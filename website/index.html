@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RightWheel — Work faster with your mouse</title>
+  <meta name="description" content="Hold right-click and scroll to instantly access apps, shortcuts, links, screenshots, and everyday Windows actions. Never leave your mouse again.">
+  <meta name="keywords" content="mouse shortcuts, windows productivity, rightwheel, hotkey, quick launch, mouse wheel">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="RightWheel — Work faster with your mouse">
+  <meta property="og:description" content="Hold right-click and scroll to move through tasks faster. Apps, shortcuts, links, screenshots — all at your fingertip.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://chautnus.github.io/mousehotkey/">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RightWheel — Work faster with your mouse">
+  <meta name="twitter:description" content="Hold right-click and scroll to move through tasks faster.">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #0b0b0b;
+      --bg2:    #111111;
+      --bg3:    #181818;
+      --bg4:    #222222;
+      --bg5:    #2a2a2a;
+      --border: #2a2a2a;
+      --text:   #d0d0d0;
+      --muted:  #777;
+      --dim:    #444;
+      --white:  #ffffff;
+      --blue:   #0078d4;
+      --blue-h: #1a8fe0;
+      --blue-l: rgba(0,120,212,.12);
+      --green:  #16825d;
+      --green-h:#1a9e71;
+      --r:      10px;
+      --r-lg:   16px;
+      --font:   'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+      --mono:   'Cascadia Code', 'Consolas', 'Courier New', monospace;
+      --max:    1140px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ─── Layout ─────────────────────────────────────────────── */
+    .container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+    /* ─── Buttons ────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 28px; border-radius: var(--r);
+      font-size: 16px; font-weight: 600; font-family: var(--font);
+      cursor: pointer; border: none; text-decoration: none;
+      transition: all .2s; line-height: 1;
+    }
+    .btn:hover { text-decoration: none; }
+    .btn-primary   { background: var(--green); color: var(--white); }
+    .btn-primary:hover {
+      background: var(--green-h); color: var(--white);
+      transform: translateY(-1px); box-shadow: 0 8px 24px rgba(22,130,93,.35);
+    }
+    .btn-secondary { background: var(--bg4); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--bg5); color: var(--white); }
+
+    /* ─── Nav ────────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(11,11,11,.88); backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center;
+      height: 62px; gap: 32px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 17px; color: var(--white);
+      text-decoration: none; flex-shrink: 0;
+    }
+    .nav-logo-icon {
+      width: 32px; height: 32px; background: var(--blue);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px;
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 28px;
+      margin-left: auto; list-style: none;
+    }
+    .nav-links a { color: var(--muted); font-size: 14px; transition: color .2s; }
+    .nav-links a:hover { color: var(--white); text-decoration: none; }
+    .nav-cta {
+      background: var(--blue) !important; color: var(--white) !important;
+      padding: 7px 18px; border-radius: var(--r);
+      font-weight: 600; font-size: 14px !important;
+      transition: background .2s !important;
+    }
+    .nav-cta:hover { background: var(--blue-h) !important; }
+
+    /* ─── Hero ───────────────────────────────────────────────── */
+    .hero {
+      min-height: calc(100vh - 62px);
+      display: flex; align-items: center;
+      padding: 80px 0 70px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 55% 60% at 68% 42%, rgba(0,120,212,.09) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--blue-l); border: 1px solid rgba(0,120,212,.3);
+      border-radius: 100px; padding: 5px 14px;
+      font-size: 13px; color: #70b8f0; margin-bottom: 24px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--blue);
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 58px); font-weight: 800;
+      line-height: 1.08; letter-spacing: -1.5px;
+      color: var(--white); margin-bottom: 22px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, #74bbf5 0%, #0078d4 60%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-desc {
+      font-size: 18px; color: var(--muted); line-height: 1.75;
+      margin-bottom: 36px; max-width: 460px;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-trust {
+      display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+      margin-top: 32px; font-size: 13px; color: var(--dim);
+    }
+    .hero-trust span { display: flex; align-items: center; gap: 5px; }
+    .hero-trust .check { color: var(--green); }
+
+    /* ─── Wheel Mockup ───────────────────────────────────────── */
+    .hero-visual {
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mockup-window {
+      width: 470px; height: 370px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--r-lg); position: relative; overflow: hidden;
+      box-shadow: 0 40px 90px rgba(0,0,0,.7);
+    }
+    .mockup-titlebar {
+      height: 36px; background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 14px; gap: 7px;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .mockup-titlebar-label { margin-left: 8px; font-size: 12px; color: var(--dim); }
+    .mockup-body {
+      position: relative; height: calc(100% - 36px);
+      background: linear-gradient(135deg, #0c0c16 0%, #0a0e18 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Wheel */
+    .wheel-wrap { position: relative; width: 290px; height: 290px;
+      display: flex; align-items: center; justify-content: center; }
+    .wheel-ring {
+      position: absolute; border-radius: 50%; border-style: solid;
+      border-color: rgba(0,120,212,.2); border-width: 1px;
+      animation: pulse-ring 3s ease-in-out infinite;
+    }
+    .wr1 { width: 210px; height: 210px; }
+    .wr2 { width: 255px; height: 255px; border-color: rgba(0,120,212,.08); animation-delay:.6s; }
+    @keyframes pulse-ring {
+      0%,100% { opacity:.5; transform:scale(1); }
+      50%      { opacity:1;  transform:scale(1.025); }
+    }
+    .wheel-center {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: rgba(0,120,212,.15); border: 2px solid rgba(0,120,212,.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; z-index: 2;
+      animation: center-pulse 2s ease-in-out infinite alternate;
+    }
+    @keyframes center-pulse {
+      from { box-shadow: 0 0 10px rgba(0,120,212,.25); }
+      to   { box-shadow: 0 0 26px rgba(0,120,212,.6);  }
+    }
+    .wi {
+      position: absolute;
+      transform: translate(-50%, -50%);
+    }
+    .pill {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(28,28,32,.96); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 7px; padding: 6px 11px;
+      font-size: 12px; color: var(--text); white-space: nowrap;
+      transition: all .3s; cursor: default;
+    }
+    .pill.hi {
+      background: rgba(0,120,212,.22);
+      border-color: rgba(0,120,212,.55);
+      color: var(--white);
+      box-shadow: 0 0 14px rgba(0,120,212,.35);
+    }
+    .scroll-hint {
+      position: absolute; bottom: 14px; right: 14px;
+      font-size: 11px; color: var(--dim);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .scroll-mouse {
+      width: 14px; height: 20px; border: 1.5px solid var(--dim);
+      border-radius: 7px; position: relative;
+    }
+    .scroll-mouse::after {
+      content: ''; width: 3px; height: 5px;
+      background: var(--dim); border-radius: 2px;
+      position: absolute; left: 50%; top: 3px; transform: translateX(-50%);
+      animation: s-dot 1.5s ease-in-out infinite;
+    }
+    @keyframes s-dot { 0%,100%{opacity:1;top:3px} 50%{opacity:.3;top:8px} }
+
+    /* ─── Section shared ─────────────────────────────────────── */
+    section { padding: 96px 0; }
+    .label {
+      font-size: 12px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--blue); margin-bottom: 12px;
+    }
+    .sh {
+      font-size: clamp(28px, 4vw, 42px); font-weight: 800;
+      color: var(--white); line-height: 1.15;
+      letter-spacing: -0.5px; margin-bottom: 16px;
+    }
+    .sd {
+      font-size: 17px; color: var(--muted);
+      line-height: 1.75; margin-bottom: 56px;
+    }
+
+    /* ─── Value Props ─────────────────────────────────────────── */
+    .props { padding: 0 0 80px; border-bottom: 1px solid var(--border); }
+    .props-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 2px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden;
+    }
+    .prop { background: var(--bg2); padding: 36px 30px; }
+    .prop-ico {
+      width: 46px; height: 46px; background: var(--blue-l);
+      border-radius: var(--r); display: flex; align-items: center;
+      justify-content: center; font-size: 22px; margin-bottom: 18px;
+    }
+    .prop h3 { font-size: 17px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+    .prop p  { font-size: 15px; color: var(--muted); line-height: 1.65; }
+
+    /* ─── How it works ───────────────────────────────────────── */
+    .how { background: var(--bg2); }
+    .how-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .step {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 32px; position: relative;
+    }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: var(--white); margin-bottom: 20px;
+    }
+    .step-icon { font-size: 38px; display: block; margin-bottom: 14px; }
+    .step h3 { font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 10px; }
+    .step p  { font-size: 15px; color: var(--muted); line-height: 1.65; }
+    .step-arrow {
+      position: absolute; top: 46px; right: -14px;
+      color: var(--border); font-size: 22px; z-index: 1; line-height: 1;
+    }
+
+    /* ─── Use Cases ──────────────────────────────────────────── */
+    .cases-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 20px;
+    }
+    .case {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 28px 26px; transition: all .2s;
+    }
+    .case:hover {
+      border-color: rgba(0,120,212,.4); background: var(--bg3);
+      transform: translateY(-2px);
+    }
+    .case-ico { font-size: 32px; display: block; margin-bottom: 16px; }
+    .case h3  { font-size: 16px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+    .case p   { font-size: 14px; color: var(--muted); line-height: 1.65; }
+    .keys     { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 14px; }
+    .kb {
+      background: var(--bg4); border: 1px solid var(--border);
+      border-radius: 5px; padding: 2px 8px;
+      font-size: 11px; font-family: var(--mono); color: var(--dim);
+    }
+
+    /* ─── Features ───────────────────────────────────────────── */
+    .features { background: var(--bg2); }
+    .features-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: start; }
+    .feat-list  { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+    .feat-item  {
+      display: flex; gap: 16px; align-items: flex-start;
+      padding: 20px; background: var(--bg3);
+      border: 1px solid var(--border); border-radius: var(--r-lg); transition: border-color .2s;
+    }
+    .feat-item:hover { border-color: rgba(0,120,212,.35); }
+    .feat-ico  { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+    .feat-item strong { display: block; font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+    .feat-item span   { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+    /* Fake settings panel */
+    .feat-panel {
+      position: sticky; top: 80px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--r-lg); overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
+    }
+    .panel-bar {
+      height: 34px; background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 14px; gap: 7px;
+    }
+    .panel-body { padding: 20px; }
+    .panel-label { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .panel-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; margin-bottom: 6px;
+      background: var(--bg4); border: 1px solid var(--border);
+      border-radius: 8px; transition: all .2s;
+    }
+    .panel-row:hover { border-color: rgba(0,120,212,.4); background: rgba(0,120,212,.06); }
+    .panel-row .pi { font-size: 15px; }
+    .panel-row .pl { flex: 1; font-size: 13px; color: var(--text); }
+    .panel-row .pk {
+      font-family: var(--mono); font-size: 10px; color: var(--dim);
+      background: var(--bg3); padding: 2px 8px;
+      border-radius: 4px; border: 1px solid var(--border);
+    }
+
+    /* ─── Pricing ────────────────────────────────────────────── */
+    .pricing { text-align: center; }
+    .pricing-card {
+      max-width: 420px; margin: 0 auto;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 48px 40px;
+      position: relative; overflow: hidden;
+    }
+    .pricing-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--blue) 0%, #005fa3 100%);
+    }
+    .pricing-badge {
+      display: inline-block;
+      background: var(--blue-l); color: #70b8f0;
+      border: 1px solid rgba(0,120,212,.3);
+      border-radius: 100px; padding: 4px 16px;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; margin-bottom: 24px;
+    }
+    .price {
+      font-size: 68px; font-weight: 900;
+      color: var(--white); line-height: 1;
+      letter-spacing: -2px; margin-bottom: 6px;
+    }
+    .price sup { font-size: 30px; font-weight: 700; letter-spacing: 0; vertical-align: super; }
+    .price-period { font-size: 15px; color: var(--muted); margin-bottom: 32px; }
+    .price-feats { list-style: none; text-align: left; display: flex; flex-direction: column; gap: 14px; margin-bottom: 36px; }
+    .price-feats li { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--text); }
+    .pf-check {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(22,130,93,.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #3dba88; flex-shrink: 0;
+    }
+    .trial-note { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+    /* ─── FAQ ────────────────────────────────────────────────── */
+    .faq { background: var(--bg2); }
+    .faq-wrap { max-width: 680px; margin: 0 auto; }
+    .faq-item { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .faq-item + .faq-item { margin-top: 8px; }
+    .faq-q {
+      width: 100%; background: var(--bg3); border: none;
+      padding: 20px 24px; text-align: left;
+      font-size: 16px; font-weight: 600; color: var(--white);
+      cursor: pointer; display: flex; justify-content: space-between;
+      align-items: center; gap: 16px; font-family: var(--font);
+      transition: background .2s;
+    }
+    .faq-q:hover { background: var(--bg4); }
+    .faq-arrow { font-size: 11px; color: var(--muted); transition: transform .25s; flex-shrink: 0; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height .3s ease; background: var(--bg2); }
+    .faq-a-inner { padding: 0 24px 20px; font-size: 15px; color: var(--muted); line-height: 1.75; }
+    .faq-item.open .faq-a { max-height: 280px; }
+
+    /* ─── CTA Banner ─────────────────────────────────────────── */
+    .cta {
+      text-align: center; padding: 100px 0;
+      background: linear-gradient(180deg, var(--bg) 0%, #060c16 100%);
+    }
+    .cta .sh { margin-bottom: 20px; }
+    .cta .sd { margin: 0 auto 40px; max-width: 480px; }
+    .cta-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .cta-note { margin-top: 20px; font-size: 13px; color: var(--dim); }
+
+    /* ─── Footer ─────────────────────────────────────────────── */
+    footer {
+      background: var(--bg2); border-top: 1px solid var(--border); padding: 40px 0;
+    }
+    .footer-inner {
+      display: flex; justify-content: space-between;
+      align-items: center; gap: 24px; flex-wrap: wrap;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--white); }
+    .footer-brand-ico {
+      width: 28px; height: 28px; background: var(--blue);
+      border-radius: 6px; display: flex; align-items: center;
+      justify-content: center; font-size: 14px;
+    }
+    .footer-copy { font-size: 13px; color: var(--dim); margin-top: 6px; }
+    .footer-links { display: flex; gap: 24px; list-style: none; }
+    .footer-links a { font-size: 13px; color: var(--muted); transition: color .2s; }
+    .footer-links a:hover { color: var(--white); text-decoration: none; }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 920px) {
+      .hero-inner { grid-template-columns: 1fr; text-align: center; }
+      .hero-visual { order: -1; }
+      .hero-actions, .hero-trust { justify-content: center; }
+      .hero-desc { margin-left: auto; margin-right: auto; }
+      .mockup-window { width: 360px; height: 300px; }
+      .wheel-wrap { width: 240px; height: 240px; }
+      .props-grid, .how-steps { grid-template-columns: 1fr; }
+      .step-arrow { display: none; }
+      .cases-grid { grid-template-columns: repeat(2,1fr); }
+      .features-inner { grid-template-columns: 1fr; }
+      .feat-panel { position: static; }
+    }
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .cases-grid { grid-template-columns: 1fr; }
+      section { padding: 64px 0; }
+      .hero { padding: 56px 0 48px; }
+      .mockup-window { width: 310px; height: 270px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════ NAV ════ -->
+<nav>
+  <div class="container nav-inner">
+    <a class="nav-logo" href="#">
+      <div class="nav-logo-icon">🖱</div>
+      RightWheel
+    </a>
+    <ul class="nav-links">
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#use-cases">Use cases</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="https://github.com/chautnus/mousehotkey" target="_blank" rel="noopener">GitHub</a></li>
+      <li>
+        <a class="nav-cta"
+           href="https://imagesnap.lemonsqueezy.com/checkout/buy/121b3bd5-3464-4e73-9ead-70b0034ec124"
+           target="_blank" rel="noopener">
+          Buy $7.99
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ════ HERO ════ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-inner">
+
+      <!-- Copy -->
+      <div class="hero-copy">
+        <div class="hero-badge">
+          <div class="hero-badge-dot"></div>
+          For Windows 10 &amp; 11
+        </div>
+        <h1>Work faster <em>with your mouse.</em></h1>
+        <p class="hero-desc">
+          Hold right-click and scroll to move through tasks faster.
+          Tasks can be anything: apps, shortcuts, links, screenshots,
+          and everyday Windows actions.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary"
+             href="https://imagesnap.lemonsqueezy.com/checkout/buy/121b3bd5-3464-4e73-9ead-70b0034ec124"
+             target="_blank" rel="noopener">
+            🛒 Buy RightWheel — $7.99
+          </a>
+          <a class="btn btn-secondary" href="#how-it-works">▶ Watch demo</a>
+        </div>
+        <div class="hero-trust">
+          <span><span class="check">✓</span> 30-day free trial</span>
+          <span><span class="check">✓</span> One-time purchase</span>
+          <span><span class="check">✓</span> No subscription</span>
+        </div>
+      </div>
+
+      <!-- Wheel mockup -->
+      <div class="hero-visual">
+        <div class="mockup-window">
+          <div class="mockup-titlebar">
+            <div class="dot" style="background:#ff5f57"></div>
+            <div class="dot" style="background:#ffbd2e"></div>
+            <div class="dot" style="background:#28ca41"></div>
+            <span class="mockup-titlebar-label">Windows Desktop</span>
+          </div>
+          <div class="mockup-body">
+            <div class="wheel-wrap">
+              <!-- rings -->
+              <div class="wheel-ring wr2"></div>
+              <div class="wheel-ring wr1"></div>
+
+              <!-- 8 items around circle r=108px, translate(-50%,-50%) centering -->
+              <!-- top 0° -->
+              <div class="wi" style="left:50%;top:calc(50% - 108px)">
+                <div class="pill">📸 Screenshot</div>
+              </div>
+              <!-- top-right 45° -->
+              <div class="wi" style="left:calc(50% + 76px);top:calc(50% - 76px)">
+                <div class="pill">🔍 Search</div>
+              </div>
+              <!-- right 90° -->
+              <div class="wi" style="left:calc(50% + 108px);top:50%">
+                <div class="pill hi" id="pill-active">🚀 VS Code</div>
+              </div>
+              <!-- bottom-right 135° -->
+              <div class="wi" style="left:calc(50% + 76px);top:calc(50% + 76px)">
+                <div class="pill">🌐 Notion</div>
+              </div>
+              <!-- bottom 180° -->
+              <div class="wi" style="left:50%;top:calc(50% + 108px)">
+                <div class="pill">🖥 Desktop</div>
+              </div>
+              <!-- bottom-left 225° -->
+              <div class="wi" style="left:calc(50% - 76px);top:calc(50% + 76px)">
+                <div class="pill">◧ Align Left</div>
+              </div>
+              <!-- left 270° -->
+              <div class="wi" style="left:calc(50% - 108px);top:50%">
+                <div class="pill">📁 System</div>
+              </div>
+              <!-- top-left 315° -->
+              <div class="wi" style="left:calc(50% - 76px);top:calc(50% - 76px)">
+                <div class="pill">📋 Clipboard</div>
+              </div>
+
+              <div class="wheel-center">🖱</div>
+            </div>
+
+            <div class="scroll-hint">
+              <div class="scroll-mouse"></div>
+              Hold RMB + Scroll
+            </div>
+          </div><!-- /mockup-body -->
+        </div>
+      </div><!-- /hero-visual -->
+
+    </div><!-- /hero-inner -->
+  </div>
+</section>
+
+<!-- ════ VALUE PROPS ════ -->
+<div class="props">
+  <div class="container">
+    <div class="props-grid">
+      <div class="prop">
+        <div class="prop-ico">⚡</div>
+        <h3>Save time on the tasks you repeat every day</h3>
+        <p>The actions you do 20 times a day — switching apps, taking screenshots, snapping windows — are now one gesture away.</p>
+      </div>
+      <div class="prop">
+        <div class="prop-ico">🖱</div>
+        <h3>Keep your hands on the mouse and stay in flow</h3>
+        <p>No more reaching for the keyboard. Stay in flow and execute anything right from where your hand already is.</p>
+      </div>
+      <div class="prop">
+        <div class="prop-ico">🚀</div>
+        <h3>Open apps, run shortcuts, and move faster across Windows</h3>
+        <p>Launch apps, snap windows, browse bookmarks, and run Windows actions — all without touching the keyboard.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ HOW IT WORKS ════ -->
+<section class="how" id="how-it-works">
+  <div class="container">
+    <p class="label">How it works</p>
+    <h2 class="sh">Three gestures. Infinite possibilities.</h2>
+    <p class="sd" style="max-width:520px">RightWheel lives in your system tray and activates with a simple mouse combo — no keyboard required.</p>
+
+    <div class="how-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <span class="step-icon">🖱</span>
+        <h3>Hold right-click</h3>
+        <p>Press and hold your right mouse button anywhere on the screen.</p>
+        <div class="step-arrow">→</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <span class="step-icon">⬆</span>
+        <h3>Scroll up</h3>
+        <p>Scroll the wheel upward while holding right-click — the shortcut panel appears instantly.</p>
+        <div class="step-arrow">→</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <span class="step-icon">⚡</span>
+        <h3>Click any shortcut</h3>
+        <p>Select an app, shortcut, URL, or folder from your wheel — it executes immediately.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ USE CASES ════ -->
+<section id="use-cases">
+  <div class="container">
+    <p class="label">Use cases</p>
+    <h2 class="sh">Everything you do. Faster.</h2>
+    <p class="sd" style="max-width:520px">Add any action to your wheel. Configure it once, use it hundreds of times a day.</p>
+
+    <div class="cases-grid">
+      <div class="case">
+        <span class="case-ico">🖥</span>
+        <h3>Show desktop instantly</h3>
+        <p>Minimize all windows and get to your desktop without hunting for the tiny corner button.</p>
+        <div class="keys">
+          <span class="kb">Win</span><span class="kb">D</span>
+        </div>
+      </div>
+      <div class="case">
+        <span class="case-ico">📸</span>
+        <h3>Screenshot any area</h3>
+        <p>Open the snipping tool in one gesture to capture exactly what you need, right when you need it.</p>
+        <div class="keys">
+          <span class="kb">Win</span><span class="kb">Shift</span><span class="kb">S</span>
+        </div>
+      </div>
+      <div class="case">
+        <span class="case-ico">🚀</span>
+        <h3>Launch your favorite apps</h3>
+        <p>Add any .exe to your wheel and open Chrome, VS Code, Slack, or any app in one click — no Start menu.</p>
+        <div class="keys">
+          <span class="kb">.exe launcher</span>
+        </div>
+      </div>
+      <div class="case">
+        <span class="case-ico">◧</span>
+        <h3>Snap windows left &amp; right</h3>
+        <p>Instantly snap any window to the left or right half of your screen for side-by-side multitasking.</p>
+        <div class="keys">
+          <span class="kb">Win</span><span class="kb">←</span>
+          <span class="kb">Win</span><span class="kb">→</span>
+        </div>
+      </div>
+      <div class="case">
+        <span class="case-ico">📋</span>
+        <h3>Clipboard history</h3>
+        <p>Pull up your full clipboard history and paste anything you've copied recently — no memorization needed.</p>
+        <div class="keys">
+          <span class="kb">Win</span><span class="kb">V</span>
+        </div>
+      </div>
+      <div class="case">
+        <span class="case-ico">◈</span>
+        <h3>Per-app profiles</h3>
+        <p>Photoshop gets design shortcuts. VS Code gets dev tools. RightWheel switches your wheel automatically.</p>
+        <div class="keys">
+          <span class="kb">Auto-switches per active app</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ FEATURES ════ -->
+<section class="features">
+  <div class="container">
+    <div class="features-inner">
+      <div>
+        <p class="label">Features</p>
+        <h2 class="sh">Everything in one wheel.</h2>
+        <p class="sd" style="margin-bottom:36px">Build your perfect shortcut panel with all the action types you need — and organize them into folders.</p>
+
+        <ul class="feat-list">
+          <li class="feat-item">
+            <span class="feat-ico">⌨</span>
+            <div>
+              <strong>Keyboard shortcuts</strong>
+              <span>Any key combination — Ctrl+Shift+V, Win+Left, Alt+F4. If Windows can do it, RightWheel can trigger it.</span>
+            </div>
+          </li>
+          <li class="feat-item">
+            <span class="feat-ico">🚀</span>
+            <div>
+              <strong>App launcher</strong>
+              <span>Add any .exe to your wheel. Open apps without touching the taskbar or searching Start.</span>
+            </div>
+          </li>
+          <li class="feat-item">
+            <span class="feat-ico">🌐</span>
+            <div>
+              <strong>URL bookmarks</strong>
+              <span>Open any website directly in your browser — Notion, Figma, GitHub, or your daily dashboard.</span>
+            </div>
+          </li>
+          <li class="feat-item">
+            <span class="feat-ico">📁</span>
+            <div>
+              <strong>Folders &amp; submenus</strong>
+              <span>Group related shortcuts into folders. Keep System tools, Work apps, and Windows actions organized.</span>
+            </div>
+          </li>
+          <li class="feat-item">
+            <span class="feat-ico">◈</span>
+            <div>
+              <strong>Context-aware profiles</strong>
+              <span>Different shortcuts appear depending on which app is active — design tools for Figma, dev tools for VS Code.</span>
+            </div>
+          </li>
+          <li class="feat-item">
+            <span class="feat-ico">🌍</span>
+            <div>
+              <strong>9 languages supported</strong>
+              <span>English, French, Portuguese, Spanish, Italian, Vietnamese, Indonesian, Thai, and Chinese — the UI speaks your language.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Fake settings panel -->
+      <div class="feat-panel">
+        <div class="panel-bar">
+          <div class="dot" style="background:#ff5f57;width:11px;height:11px;border-radius:50%;flex-shrink:0"></div>
+          <div class="dot" style="background:#ffbd2e;width:11px;height:11px;border-radius:50%;flex-shrink:0"></div>
+          <div class="dot" style="background:#28ca41;width:11px;height:11px;border-radius:50%;flex-shrink:0"></div>
+          <span style="margin-left:8px;font-size:12px;color:var(--dim)">RightWheel — Settings</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-label">Default Shortcuts</div>
+          <div class="panel-row"><span class="pi">🖥</span><span class="pl">Desktop</span><span class="pk">win+d</span></div>
+          <div class="panel-row"><span class="pi">🔍</span><span class="pl">Search</span><span class="pk">win+s</span></div>
+          <div class="panel-row"><span class="pi">📸</span><span class="pl">Screenshot</span><span class="pk">win+shift+s</span></div>
+          <div class="panel-row"><span class="pi">📋</span><span class="pl">Clipboard History</span><span class="pk">win+v</span></div>
+          <div class="panel-row" style="border-color:rgba(0,120,212,.5);background:rgba(0,120,212,.08)">
+            <span class="pi">◧</span><span class="pl">Align Left</span><span class="pk">win+←</span>
+          </div>
+          <div class="panel-row"><span class="pi">◨</span><span class="pl">Align Right</span><span class="pk">win+→</span></div>
+          <div class="panel-row"><span class="pi">📁</span><span class="pl">System</span><span class="pk">folder →</span></div>
+          <div class="panel-row"><span class="pi">🚀</span><span class="pl">VS Code</span><span class="pk">app</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PRICING ════ -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <p class="label">Pricing</p>
+    <h2 class="sh">Simple, honest pricing.</h2>
+    <p class="sd" style="max-width:460px;margin:0 auto 48px">Buy once. Use forever. No subscription, no paywalls, no surprises.</p>
+
+    <div class="pricing-card">
+      <div class="pricing-badge">Lifetime License</div>
+      <div class="price"><sup>$</sup>7.99</div>
+      <div class="price-period">one-time purchase &nbsp;·&nbsp; no recurring fees</div>
+
+      <ul class="price-feats">
+        <li><span class="pf-check">✓</span> Lifetime license — pay once, keep forever</li>
+        <li><span class="pf-check">✓</span> 1 year of free updates included</li>
+        <li><span class="pf-check">✓</span> 30-day free trial — no credit card needed</li>
+        <li><span class="pf-check">✓</span> Works on Windows 10 &amp; 11</li>
+        <li><span class="pf-check">✓</span> Portable .exe — no installation required</li>
+      </ul>
+
+      <a class="btn btn-primary"
+         href="https://imagesnap.lemonsqueezy.com/checkout/buy/121b3bd5-3464-4e73-9ead-70b0034ec124"
+         target="_blank" rel="noopener"
+         style="width:100%;justify-content:center;font-size:17px;padding:16px 28px">
+        🛒 Buy RightWheel — $7.99
+      </a>
+      <div class="trial-note">Try free for 30 days &nbsp;·&nbsp; No credit card required</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ FAQ ════ -->
+<section class="faq">
+  <div class="container">
+    <p class="label" style="text-align:center">FAQ</p>
+    <h2 class="sh" style="text-align:center;margin-bottom:48px">Common questions</h2>
+
+    <div class="faq-wrap">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          How does the free trial work?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          After downloading, RightWheel runs in full trial mode for 30 days — no account and no credit card required. All features are available during the trial. After 30 days, activate a purchased license key to continue using it indefinitely.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          Will it interfere with my normal right-click?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          No. RightWheel only activates when you hold right-click <em>and</em> scroll at the same time. A quick single right-click still shows the normal Windows context menu as usual — nothing changes for your existing workflow.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          Does it work on Mac or Linux?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          RightWheel is currently Windows-only (Windows 10 and 11). It relies on the Windows low-level mouse hook API. Mac and Linux versions are not planned at this time.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          What happens after 1 year of updates?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          Your license is permanent — RightWheel keeps working forever on the version you have. After 1 year, you won't receive new feature updates automatically, but the app continues to run. You can always buy an upgrade to renew your update period.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">
+          Can I use it on multiple PCs?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          Each license covers one PC. If you need RightWheel on multiple machines, purchase additional licenses. Contact us if you need a multi-seat arrangement.
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════ FINAL CTA ════ -->
+<section class="cta">
+  <div class="container">
+    <h2 class="sh">Stop reaching for the keyboard.</h2>
+    <p class="sd">
+      Every shortcut. Every app. Every website.<br>
+      All at your right-click.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary"
+         href="https://imagesnap.lemonsqueezy.com/checkout/buy/121b3bd5-3464-4e73-9ead-70b0034ec124"
+         target="_blank" rel="noopener"
+         style="font-size:17px;padding:15px 34px">
+        🛒 Buy RightWheel — $7.99
+      </a>
+      <a class="btn btn-secondary" href="#how-it-works" style="font-size:16px">Learn more</a>
+    </div>
+    <div class="cta-note">30-day free trial &nbsp;·&nbsp; One-time purchase &nbsp;·&nbsp; Windows 10 &amp; 11</div>
+  </div>
+</section>
+
+<!-- ════ FOOTER ════ -->
+<footer>
+  <div class="container footer-inner">
+    <div>
+      <div class="footer-brand">
+        <div class="footer-brand-ico">🖱</div>
+        RightWheel
+      </div>
+      <div class="footer-copy">© 2026 RightWheel. All rights reserved.</div>
+    </div>
+    <ul class="footer-links">
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#use-cases">Use cases</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="https://github.com/chautnus/mousehotkey" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+/* FAQ accordion */
+function faq(btn) {
+  const item = btn.closest('.faq-item');
+  const open = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!open) item.classList.add('open');
+}
+
+/* Wheel: animate pills in, then cycle active state */
+document.addEventListener('DOMContentLoaded', () => {
+  const pills = document.querySelectorAll('.pill');
+
+  /* entrance animation */
+  pills.forEach((p, i) => {
+    p.style.opacity = '0';
+    p.style.transform = 'scale(.75)';
+    setTimeout(() => {
+      p.style.transition = 'opacity .3s ease, transform .3s ease, background .3s, border-color .3s, box-shadow .3s';
+      p.style.opacity = '1';
+      p.style.transform = 'scale(1)';
+    }, 80 + i * 55);
+  });
+
+  /* cycle active highlight */
+  let idx = 2; // start at VS Code (right)
+  setInterval(() => {
+    pills.forEach(p => p.classList.remove('hi'));
+    idx = (idx + 1) % pills.length;
+    pills[idx].classList.add('hi');
+  }, 1800);
+});
+
+/* Smooth-scroll for nav links */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+  });
+});
+</script>
+</body>
+</html>
