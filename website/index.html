@@ -432,6 +432,12 @@
       font-size: 11px; color: #3dba88; flex-shrink: 0;
     }
     .trial-note { margin-top: 14px; font-size: 13px; color: var(--muted); }
+    .smartscreen-note {
+      margin-top: 18px; font-size: 13px; color: var(--dim);
+      line-height: 1.6; max-width: 420px;
+    }
+    .smartscreen-note a { color: var(--muted); }
+    .smartscreen-note a:hover { color: var(--white); }
 
     /* ─── FAQ ────────────────────────────────────────────────── */
     .faq { background: var(--bg2); }
@@ -563,6 +569,12 @@
           <span><span class="check">✓</span> One-time purchase</span>
           <span><span class="check">✓</span> No subscription</span>
         </div>
+        <p class="smartscreen-note">
+          🛡 Windows may show a SmartScreen prompt on first run —
+          click <strong>More info → Run anyway</strong>.
+          This is normal for indie apps without a paid code-signing certificate.
+          <a href="#faq-smartscreen">Why?</a>
+        </p>
       </div>
 
       <!-- Wheel mockup -->
@@ -857,7 +869,12 @@
          style="width:100%;justify-content:center;font-size:17px;padding:16px 28px">
         🛒 Buy RightWheel — $7.99
       </a>
-      <div class="trial-note">No credit card for trial &nbsp;·&nbsp; Cancel anytime</div>
+      <div class="trial-note">No credit card for trial &nbsp;·&nbsp; One-time purchase</div>
+      <p style="margin-top:14px;font-size:12px;color:var(--dim);line-height:1.6">
+        🛡 Windows SmartScreen may appear on first run —
+        click <strong>More info → Run anyway</strong>.
+        <a href="#faq-smartscreen" style="color:var(--muted)">Learn why</a>
+      </p>
     </div>
   </div>
 </section>
@@ -917,6 +934,23 @@
         </button>
         <div class="faq-a"><div class="faq-a-inner">
           Each license covers one PC. If you need RightWheel on multiple machines, purchase additional licenses. Contact us if you need a multi-seat arrangement.
+        </div></div>
+      </div>
+
+      <div class="faq-item" id="faq-smartscreen">
+        <button class="faq-q" onclick="faq(this)">
+          Windows says "RightWheel isn't commonly downloaded" — is it safe?
+          <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          Yes, completely. The warning is from Windows SmartScreen, which flags any
+          executable that hasn't yet built up a download reputation — regardless of
+          whether it's safe or not. RightWheel is an indie app without a paid
+          code-signing certificate, so SmartScreen doesn't recognize it yet.<br><br>
+          To run it: click <strong>More info</strong> → <strong>Run anyway</strong>.
+          You can also verify the file hash against the one published on the
+          <a href="https://github.com/chautnus/RightWheel/releases/latest" target="_blank" rel="noopener">GitHub Releases page</a>
+          before running. The source code is open on GitHub.
         </div></div>
       </div>
 
