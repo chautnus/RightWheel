@@ -6,6 +6,8 @@ on:
     paths:
       - 'website/**'
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'   # every day at 6:00 AM UTC
 
 permissions:
   contents: read
