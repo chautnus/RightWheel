@@ -56,6 +56,7 @@ class DefaultTab(tk.Frame):
             (t("btn.delete"),   self._delete,           _RED),
             (t("btn.up"),       lambda: self._move(-1), "#404040"),
             (t("btn.down"),     lambda: self._move(1),  "#404040"),
+            ("⬇ Import",        self._import,           _GRN),
         ]:
             _btn(bf, txt, cmd, c).pack(fill="x", pady=2)
 
@@ -199,6 +200,12 @@ class DefaultTab(tk.Frame):
         data["default"].pop(idx)
         config_service.save(data)
         self._refresh(); self._logic.reload()
+
+    def _import(self) -> None:
+        from .import_dialog import ImportDialog
+        ImportDialog.open(self.winfo_toplevel())
+        self._refresh()
+        self._logic.reload()
 
     def _move(self, delta: int) -> None:
         idx = self._sel()

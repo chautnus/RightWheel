@@ -1,4 +1,4 @@
-"""RightWheel v2.9.0 — system tray app entry point."""
+"""RightWheel v2.10.0 — system tray app entry point."""
 import sys
 
 if sys.platform != "win32":
