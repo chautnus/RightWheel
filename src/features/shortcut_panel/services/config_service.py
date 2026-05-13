@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from ..types.panel_types import (
-    ActionItem, AppItem, FolderItem, MenuItem, ShortcutItem, UrlItem,
+    ActionItem, AppItem, CommandItem, FolderItem, MenuItem, ShortcutItem, UrlItem,
 )
 
 CONFIG_DIR  = Path(os.environ.get("APPDATA", ".")) / "RightWheel"
@@ -116,6 +116,12 @@ def parse_items(raw: list) -> list[MenuItem]:
             result.append(ActionItem(
                 label=entry.get("label", "Action"),
                 action=entry.get("action", ""),
+            ))
+        elif t == "command":
+            result.append(CommandItem(
+                label=entry.get("label", "Command"),
+                cmd=entry.get("cmd", ""),
+                cwd=entry.get("cwd", ""),
             ))
         else:
             result.append(ShortcutItem(
