@@ -6,11 +6,36 @@ tags: [bugs, ctypes, hook, alt-tab, context-menu]
 keywords: [ghost-right-up, suppress, INJECTED_MARKER, freeze, hook-timeout]
 status: active
 created: 2026-04-30
-updated: 2026-05-07
+updated: 2026-05-13
 summary: "Root causes and fixes for all critical bugs found during v1→v2→v2.5 development."
 ---
 
 ## Critical Bugs and Fixes
+
+---
+
+---
+
+### [v2.10.x] Panel Scroll Regression Series — 3 bugs introduced & fixed
+
+**Bối cảnh:** v2.10.1 thêm `PanelLogic` vào `main.py` với `mapper.panel = panel` nhưng `mouse_mapper_logic._on_scroll` **không bao giờ được cập nhật** để dùng `self.panel`. Bug tồn tại từ v2.10.1 đến v2.10.4 nhưng không ai phát hiện.
+
+**Bug 1 — Scroll gọi Alt+Tab thay vì mở panel (v2.10.1–v2.10.4)**  
+`_on_scroll` vẫn gọi `hotkey_service.begin_switch()` → Win11 hiển thị browser recent tabs.  
+Fix (commit `3ffbcb8`): Kiểm tra `self.panel` trong `_on_scroll`; nếu có → gọi `panel.show()` và `panel.navigate()`.
+
+**Bug 2 — Scroll UP chọn item cuối thay vì item đầu (introduced tại `3ffbcb8`)**  
+`panel.show()` reset index=0. Ngay sau đó `panel.navigate(-1)` được gọi → `(0-1)%n = n-1`.  
+Fix (commit `307137e`): Scroll đầu tiên chỉ gọi `panel.show()`, KHÔNG gọi `navigate()`.
+
+**Bug 3 — Panel đóng ngay khi nhả RMB (introduced tại `3ffbcb8`)**  
+`_on_right_up` thêm `panel.select_current()` theo analogy với `hotkey_service.end_switch()`. Nhưng Alt+Tab cần release Alt key; panel không giữ phím nào → không cần làm gì, panel phải ở lại.  
+Fix (commit `05acf49`): Xóa `panel.select_current()` khỏi `_on_right_up`. Panel ở lại mở, user tương tác bằng LMB/scroll/số/Escape.
+
+**Rule đúc kết:**
+- `_on_right_up` khi SCROLLING + panel: **không gọi select_current()**. Chỉ clear `_alt_held`, return True (suppress RMB up).
+- Scroll đầu tiên: **chỉ `panel.show()`**, không `navigate()`.
+- Xem toàn bộ spec tại `docs/memory/project/panel_scroll_behavior.md`.
 
 ---
 

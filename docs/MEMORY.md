@@ -1,6 +1,6 @@
 # RightWheel — Project Memory
 
-last_updated: 2026-05-08 (v2.9.0 — i18n 9 languages, rename RightWheel, LemonSqueezy license, App/URL shortcuts)
+last_updated: 2026-05-13 (v2.10.7 — panel scroll behavior locked; app icon; Command feature; 9-lang f8 strings)
 
 ## Overview
 Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a shortcut panel. Python + ctypes WH_MOUSE_LL hook. Feature-Sliced Design.
@@ -15,6 +15,14 @@ Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a s
 | user | [memory/user/](memory/user/INDEX.md) | User preferences and profile |
 | feedback | [memory/feedback/](memory/feedback/INDEX.md) | Collaboration feedback |
 | reference | [memory/reference/](memory/reference/INDEX.md) | External resources and URLs |
+
+## 🔒 Locked Behaviors (v2.10.7)
+
+Xem `CLAUDE.md` ở project root để biết toàn bộ luật. Tóm tắt:
+- `mouse_mapper_logic._on_scroll`: scroll đầu → `panel.show()` only; scroll sau → `panel.navigate(delta)`
+- `mouse_mapper_logic._on_right_up` (SCROLLING+panel): KHÔNG gọi `panel.select_current()` — panel ở lại
+- `panel_logic.select_current()`: `SetForegroundWindow` TRƯỚC `hide()`, Timer 0.25s sau
+- Chỉ một `tk.Tk()` trong toàn app
 
 ## Quick Reference
 
@@ -34,4 +42,6 @@ Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a s
 - **License:** `src/features/licensing/` — LemonSqueezy API, trial 30d, 7d cache
 - **Spec:** `RightWheel.spec` (supersedes MouseHotkey.spec)
 - **GitHub:** https://github.com/chautnus/mousehotkey
-- **Portable exe:** `dist/RightWheel.exe` (v2.9.0)
+- **Portable exe:** `dist/RightWheel.exe` (v2.10.7)
+- **App icon:** `assets/icon.ico` + `assets/icon.png` (mouse PNG, multi-size)
+- **CLAUDE.md:** `CLAUDE.md` — project agent rules & locked behaviors

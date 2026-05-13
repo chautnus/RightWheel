@@ -6,14 +6,73 @@ tags: [changelog, versions]
 keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
-updated: 2026-05-07
-summary: "Version history for MouseHotkey from v1.0.0 to v2.5.0."
+updated: 2026-05-13
+summary: "Version history for RightWheel from v1.0.0 to v2.10.7."
 ---
 
 # Changelog
 
-All notable changes to MouseHotkey are documented here.
+All notable changes to RightWheel are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [2.10.7] — 2026-05-13
+
+### Fixed
+- **Panel stays open after releasing RMB** — restored v2.9.x behavior. Releasing right mouse button no longer calls `panel.select_current()`. Panel remains open; user interacts via LMB click, scroll wheel, number keys 0-9, Escape, or click-outside.
+- Root cause: `_on_right_up` erroneously called `panel.select_current()` (introduced in 2.10.5 by analogy with `hotkey_service.end_switch()`).
+
+---
+
+## [2.10.6] — 2026-05-13
+
+### Fixed
+- **First scroll opens panel at index 0** — navigate(-1) was called immediately after `panel.show()` causing `(0-1)%n = last item`. First scroll now only calls `show()`.
+- Welcome screen now shows mouse PNG icon (PIL/ImageTk) instead of 🖱 emoji; fallback to emoji if PIL unavailable.
+
+### Changed
+- `RightWheel.spec` bundles `assets/icon.png` into frozen exe.
+
+---
+
+## [2.10.5] — 2026-05-13
+
+### Fixed
+- **Scroll now opens shortcut panel** instead of Alt+Tab (Windows task switcher). `_on_scroll` in `mouse_mapper_logic` was always calling `hotkey_service.begin_switch()` — the `mapper.panel` reference set in `main.py` was dead code since v2.10.1.
+
+---
+
+## [2.10.4] — 2026-05-13
+
+### Added
+- **App icon** — mouse PNG (dark gray + orange) converted to multi-size ICO (`assets/icon.ico`), applied to exe via `RightWheel.spec`.
+- **Run Commands row in welcome screen** — `_FEATURE_KEYS` f8 added to `welcome_window.py` and all 9 i18n files (en, vi, zh, fr, es, pt, th, id, it).
+
+---
+
+## [2.10.2] — 2026-05-13
+
+### Added
+- **Command shortcut type in folder editor** — Add/edit shell commands inside folder submenus via `FolderEditorDialog`.
+
+---
+
+## [2.10.1] — 2026-05-13 (was v2.10.0 bump)
+
+### Added
+- **Hover-to-open folders** — hover cursor over a folder item for 400 ms → auto-opens subfolder (no click needed). Uses `<Enter>`/`<Leave>` bindings + `win.after(400, ...)`.
+
+---
+
+## [2.9.0] — 2026-05-08
+
+### Added
+- Full i18n system — 9 languages (EN, VI, ZH, FR, ES, PT, TH, ID, IT) via `features/i18n/` with dynamic locale loading
+- Renamed app: MouseHotkey → **RightWheel**; new exe `RightWheel.exe`
+- LemonSqueezy license system — 30-day trial, $5.99 perpetual license, 7-day cache
+- Language selector dropdown in Settings footer
+- GitHub Pages website at `chautnus.github.io/RightWheel`
 
 ---
 
