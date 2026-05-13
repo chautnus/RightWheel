@@ -52,6 +52,7 @@ class DefaultTab(tk.Frame):
             (t("btn.app"),      self._add_app,          _ACC),
             (t("btn.url"),      self._add_url,          _ACC),
             (t("btn.folder"),   self._add_folder,       _ACC),
+            ("▶ Command",       self._add_command,      "#6a5acd"),
             (t("btn.edit"),     self._edit,             "#404040"),
             (t("btn.delete"),   self._delete,           _RED),
             (t("btn.up"),       lambda: self._move(-1), "#404040"),
@@ -89,6 +90,9 @@ class DefaultTab(tk.Frame):
             elif t == "url":
                 self._lb.insert("end", f"  🌐  {it['label']}   →   {it.get('url','')}")
                 self._lb.itemconfigure(i, foreground="#4fc1ff")
+            elif t == "command":
+                self._lb.insert("end", f"  ▶  {it['label']}   →   {it.get('cmd','')}")
+                self._lb.itemconfigure(i, foreground="#ce9178")
             elif t == "action":
                 self._lb.insert("end", f"  ⚡  {it['label']}")
                 self._lb.itemconfigure(i, foreground="#dcdcaa")
@@ -198,6 +202,20 @@ class DefaultTab(tk.Frame):
             return
         data = config_service.load()
         data["default"].pop(idx)
+        config_service.save(data)
+        self._refresh(); self._logic.reload()
+
+    def _add_command(self) -> None:
+        label = self._ask("Add Command", "Display name")
+        if not label:
+            return
+        cmd = self._ask("Add Command", "Shell command",
+                        hint="e.g. cd C:\\projects && git pull")
+        if not cmd:
+            return
+        data = config_service.load()
+        data.setdefault("default", []).append(
+            {"type": "command", "label": label, "cmd": cmd, "cwd": ""})
         config_service.save(data)
         self._refresh(); self._logic.reload()
 

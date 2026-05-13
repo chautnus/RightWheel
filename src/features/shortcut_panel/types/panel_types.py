@@ -46,13 +46,21 @@ class ActionItem:
 
 
 @dataclass
+class CommandItem:
+    label: str
+    cmd:   str          # shell command, e.g. "cd C:\proj && git pull"
+    cwd:   str = ""     # working directory (optional)
+    type:  str = "command"
+
+
+@dataclass
 class FolderItem:
     label:    str
     children: list = field(default_factory=list)  # list[MenuItem]
     type:     str  = "folder"
 
 
-MenuItem = Union[ShortcutItem, AppItem, UrlItem, ActionItem, FolderItem]
+MenuItem = Union[ShortcutItem, AppItem, UrlItem, ActionItem, CommandItem, FolderItem]
 
 
 @dataclass

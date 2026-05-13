@@ -14,7 +14,8 @@ _log.addHandler(_fh)
 
 from ..services import config_service, shortcut_executor, window_service
 from ..types.panel_types import (
-    ActionItem, AppItem, FolderItem, MenuItem, NavState, ShortcutItem, UrlItem,
+
+    ActionItem, AppItem, CommandItem, FolderItem, MenuItem, NavState, ShortcutItem, UrlItem,
 )
 
 
@@ -118,6 +119,9 @@ class PanelLogic:
         elif isinstance(item, UrlItem):
             threading.Timer(0.1, shortcut_executor.execute_url,
                             args=[item.url]).start()
+        elif isinstance(item, CommandItem):
+            threading.Timer(0.1, shortcut_executor.execute_command,
+                            args=[item.cmd, item.cwd]).start()
 
     def _handle_action(self, action: str) -> None:
         self.hide()

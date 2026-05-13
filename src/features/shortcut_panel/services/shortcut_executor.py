@@ -133,6 +133,21 @@ def execute_app(path: str, args: str = "") -> None:
         _log.warning(f"execute_app() failed: {exc}")
 
 
+def execute_command(cmd: str, cwd: str = "") -> None:
+    """Run a shell command (cmd /c). Silently no-op if cmd is empty."""
+    if not cmd.strip():
+        return
+    try:
+        subprocess.Popen(
+            ["cmd.exe", "/c", cmd],
+            cwd=cwd if cwd.strip() else None,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+        _log.debug(f"execute_command()  cmd={cmd!r}  cwd={cwd!r}")
+    except Exception as exc:
+        _log.warning(f"execute_command() failed: {exc}")
+
+
 def execute_url(url: str) -> None:
     """Open a URL in the default browser."""
     if not url:
