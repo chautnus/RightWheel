@@ -85,9 +85,7 @@ class MouseMapperLogic:
 
         if self._alt_held:
             panel = getattr(self, "panel", None)
-            if panel:
-                panel.select_current()
-            else:
+            if not panel:
                 hotkey_service.end_switch()
             self._alt_held = False
 
