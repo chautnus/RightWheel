@@ -17,6 +17,8 @@ STRINGS: dict[str, str] = {
     "welcome.f6.desc":             "Pintasan berbeda per aplikasi",
     "welcome.f7.trigger":          "Baki → Pengaturan",
     "welcome.f7.desc":             "Tambah, edit, dan atur",
+    "welcome.f8.trigger":          "Jalankan Perintah",
+    "welcome.f8.desc":             "Jalankan perintah shell apa pun secara instan",
     "welcome.run_on_startup":      "Jalankan otomatis saat Windows mulai",
     "welcome.get_started":         "Mulai  →",
     "settings.title":              "RightWheel — Pengaturan  (v{v})",

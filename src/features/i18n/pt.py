@@ -17,6 +17,8 @@ STRINGS: dict[str, str] = {
     "welcome.f6.desc":             "Atalhos diferentes por aplicação",
     "welcome.f7.trigger":          "Bandeja → Definições",
     "welcome.f7.desc":             "Adicionar, editar e organizar",
+    "welcome.f8.trigger":          "Executar comandos",
+    "welcome.f8.desc":             "Execute qualquer comando shell instantaneamente",
     "welcome.run_on_startup":      "Iniciar automaticamente com o Windows",
     "welcome.get_started":         "Começar  →",
     "settings.title":              "RightWheel — Definições  (v{v})",

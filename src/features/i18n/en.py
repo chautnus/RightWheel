@@ -20,6 +20,8 @@ STRINGS: dict[str, str] = {
     "welcome.f6.desc":             "Different shortcuts per active app",
     "welcome.f7.trigger":          "Tray → Settings",
     "welcome.f7.desc":             "Add, edit, and organize shortcuts",
+    "welcome.f8.trigger":          "Run Commands",
+    "welcome.f8.desc":             "Execute any shell command instantly",
     "welcome.run_on_startup":      "Run automatically on Windows startup",
     "welcome.get_started":         "Get Started  →",
 

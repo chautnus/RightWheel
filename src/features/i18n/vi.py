@@ -17,6 +17,8 @@ STRINGS: dict[str, str] = {
     "welcome.f6.desc":             "Phím tắt khác nhau theo ứng dụng",
     "welcome.f7.trigger":          "Khay → Cài đặt",
     "welcome.f7.desc":             "Thêm, chỉnh sửa và sắp xếp",
+    "welcome.f8.trigger":          "Chạy Lệnh",
+    "welcome.f8.desc":             "Thực thi bất kỳ lệnh shell nào ngay lập tức",
     "welcome.run_on_startup":      "Tự động chạy khi khởi động Windows",
     "welcome.get_started":         "Bắt đầu  →",
     "settings.title":              "RightWheel — Cài đặt  (v{v})",

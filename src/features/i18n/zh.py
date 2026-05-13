@@ -17,6 +17,8 @@ STRINGS: dict[str, str] = {
     "welcome.f6.desc":             "不同应用使用不同快捷键",
     "welcome.f7.trigger":          "托盘 → 设置",
     "welcome.f7.desc":             "添加、编辑和整理",
+    "welcome.f8.trigger":          "运行命令",
+    "welcome.f8.desc":             "即刻执行任意 Shell 命令",
     "welcome.run_on_startup":      "Windows 启动时自动运行",
     "welcome.get_started":         "开始使用  →",
     "settings.title":              "RightWheel — 设置  (v{v})",

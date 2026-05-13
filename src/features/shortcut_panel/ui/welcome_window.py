@@ -21,6 +21,7 @@ _FEATURE_KEYS = [
     ("📁", "welcome.f5.trigger", "welcome.f5.desc"),
     ("◈",  "welcome.f6.trigger", "welcome.f6.desc"),
     ("⚙",  "welcome.f7.trigger", "welcome.f7.desc"),
+    ("▶",  "welcome.f8.trigger", "welcome.f8.desc"),
 ]
 
 
