@@ -1,0 +1,18 @@
+{
+  "name": "Developer Setup",
+  "description": "Shortcuts for everyday dev workflow",
+  "shortcuts": [
+    {"type": "shortcut", "label": "📸 Screenshot",        "keys": "win+shift+s"},
+    {"type": "shortcut", "label": "🖥 Desktop",           "keys": "win+d"},
+    {"type": "shortcut", "label": "📋 Clipboard History", "keys": "win+v"},
+    {"type": "shortcut", "label": "◧ Align Left",         "keys": "win+left"},
+    {"type": "shortcut", "label": "◨ Align Right",        "keys": "win+right"},
+    {"type": "url",      "label": "🐙 GitHub",            "url": "https://github.com"},
+    {"type": "url",      "label": "🤖 Claude",            "url": "https://claude.ai"},
+    {"type": "folder",   "label": "📁 System",            "children": [
+      {"type": "shortcut", "label": "▶ Run",              "keys": "win+r"},
+      {"type": "shortcut", "label": "⚙ Settings",        "keys": "win+i"},
+      {"type": "shortcut", "label": "📊 Task Manager",   "keys": "ctrl+shift+esc"}
+    ]}
+  ]
+}
