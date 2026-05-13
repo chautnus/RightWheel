@@ -57,12 +57,20 @@ class MouseMapperLogic:
         if self._state not in (MapperState.RIGHT_HELD, MapperState.SCROLLING):
             return False
         self._state = MapperState.SCROLLING
-        forward = (direction == ScrollDirection.DOWN)
-        if not self._alt_held:
-            hotkey_service.begin_switch(forward)
-            self._alt_held = True
+        panel = getattr(self, "panel", None)
+        if panel:
+            delta = -1 if direction == ScrollDirection.UP else 1
+            if not self._alt_held:
+                panel.show()
+                self._alt_held = True
+            panel.navigate(delta)
         else:
-            hotkey_service.cycle(forward)
+            forward = (direction == ScrollDirection.DOWN)
+            if not self._alt_held:
+                hotkey_service.begin_switch(forward)
+                self._alt_held = True
+            else:
+                hotkey_service.cycle(forward)
         return True
 
     def _on_right_up(self) -> bool:
@@ -75,7 +83,11 @@ class MouseMapperLogic:
             return False
 
         if self._alt_held:
-            hotkey_service.end_switch()
+            panel = getattr(self, "panel", None)
+            if panel:
+                panel.select_current()
+            else:
+                hotkey_service.end_switch()
             self._alt_held = False
 
         if prev == MapperState.RIGHT_HELD:
