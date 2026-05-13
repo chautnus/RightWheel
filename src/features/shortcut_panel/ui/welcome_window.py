@@ -1,10 +1,22 @@
 """Welcome / onboarding screen — shown on every launch."""
 from __future__ import annotations
 
+import os
+import sys
 import tkinter as tk
 
 from ..services import startup_service
 from features.i18n import t, ui_font
+
+
+def _asset_path(rel: str) -> str:
+    """Resolve path to a bundled asset (works both frozen and from source)."""
+    if getattr(sys, "frozen", False):
+        base = sys._MEIPASS
+    else:
+        # src/features/shortcut_panel/ui/ → project root is 4 levels up
+        base = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
+    return os.path.normpath(os.path.join(base, rel))
 
 _TOP = "#f5f5f5"
 _BG  = "#141414"
@@ -40,8 +52,19 @@ def show_welcome(root: tk.Tk) -> None:
     # ── top section (light) ────────────────────────────────────────────────
     top = tk.Frame(win, bg=_TOP)
     top.pack(fill="x")
-    tk.Label(top, text="🖱", bg=_TOP,
-             font=("Segoe UI Emoji", 36)).pack(pady=(22, 4))
+
+    # Mouse icon — PNG preferred; emoji fallback if PIL unavailable
+    try:
+        from PIL import Image, ImageTk
+        img = Image.open(_asset_path("assets/icon.png")).convert("RGBA")
+        img = img.resize((72, 72), Image.LANCZOS)
+        _icon_img = ImageTk.PhotoImage(img)   # keep reference to avoid GC
+        icon_lbl = tk.Label(top, image=_icon_img, bg=_TOP)
+        icon_lbl._icon_img = _icon_img        # pin reference on widget
+        icon_lbl.pack(pady=(18, 4))
+    except Exception:
+        tk.Label(top, text="🖱", bg=_TOP,
+                 font=("Segoe UI Emoji", 36)).pack(pady=(22, 4))
     tk.Label(top, text=t("app.name"), bg=_TOP, fg="#111111",
              font=(font, 20, "bold")).pack()
     tk.Label(top, text=t("app.tagline"),

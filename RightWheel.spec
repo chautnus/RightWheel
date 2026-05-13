@@ -4,7 +4,7 @@ a = Analysis(
     ['src/main.py'],
     pathex=['src'],
     binaries=[],
-    datas=[],
+    datas=[('assets/icon.png', 'assets')],
     hiddenimports=[
         'pystray._win32',   # pystray backend is loaded dynamically
         'PIL.Image',

@@ -61,9 +61,10 @@ class MouseMapperLogic:
         if panel:
             delta = -1 if direction == ScrollDirection.UP else 1
             if not self._alt_held:
-                panel.show()
+                panel.show()   # show() resets index to 0
                 self._alt_held = True
-            panel.navigate(delta)
+            else:
+                panel.navigate(delta)
         else:
             forward = (direction == ScrollDirection.DOWN)
             if not self._alt_held:
