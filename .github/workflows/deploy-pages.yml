@@ -28,17 +28,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./website/
-          destination: ./_site
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./website/
 
   deploy:
     environment:
