@@ -15,6 +15,7 @@ _FG  = "#cccccc"
 _ACC = "#0078d4"
 _RED = "#c0392b"
 _SAV = "#16825d"
+_CMD = "#6a5acd"
 
 
 class FolderEditorDialog:
@@ -63,6 +64,7 @@ class FolderEditorDialog:
             (t("btn.shortcut"), self._add_shortcut,    _ACC),
             (t("btn.app"),      self._add_app,          _ACC),
             (t("btn.url"),      self._add_url,          _ACC),
+            ("▶ Command",       self._add_command,      _CMD),
             (t("btn.edit"),     self._edit,             "#404040"),
             (t("btn.del"),      self._delete,           _RED),
             (t("btn.up"),       lambda: self._move(-1), "#404040"),
@@ -100,6 +102,10 @@ class FolderEditorDialog:
                 self._lb.insert("end",
                     f"  🌐  {ch.get('label','')}   →   {ch.get('url','')}")
                 self._lb.itemconfigure(i, foreground="#4fc1ff")
+            elif ctype == "command":
+                self._lb.insert("end",
+                    f"  ▶  {ch.get('label','')}   →   {ch.get('cmd','')}")
+                self._lb.itemconfigure(i, foreground="#ce9178")
             else:
                 self._lb.insert("end",
                     f"  ⌨  {ch.get('label','')}   →   {ch.get('keys','')}")
@@ -149,6 +155,20 @@ class FolderEditorDialog:
         config_service.save(data)
         self._refresh(); self._logic.reload()
 
+    def _add_command(self) -> None:
+        label = self._ask("Add Command", "Display name")
+        if not label:
+            return
+        cmd = self._ask("Add Command", "Shell command",
+                        hint="e.g. cd C:\\projects && git pull")
+        if not cmd:
+            return
+        data = config_service.load()
+        data["default"][self._idx]["children"].append(
+            {"type": "command", "label": label, "cmd": cmd, "cwd": ""})
+        config_service.save(data)
+        self._refresh(); self._logic.reload()
+
     def _edit(self) -> None:
         idx = self._sel()
         if idx is None:
@@ -174,6 +194,13 @@ class FolderEditorDialog:
             if url is None:
                 return
             ch["url"] = url
+        elif ctype == "command":
+            cmd = self._ask("Edit Command", "Shell command",
+                            init=ch.get("cmd", ""),
+                            hint="e.g. cd C:\\projects && git pull")
+            if cmd is None:
+                return
+            ch["cmd"] = cmd
         else:
             keys = self._record_keys(init=ch.get("keys", ""))
             if keys is None:
