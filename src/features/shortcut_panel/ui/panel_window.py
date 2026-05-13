@@ -149,9 +149,12 @@ class PanelWindow:
             )
             lbl.pack(fill="x")
             lbl.bind("<Button-1>", lambda _, ii=i: self._logic.select_at(ii))
-            lbl.bind("<Enter>",    lambda _, ii=i, folder=(item.type == "folder"):
-                                       self._on_hover(ii, folder))
-            lbl.bind("<Leave>",    lambda _: self._cancel_hover())
+            if item.type == "folder":
+                lbl.bind("<Enter>", lambda _, ii=i: self._on_hover(ii))
+                lbl.bind("<Leave>", lambda _: self._cancel_hover())
+            else:
+                # Moving onto a non-folder cancels any pending folder open
+                lbl.bind("<Enter>", lambda _: self._cancel_hover())
 
         self._win.update_idletasks()
 
@@ -168,11 +171,10 @@ class PanelWindow:
         y  = min(py - h // 2, sh - h - 40)
         self._win.geometry(f"{_W}x{h}+{x}+{max(y, 0)}")
 
-    def _on_hover(self, idx: int, is_folder: bool) -> None:
-        """Highlight item on hover; auto-enter folder after a short delay."""
+    def _on_hover(self, idx: int) -> None:
+        """Schedule folder open after hover delay — no re-render triggered."""
         self._cancel_hover()
-        self._logic.highlight(idx)
-        if is_folder and self._win:
+        if self._win:
             self._hover_job = self._win.after(
                 400, lambda: self._logic.select_at(idx))
 
