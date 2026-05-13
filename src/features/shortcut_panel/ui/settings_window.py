@@ -12,7 +12,7 @@ from features.i18n import t, available, set_locale, current, ui_font
 if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
 
-VERSION = "2.10.1"
+VERSION = "2.10.2"
 
 _BG  = "#1e1e1e"
 _BG2 = "#2d2d2d"
