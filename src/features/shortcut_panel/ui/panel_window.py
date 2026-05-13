@@ -81,6 +81,7 @@ class PanelWindow:
         self._win.bind("<FocusOut>",  lambda _: self._logic.hide())
         for k in "0123456789":
             self._win.bind(k, lambda e, c=k: self._jump(int(c)))
+        self._hover_job: str | None = None
         self._render()
         self._position()
         self._win.focus_force()
@@ -148,6 +149,9 @@ class PanelWindow:
             )
             lbl.pack(fill="x")
             lbl.bind("<Button-1>", lambda _, ii=i: self._logic.select_at(ii))
+            lbl.bind("<Enter>",    lambda _, ii=i, folder=(item.type == "folder"):
+                                       self._on_hover(ii, folder))
+            lbl.bind("<Leave>",    lambda _: self._cancel_hover())
 
         self._win.update_idletasks()
 
@@ -163,6 +167,19 @@ class PanelWindow:
         x  = min(px + 10, sw - _W - 10)
         y  = min(py - h // 2, sh - h - 40)
         self._win.geometry(f"{_W}x{h}+{x}+{max(y, 0)}")
+
+    def _on_hover(self, idx: int, is_folder: bool) -> None:
+        """Highlight item on hover; auto-enter folder after a short delay."""
+        self._cancel_hover()
+        self._logic.highlight(idx)
+        if is_folder and self._win:
+            self._hover_job = self._win.after(
+                400, lambda: self._logic.select_at(idx))
+
+    def _cancel_hover(self) -> None:
+        if self._hover_job and self._win:
+            self._win.after_cancel(self._hover_job)
+        self._hover_job = None
 
     def _jump(self, n: int) -> None:
         if n < len(self._logic.state.items):

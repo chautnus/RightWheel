@@ -83,6 +83,14 @@ class PanelLogic:
         if self.on_update:
             self.on_update()
 
+    def highlight(self, index: int) -> None:
+        """Move highlight without executing — used by hover."""
+        if not self.visible or not self._items:
+            return
+        self._index = index
+        if self.on_update:
+            self.on_update()
+
     def select_at(self, index: int) -> None:
         self._index = index
         self.select_current()
