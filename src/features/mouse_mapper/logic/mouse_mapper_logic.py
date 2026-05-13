@@ -13,13 +13,14 @@ from ..types.mouse_mapper_types import (
 
 class MouseMapperLogic:
     def __init__(self, config: HotkeyConfig | None = None) -> None:
-        self._cfg      = config or HotkeyConfig()
-        self._state    = MapperState.IDLE
-        self._lock     = threading.Lock()
-        self._alt_held = False
-        self._down_x   = 0
-        self._down_y   = 0
-        self.enabled   = True
+        self._cfg        = config or HotkeyConfig()
+        self._state      = MapperState.IDLE
+        self._lock       = threading.Lock()
+        self._alt_held   = False
+        self._panel_mode = False   # True = this scroll session opened the panel
+        self._down_x     = 0
+        self._down_y     = 0
+        self.enabled     = True
 
     def handle(self, event: MouseEvent) -> bool:
         if not self.enabled:
@@ -57,19 +58,26 @@ class MouseMapperLogic:
         if self._state not in (MapperState.RIGHT_HELD, MapperState.SCROLLING):
             return False
         self._state = MapperState.SCROLLING
-        panel = getattr(self, "panel", None)
-        if panel:
-            delta = -1 if direction == ScrollDirection.UP else 1
-            if not self._alt_held:
-                panel.show()   # show() resets index to 0
-                self._alt_held = True
+        panel   = getattr(self, "panel", None)
+        forward = (direction == ScrollDirection.DOWN)
+
+        if not self._alt_held:
+            # First scroll in this RMB session — direction decides mode
+            if direction == ScrollDirection.UP and panel:
+                # Scroll UP → open shortcut panel
+                panel.show()
+                self._panel_mode = True
             else:
-                panel.navigate(delta)
-        else:
-            forward = (direction == ScrollDirection.DOWN)
-            if not self._alt_held:
+                # Scroll DOWN (or no panel) → Alt+Tab
+                if panel and panel.visible:
+                    panel.hide()
                 hotkey_service.begin_switch(forward)
-                self._alt_held = True
+                self._panel_mode = False
+            self._alt_held = True
+        else:
+            # Subsequent scrolls — stay in chosen mode
+            if self._panel_mode and panel:
+                panel.navigate(-1 if direction == ScrollDirection.UP else 1)
             else:
                 hotkey_service.cycle(forward)
         return True
@@ -84,8 +92,9 @@ class MouseMapperLogic:
             return False
 
         if self._alt_held:
-            panel = getattr(self, "panel", None)
-            if not panel:
+            if self._panel_mode:
+                self._panel_mode = False   # panel stays open; user interacts freely
+            else:
                 hotkey_service.end_switch()
             self._alt_held = False
 

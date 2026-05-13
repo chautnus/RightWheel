@@ -26,10 +26,11 @@ _FONT_BC = ("Segoe UI", 9)
 
 class PanelWindow:
     def __init__(self, logic: PanelLogic) -> None:
-        self._logic  = logic
+        self._logic   = logic
         self._q: queue.Queue = queue.Queue()
-        self._root: tk.Tk | None  = None
+        self._root: tk.Tk | None      = None
         self._win:  tk.Toplevel | None = None
+        self._overlay: tk.Toplevel | None = None
 
         logic.on_show   = lambda: self._q.put("show")
         logic.on_hide   = lambda: self._q.put("hide")
@@ -65,8 +66,21 @@ class PanelWindow:
     # ── window lifecycle ───────────────────────────────────────────────────
 
     def _do_show(self) -> None:
+        if self._overlay:
+            self._overlay.destroy()
         if self._win:
             self._win.destroy()
+
+        # Fullscreen transparent overlay — any click outside panel closes it
+        sw = self._root.winfo_screenwidth()
+        sh = self._root.winfo_screenheight()
+        self._overlay = tk.Toplevel(self._root)
+        self._overlay.overrideredirect(True)
+        self._overlay.attributes("-topmost", True)
+        self._overlay.attributes("-alpha", 0.01)
+        self._overlay.geometry(f"{sw}x{sh}+0+0")
+        self._overlay.bind("<ButtonPress>", lambda _: self._logic.hide())
+
         self._win = tk.Toplevel(self._root)
         self._win.overrideredirect(True)
         self._win.attributes("-topmost", True)
@@ -83,9 +97,13 @@ class PanelWindow:
             self._win.bind(k, lambda e, c=k: self._jump(int(c)))
         self._render()
         self._position()
+        self._win.lift()        # ensure panel is above overlay
         self._win.focus_force()
 
     def _do_hide(self) -> None:
+        if self._overlay:
+            self._overlay.destroy()
+            self._overlay = None
         if self._win:
             self._win.destroy()
             self._win = None
