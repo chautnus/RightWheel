@@ -27,7 +27,16 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
+        # stdlib bloat
         'unittest', 'xml', 'xmlrpc', 'pydoc', 'doctest', 'difflib', 'pdb',
+        'test', 'tests', 'lib2to3', 'tkinter.test', 'distutils',
+        'multiprocessing', 'concurrent', 'asyncio',
+        # heavy scientific libs pulled in by PIL (not needed — app only loads icon PNG)
+        'numpy', 'numpy.core', 'numpy.lib', 'numpy.linalg', 'numpy.fft',
+        'numpy.random', 'numpy.polynomial', 'numpy.ma', 'numpy.matrixlib',
+        'scipy', 'pandas', 'matplotlib', 'IPython', 'PIL.ImageMath',
+        # other unused
+        'cryptography', 'OpenSSL', 'Crypto',
     ],
     noarchive=False,
 )
