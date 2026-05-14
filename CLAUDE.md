@@ -76,11 +76,27 @@ self._overlay.attributes("-topmost", True)
 self._overlay.attributes("-alpha", 0.01)
 self._overlay.geometry(f"{sw}x{sh}+0+0")
 self._overlay.bind("<ButtonPress>", lambda _: self._logic.hide())
-# ... tạo self._win ...
-self._win.lift()   # panel phải trên overlay
+# ... tạo self._win, render, rồi:
+self._win.lift()        # map window lên trên overlay trước
+self._win.focus_force()
+self._position()        # đặt vị trí SAU khi đã map — xem Rule 4b
 ```
 
-**Luôn destroy overlay trong `_do_hide()`.** Không để overlay tồn tại khi panel đã đóng.
+**Luôn destroy overlay trong `_do_hide()`.** Không để overlay tồn tại khi panel đã đóng.  
+**KHÔNG bind `<FocusOut>` trên `self._win`** — overlay đã xử lý click-outside; FocusOut gây đóng panel nhầm.
+
+### 4b. Panel Positioning — Thứ tự bắt buộc trong `_do_show()`
+
+```
+THỨ TỰ SAI (panel hiện ở góc trên trái):
+    _render() → _position() → lift() → focus_force()
+
+THỨ TỰ ĐÚNG:
+    _render() → lift() → focus_force() → _position()
+```
+
+**Tại sao:** Trên Windows, gọi `lift()` trên `overrideredirect(True)` Toplevel chưa được map sẽ đồng thời map window VÀ reset position về `+0+0` (default position). Nếu `_position()` chạy trước `lift()`, geometry bị overwrite → panel luôn xuất hiện góc trên trái màn hình.  
+Fix: gọi `_position()` sau `lift()` + `focus_force()` để geometry được set sau khi window đã được map.
 
 ### 5. Focus Management — `panel_logic.select_current()`
 
@@ -153,6 +169,7 @@ Gọi `SetForegroundWindow` sau khi panel bị destroy → silently fail, shortc
 ❌ begin_switch/cycle/end_switch khi _panel_mode=True → gửi Alt+Tab thay vì navigate panel
 ❌ Dùng <FocusOut> để detect click-outside trên overrideredirect window → không tin cậy trên Windows
 ❌ Scroll UP và DOWN đều mở panel → vi phạm dual-mode spec (UP=panel, DOWN=Alt+Tab)
+❌ Gọi _position() trước lift() → lift() reset geometry về +0+0, panel xuất hiện góc trên trái
 ```
 
 ---

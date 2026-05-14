@@ -1,6 +1,6 @@
 # RightWheel — Project Memory
 
-last_updated: 2026-05-13 (v2.10.8 — dual-mode scroll UP=panel/DOWN=Alt+Tab; click-outside overlay)
+last_updated: 2026-05-13 (v2.10.9 — fix panel position top-left; lock _do_show() ordering rule)
 
 ## Overview
 Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a shortcut panel. Python + ctypes WH_MOUSE_LL hook. Feature-Sliced Design.

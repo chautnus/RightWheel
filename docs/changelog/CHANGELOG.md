@@ -17,6 +17,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.10.9] — 2026-05-13
+
+### Fixed
+- **Panel appears at top-left instead of cursor position** — `_position()` was called before `lift()`. On Windows, `lift()` maps an `overrideredirect` Toplevel and resets its geometry to `+0+0`. Fix: call `lift()` + `focus_force()` first, then `_position()`.
+- Removed `<FocusOut>` binding on panel window — it conflicted with the overlay click-outside handler and caused spurious closes.
+
+### Locked (CLAUDE.md Rule 4b)
+- `_do_show()` ordering: `_render()` → `lift()` → `focus_force()` → `_position()`. Any other order breaks panel positioning on Windows.
+
+---
+
 ## [2.10.8] — 2026-05-13
 
 ### Changed
