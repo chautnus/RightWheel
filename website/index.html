@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RightWheel — Work faster with your mouse</title>
-  <meta name="description" content="RightWheel is a Windows mouse shortcut launcher. Hold right-click and scroll to instantly open apps, trigger shortcuts, and switch windows — without touching the keyboard.">
+  <title>Mouse Shortcut Launcher for Windows — RightWheel</title>
+  <meta name="description" content="RightWheel: Windows mouse shortcut launcher. Hold right-click and scroll to open apps, trigger shortcuts, and switch windows instantly — no keyboard needed. Free 30-day trial.">
   <meta name="keywords" content="mouse shortcuts, windows productivity, rightwheel, hotkey, quick launch, mouse wheel, keyboard shortcut launcher">
   <link rel="canonical" href="https://chautnus.github.io/RightWheel/">
   <link rel="sitemap" type="application/xml" href="/RightWheel/sitemap.xml">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230078d4'/><text y='.9em' font-size='80'>🖱</text></svg>">
 
   <!-- Open Graph -->
-  <meta property="og:title" content="RightWheel — Work faster with your mouse">
+  <meta property="og:title" content="Mouse Shortcut Launcher for Windows — RightWheel">
   <meta property="og:description" content="Hold right-click and scroll to move through tasks faster. Apps, shortcuts, links, screenshots — all at your fingertip.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://chautnus.github.io/RightWheel/">
@@ -23,7 +23,7 @@
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="RightWheel — Work faster with your mouse">
+  <meta name="twitter:title" content="Mouse Shortcut Launcher for Windows — RightWheel">
   <meta name="twitter:description" content="Hold right-click and scroll to move through tasks faster.">
   <meta name="twitter:image" content="https://chautnus.github.io/RightWheel/og-image.png">
   <meta name="twitter:image:alt" content="RightWheel — Windows mouse shortcut launcher">
@@ -41,7 +41,12 @@
     "description": "Hold right-click and scroll to instantly access apps, shortcuts, links, screenshots, and everyday Windows actions.",
     "url": "https://chautnus.github.io/RightWheel/",
     "downloadUrl": "https://github.com/chautnus/RightWheel/releases/latest/download/RightWheel.exe",
-    "softwareVersion": "2.9.0",
+    "softwareVersion": "2.10.9",
+    "author": {
+      "@type": "Person",
+      "name": "chautnus",
+      "url": "https://github.com/chautnus"
+    },
     "offers": {
       "@type": "Offer",
       "price": "5.99",
@@ -49,13 +54,74 @@
       "availability": "https://schema.org/InStock"
     },
     "featureList": [
+      "Mouse shortcut launcher for Windows",
+      "Right-click radial menu",
       "Keyboard shortcut launcher",
       "App launcher",
       "URL bookmarks",
+      "Shell command runner",
       "Folders and submenus",
-      "Tab and window switcher",
+      "Alt+Tab window switcher",
       "9 languages supported",
       "30-day free trial"
+    ]
+  }
+  </script>
+
+  <!-- FAQPage structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does the free trial work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "After downloading, RightWheel runs in full trial mode for 30 days — no account and no credit card required. All features are available during the trial. After 30 days, activate a purchased license key to continue using it indefinitely."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will RightWheel interfere with my normal right-click?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. RightWheel only activates when you hold right-click and scroll at the same time. A quick single right-click still shows the normal Windows context menu as usual — nothing changes for your existing workflow."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does RightWheel work on Mac or Linux?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "RightWheel is currently Windows-only (Windows 10 and 11). It relies on the Windows low-level mouse hook API. Mac and Linux versions are not planned at this time."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What happens after 1 year of updates?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your license is permanent — RightWheel keeps working forever on the version you have. After 1 year, you won't receive new feature updates automatically, but the app continues to run. You can always buy an upgrade to renew your update period."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I use RightWheel on multiple PCs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Each license covers one PC. If you need RightWheel on multiple machines, purchase additional licenses."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Windows says RightWheel isn't commonly downloaded — is it safe?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, completely. The warning is from Windows SmartScreen, which flags any executable that hasn't yet built up a download reputation — regardless of whether it is safe or not. RightWheel is an indie app without a paid code-signing certificate. To run it: click More info then Run anyway. The source code is open on GitHub."
+        }
+      }
     ]
   }
   </script>
@@ -552,7 +618,7 @@
           <div class="hero-badge-dot"></div>
           For Windows 10 &amp; 11
         </div>
-        <h1>Work faster <em>with your mouse.</em></h1>
+        <h1>Mouse Shortcut Launcher <em>for Windows.</em></h1>
         <p class="hero-desc">
           Hold right-click and scroll to move through tasks faster.
           Tasks can be anything: apps, shortcuts, links, screenshots,
@@ -673,7 +739,7 @@
 <section class="how" id="how-it-works">
   <div class="container">
     <p class="label">How it works</p>
-    <h2 class="sh">Three gestures. Infinite possibilities.</h2>
+    <h2 class="sh">How RightWheel Works — Right-Click &amp; Scroll</h2>
     <p class="sd" style="max-width:520px">RightWheel lives in your system tray and activates with a simple mouse combo — no keyboard required.</p>
 
     <div class="how-steps">
@@ -705,7 +771,7 @@
 <section id="use-cases">
   <div class="container">
     <p class="label">Use cases</p>
-    <h2 class="sh">Everything you do. Faster.</h2>
+    <h2 class="sh">Windows Shortcut Use Cases</h2>
     <p class="sd" style="max-width:520px">Add any action to your wheel. Configure it once, use it hundreds of times a day.</p>
 
     <div class="cases-grid">
@@ -768,7 +834,7 @@
     <div class="features-inner">
       <div>
         <p class="label">Features</p>
-        <h2 class="sh">Everything in one wheel.</h2>
+        <h2 class="sh">All Shortcut Types: Apps, Keys, URLs &amp; Commands</h2>
         <p class="sd" style="margin-bottom:36px">Build your perfect shortcut panel with all the action types you need — and organize them into folders.</p>
 
         <ul class="feat-list">
@@ -888,7 +954,7 @@
 <section class="faq">
   <div class="container">
     <p class="label" style="text-align:center">FAQ</p>
-    <h2 class="sh" style="text-align:center;margin-bottom:48px">Common questions</h2>
+    <h2 class="sh" style="text-align:center;margin-bottom:48px">Frequently Asked Questions About RightWheel</h2>
 
     <div class="faq-wrap">
 
