@@ -17,6 +17,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.10.8] — 2026-05-13
+
+### Changed
+- **Dual-mode scroll**: RMB+scroll direction now determines session mode.
+  - Scroll **UP** → open shortcut panel (`_panel_mode = True`)
+  - Scroll **DOWN** → activate Alt+Tab window switcher (`_panel_mode = False`)
+  - Subsequent scrolls in the same RMB session stay in chosen mode.
+- **Click-outside via transparent overlay**: replaced unreliable `<FocusOut>` with a fullscreen `alpha=0.01` `tk.Toplevel` overlay. Any `<ButtonPress>` outside the panel fires `logic.hide()`. Panel is `lift()`ed above overlay to receive clicks correctly.
+- `_panel_mode: bool` flag added to `MouseMapperLogic.__init__` (reset to `False` on each `_on_right_up`).
+- `panel_window.py`: `_overlay: tk.Toplevel | None` added; destroyed in `_do_hide()`.
+
+### Fixed
+- Scroll DOWN no longer opens panel (regression since v2.10.5 where both directions triggered `panel.show()`).
+- `<FocusOut>` was silently failing on `overrideredirect(True)` windows → click outside did nothing.
+
+---
+
 ## [2.10.7] — 2026-05-13
 
 ### Fixed

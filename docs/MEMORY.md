@@ -1,6 +1,6 @@
 # RightWheel — Project Memory
 
-last_updated: 2026-05-13 (v2.10.7 — panel scroll behavior locked; app icon; Command feature; 9-lang f8 strings)
+last_updated: 2026-05-13 (v2.10.8 — dual-mode scroll UP=panel/DOWN=Alt+Tab; click-outside overlay)
 
 ## Overview
 Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a shortcut panel. Python + ctypes WH_MOUSE_LL hook. Feature-Sliced Design.
@@ -16,11 +16,13 @@ Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a s
 | feedback | [memory/feedback/](memory/feedback/INDEX.md) | Collaboration feedback |
 | reference | [memory/reference/](memory/reference/INDEX.md) | External resources and URLs |
 
-## 🔒 Locked Behaviors (v2.10.7)
+## 🔒 Locked Behaviors (v2.10.8)
 
 Xem `CLAUDE.md` ở project root để biết toàn bộ luật. Tóm tắt:
-- `mouse_mapper_logic._on_scroll`: scroll đầu → `panel.show()` only; scroll sau → `panel.navigate(delta)`
+- `mouse_mapper_logic._on_scroll`: scroll UP → `panel.show()`, scroll DOWN → `hotkey_service.begin_switch()`
+- Scroll đầu tiên → chỉ show/begin; scroll sau → `panel.navigate(delta)` hoặc `hotkey_service.cycle()`
 - `mouse_mapper_logic._on_right_up` (SCROLLING+panel): KHÔNG gọi `panel.select_current()` — panel ở lại
+- Click-outside: transparent overlay `alpha=0.01` + `<ButtonPress>` binding (KHÔNG dùng `<FocusOut>`)
 - `panel_logic.select_current()`: `SetForegroundWindow` TRƯỚC `hide()`, Timer 0.25s sau
 - Chỉ một `tk.Tk()` trong toàn app
 
