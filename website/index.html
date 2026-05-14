@@ -15,7 +15,7 @@
   <meta property="og:description" content="Hold right-click and scroll to move through tasks faster. Apps, shortcuts, links, screenshots — all at your fingertip.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://chautnus.github.io/RightWheel/">
-  <meta property="og:image" content="https://chautnus.github.io/RightWheel/og-image.png">
+  <meta property="og:image" content="https://chautnus.github.io/RightWheel/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="RightWheel — Windows mouse shortcut launcher">
@@ -26,7 +26,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Mouse Shortcut Launcher for Windows — RightWheel">
   <meta name="twitter:description" content="Hold right-click + scroll to instantly open apps, trigger shortcuts, and switch windows — no keyboard needed. Free 30-day trial on Windows 10 &amp; 11.">
-  <meta name="twitter:image" content="https://chautnus.github.io/RightWheel/og-image.png">
+  <meta name="twitter:image" content="https://chautnus.github.io/RightWheel/og-image.jpg">
   <meta name="twitter:image:alt" content="RightWheel — Windows mouse shortcut launcher">
   <meta name="robots" content="index, follow">
   <meta name="author" content="chautnus">
@@ -385,6 +385,10 @@
     /* ─── How it works ───────────────────────────────────────── */
     .how { background: var(--bg2); }
     .how-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .screenshots { display: flex; gap: 40px; justify-content: center; align-items: flex-start; margin-top: 48px; flex-wrap: wrap; }
+    .screenshots figure { margin: 0; text-align: center; }
+    .screenshots img { border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,.4); max-width: 100%; height: auto; }
+    .screenshots figcaption { margin-top: 10px; font-size: 13px; color: var(--muted); }
     .step {
       background: var(--bg3); border: 1px solid var(--border);
       border-radius: var(--r-lg); padding: 32px; position: relative;
@@ -764,6 +768,21 @@
         <h3>Click any shortcut</h3>
         <p>Select an app, shortcut, URL, or folder from your wheel — it executes immediately.</p>
       </div>
+    </div>
+
+    <div class="screenshots">
+      <figure>
+        <img src="RightWheel Screen 1.png"
+             alt="RightWheel shortcut panel open on Windows desktop showing numbered quick-launch items"
+             width="225" height="367" loading="lazy">
+        <figcaption>The shortcut panel — appears at your cursor instantly</figcaption>
+      </figure>
+      <figure>
+        <img src="RightWheel Screen 2.png"
+             alt="RightWheel settings window for adding apps, keyboard shortcuts, URLs, and shell commands"
+             width="713" height="628" loading="lazy">
+        <figcaption>Settings — add apps, key combos, URLs, and commands</figcaption>
+      </figure>
     </div>
   </div>
 </section>

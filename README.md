@@ -8,7 +8,7 @@
 
 **🌐 Website & download:** [chautnus.github.io/RightWheel](https://chautnus.github.io/RightWheel/)
 
-![RightWheel demo](https://chautnus.github.io/RightWheel/og-image.png)
+![RightWheel demo](https://chautnus.github.io/RightWheel/og-image.jpg)
 
 ---
 
