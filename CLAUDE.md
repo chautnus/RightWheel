@@ -123,6 +123,26 @@ Gọi `SetForegroundWindow` sau khi panel bị destroy → silently fail, shortc
 - Toàn bộ dispatch trong `try/except` — không để Python exception leak ra C callback
 - `wants_moves()` fast-path: chỉ route WM_MOUSEMOVE khi state == RIGHT_HELD
 
+### 8. Hook Watchdog — Auto-Recovery sau Sleep/Wake/Lock
+
+`WH_MOUSE_LL` bị Windows kill silently sau sleep, session lock, hoặc UAC. Không có error, không có callback — hook đơn giản ngừng hoạt động.
+
+Fix (v2.11.0): watchdog daemon post `WM_APP_REHOOK` (0x8001) mỗi 10 giây → `GetMessageW` loop bắt và re-register:
+
+```python
+if msg.message == WM_APP_REHOOK:
+    if self._hook_id:
+        user32.UnhookWindowsHookEx(self._hook_id)
+    self._hook_id = user32.SetWindowsHookExW(WH_MOUSE_LL, self._proc, None, 0)
+```
+
+**KHÔNG xóa `_start_watchdog()` trong `_run()`** — đây là fix cho bug mất hook sau sleep.  
+Recovery: tối đa 10 giây sau wake/unlock.
+
+```
+❌ Không có watchdog → hook chết sau sleep, app phải restart thủ công
+```
+
 ---
 
 ## ⚠️ FILES CÓ NGƯỠNG SYSTEM LOCK
@@ -170,6 +190,7 @@ Gọi `SetForegroundWindow` sau khi panel bị destroy → silently fail, shortc
 ❌ Dùng <FocusOut> để detect click-outside trên overrideredirect window → không tin cậy trên Windows
 ❌ Scroll UP và DOWN đều mở panel → vi phạm dual-mode spec (UP=panel, DOWN=Alt+Tab)
 ❌ Gọi _position() trước lift() → lift() reset geometry về +0+0, panel xuất hiện góc trên trái
+❌ Xóa _start_watchdog() trong mouse_hook_service._run() → hook chết sau sleep, không tự hồi phục
 ```
 
 ---

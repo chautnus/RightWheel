@@ -6,14 +6,34 @@ tags: [changelog, versions]
 keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
-updated: 2026-05-13
-summary: "Version history for RightWheel from v1.0.0 to v2.10.7."
+updated: 2026-05-14
+summary: "Version history for RightWheel from v1.0.0 to v2.11.0."
 ---
 
 # Changelog
 
 All notable changes to RightWheel are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [2.11.0] — 2026-05-14
+
+### Fixed
+- **Hook dies after sleep/wake/lock — app stops responding** — `WH_MOUSE_LL` is silently killed by Windows after sleep, session lock, or UAC prompt. No recovery mechanism existed; app had to be restarted.
+- Fix: watchdog daemon thread posts `WM_APP_REHOOK` (0x8001) to the hook thread every 10 seconds. The `GetMessageW` loop intercepts this message, calls `UnhookWindowsHookEx` on the stale handle, and calls `SetWindowsHookExW` to re-register. Recovery guaranteed within 10 s of any such event.
+
+### Added
+- `MIT LICENSE` file — GitHub now detects and displays the license badge.
+
+### Changed (website / SEO)
+- `og-image.png` → `og-image.jpg` (969 KB → 102 KB, −90%)
+- Added real screenshots (`RightWheel Screen 1.png`, `Screen 2.png`) with descriptive `alt` text — enables Google Images indexing.
+- Fixed meta description truncation (175 → 158 chars).
+- Added `og:locale`, fixed `twitter:description` length, `rel=sitemap` now absolute URL.
+- Fixed CTA H2 to be keyword-bearing: "Try RightWheel — Mouse Shortcuts for Windows."
+- Added Google Analytics 4 (`G-XC45ZRJ7Y9`).
+- Removed conflicting `jekyll-gh-pages.yml` workflow — `deploy-pages.yml` is now the sole Pages deployer; `sitemap.xml`, `robots.txt`, `og-image` all return 200.
 
 ---
 

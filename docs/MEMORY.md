@@ -1,6 +1,6 @@
 # RightWheel — Project Memory
 
-last_updated: 2026-05-13 (v2.10.9 — fix panel position top-left; lock _do_show() ordering rule)
+last_updated: 2026-05-14 (v2.11.0 — hook watchdog: auto-recover after sleep/wake/lock)
 
 ## Overview
 Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a shortcut panel. Python + ctypes WH_MOUSE_LL hook. Feature-Sliced Design.
@@ -16,7 +16,7 @@ Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a s
 | feedback | [memory/feedback/](memory/feedback/INDEX.md) | Collaboration feedback |
 | reference | [memory/reference/](memory/reference/INDEX.md) | External resources and URLs |
 
-## 🔒 Locked Behaviors (v2.10.8)
+## 🔒 Locked Behaviors (v2.11.0)
 
 Xem `CLAUDE.md` ở project root để biết toàn bộ luật. Tóm tắt:
 - `mouse_mapper_logic._on_scroll`: scroll UP → `panel.show()`, scroll DOWN → `hotkey_service.begin_switch()`
