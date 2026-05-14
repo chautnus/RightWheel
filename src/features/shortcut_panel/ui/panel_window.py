@@ -92,13 +92,12 @@ class PanelWindow:
         self._win.bind("<Down>",      lambda _: self._logic.navigate(1))
         self._win.bind("<MouseWheel>",
                        lambda e: self._logic.navigate(-1 if e.delta > 0 else 1))
-        self._win.bind("<FocusOut>",  lambda _: self._logic.hide())
         for k in "0123456789":
             self._win.bind(k, lambda e, c=k: self._jump(int(c)))
         self._render()
-        self._position()
-        self._win.lift()        # ensure panel is above overlay
+        self._win.lift()        # map window above overlay first
         self._win.focus_force()
+        self._position()        # position AFTER lift so geometry sticks
 
     def _do_hide(self) -> None:
         if self._overlay:
