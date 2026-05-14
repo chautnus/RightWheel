@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-informational)](https://github.com/chautnus/RightWheel/releases/latest)
 [![Download](https://img.shields.io/github/downloads/chautnus/RightWheel/total?color=16825d&label=downloads)](https://github.com/chautnus/RightWheel/releases/latest)
 
-![RightWheel demo](website/RightWheel%20Up.png)
+![RightWheel demo](https://chautnus.github.io/RightWheel/og-image.png)
 
 ---
 
