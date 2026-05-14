@@ -3,6 +3,7 @@ from __future__ import annotations
 import ctypes
 import ctypes.wintypes as wt
 import threading
+import time
 from typing import Callable
 
 from ..types.mouse_mapper_types import MouseEvent, ScrollDirection
@@ -13,6 +14,7 @@ WM_MOUSEMOVE   = 0x0200
 WM_RBUTTONDOWN = 0x0204
 WM_RBUTTONUP   = 0x0205
 WM_MOUSEWHEEL  = 0x020A
+WM_APP_REHOOK  = 0x8001   # custom thread msg: re-register hook after sleep/wake
 
 user32   = ctypes.windll.user32
 kernel32 = ctypes.windll.kernel32
@@ -54,6 +56,7 @@ class MouseHookService:
         self._wants_moves    = wants_move_events
         self._hook_id        = None
         self._thread_id: int = 0
+        self._alive          = True
         self._thread         = threading.Thread(target=self._run, daemon=True)
         self._proc           = _HookProc(self._hook_proc)
 
@@ -61,6 +64,7 @@ class MouseHookService:
         self._thread.start()
 
     def stop(self) -> None:
+        self._alive = False
         if self._hook_id:
             user32.UnhookWindowsHookEx(self._hook_id)
             self._hook_id = None
@@ -70,12 +74,33 @@ class MouseHookService:
     def _run(self) -> None:
         self._thread_id = kernel32.GetCurrentThreadId()
         self._hook_id   = user32.SetWindowsHookExW(WH_MOUSE_LL, self._proc, None, 0)
+        self._start_watchdog()
         msg = wt.MSG()
         while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
-            user32.TranslateMessage(ctypes.byref(msg))
-            user32.DispatchMessageW(ctypes.byref(msg))
+            if msg.message == WM_APP_REHOOK:
+                # Hook may have been killed by Windows after sleep/wake/lock.
+                # Safely unregister old handle and re-register.
+                if self._hook_id:
+                    user32.UnhookWindowsHookEx(self._hook_id)
+                self._hook_id = user32.SetWindowsHookExW(WH_MOUSE_LL, self._proc, None, 0)
+            else:
+                user32.TranslateMessage(ctypes.byref(msg))
+                user32.DispatchMessageW(ctypes.byref(msg))
         if self._hook_id:
             user32.UnhookWindowsHookEx(self._hook_id)
+
+    def _start_watchdog(self) -> None:
+        """Daemon thread that re-registers the hook every 10 s.
+
+        WH_MOUSE_LL is silently killed by Windows after sleep, lock, or UAC.
+        Periodic re-registration guarantees recovery within 10 s of any such event.
+        """
+        def _watch() -> None:
+            while self._alive:
+                time.sleep(10)
+                if self._alive and self._thread_id:
+                    user32.PostThreadMessageW(self._thread_id, WM_APP_REHOOK, 0, 0)
+        threading.Thread(target=_watch, daemon=True).start()
 
     def _hook_proc(self, n_code: int, w_param: int, l_param) -> int:
         try:
