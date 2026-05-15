@@ -6,13 +6,16 @@ tags: [panel, scroll, state-machine, ux, locked, dual-mode]
 keywords: [RMB, scroll, navigate, select_current, _on_right_up, _on_scroll, panel.show, _panel_mode, overlay]
 status: active
 created: 2026-05-13
-updated: 2026-05-13
-summary: "Definitive scroll+panel+Alt+Tab dual-mode spec locked at v2.10.8. Do not change without explicit user approval."
+updated: 2026-05-14
+summary: "Definitive scroll+panel+Alt+Tab dual-mode spec locked at v2.10.8. Confirmed working and user-approved as of v2.11.0."
 ---
 
-## Locked Behavior: Panel Scroll Interaction (v2.10.8)
+## Locked Behavior: Panel Scroll Interaction (v2.10.8 → v2.11.0)
 
-Đây là UX contract đã được xác nhận bởi user. Mọi thay đổi phải có phê duyệt rõ ràng.
+Đây là UX contract đã được xác nhận và **yêu thích** bởi user (confirmed v2.11.0).  
+Mọi thay đổi phải có phê duyệt rõ ràng.
+
+> "tao thích tính năng giữ chuột phải kéo xuống là mở alt-tab, sau đó vẫn giữ chuột phải, cuộn lên xuống để di chuyển giữa các tab" — user feedback 2026-05-14
 
 ---
 
