@@ -6,11 +6,16 @@ import threading
 import time
 from typing import Callable
 
+import sys as _sys
 _log = logging.getLogger("mousehotkey")
-_log.setLevel(logging.DEBUG)
-_fh = logging.FileHandler(r"C:\dev\Mousehotkey\debug.log", mode="w", encoding="utf-8")
-_fh.setFormatter(logging.Formatter("%(asctime)s.%(msecs)03d  %(message)s", datefmt="%H:%M:%S"))
-_log.addHandler(_fh)
+if not getattr(_sys, "frozen", False):
+    # Dev mode only — log to project root
+    _log.setLevel(logging.DEBUG)
+    _fh = logging.FileHandler(r"C:\dev\Mousehotkey\debug.log", mode="w", encoding="utf-8")
+    _fh.setFormatter(logging.Formatter("%(asctime)s.%(msecs)03d  %(message)s", datefmt="%H:%M:%S"))
+    _log.addHandler(_fh)
+else:
+    _log.addHandler(logging.NullHandler())
 
 from ..services import config_service, shortcut_executor, window_service
 from ..types.panel_types import (
