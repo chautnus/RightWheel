@@ -16,7 +16,8 @@ class ScrollDirection(Enum):
 
 @dataclass
 class HotkeyConfig:
-    move_threshold: int = 8   # pixels before we commit to GESTURE mode
+    move_threshold: int = 50  # pixels before we commit to GESTURE mode
+                              # 50px ≈ 1.5mm at 1600 DPI — tolerates hand tremor
 
 
 @dataclass
