@@ -47,7 +47,7 @@ def show_welcome(root: tk.Tk) -> None:
     win.attributes("-topmost", True)
     win.grab_set()
 
-    sv = tk.BooleanVar(win, value=False)
+    sv = tk.BooleanVar(win, value=True)   # pre-checked: most users want startup
 
     # ── top section (light) ────────────────────────────────────────────────
     top = tk.Frame(win, bg=_TOP)
