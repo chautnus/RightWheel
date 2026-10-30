@@ -51,9 +51,11 @@ class MouseHookService:
         self,
         on_event: Callable[[MouseEvent], bool],
         wants_move_events: Callable[[], bool] = lambda: True,
+        on_scroll_modifier: Callable[[ScrollDirection], bool] | None = None,
     ) -> None:
         self._on_event       = on_event
         self._wants_moves    = wants_move_events
+        self._on_scroll_mod  = on_scroll_modifier
         self._hook_id        = None
         self._thread_id: int = 0
         self._alive          = True
@@ -129,7 +131,10 @@ class MouseHookService:
                 elif w_param == WM_MOUSEWHEEL:
                     delta     = ctypes.c_short(data.mouseData >> 16).value
                     direction = ScrollDirection.UP if delta > 0 else ScrollDirection.DOWN
-                    suppress  = self._on_event(MouseEvent("scroll", scroll_dir=direction))
+                    if self._on_scroll_mod is not None and self._on_scroll_mod(direction):
+                        suppress = True
+                    else:
+                        suppress = self._on_event(MouseEvent("scroll", scroll_dir=direction))
 
                 if suppress:
                     return 1

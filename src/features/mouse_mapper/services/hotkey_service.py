@@ -25,6 +25,7 @@ MOUSEEVENTF_RIGHTUP   = 0x0010
 VK_MENU  = 0x12
 VK_TAB   = 0x09
 VK_SHIFT = 0x10
+VK_CONTROL = 0x11
 
 
 class _KEYBDINPUT(ctypes.Structure):
@@ -108,5 +109,24 @@ def inject_right_down() -> None:
 def inject_right_click() -> None:
     """Right down+up → context menu at current cursor pos."""
     _mouse(MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP)
+
+
+# ── Browser tab switch (Shift+Scroll gesture) ───────────────────────────────
+
+def switch_tab(forward: bool) -> None:
+    """Send Ctrl+Tab (forward/next) or Ctrl+Shift+Tab (back/previous).
+
+    Real physical Shift is held by the user (gesture trigger). For `forward`
+    we blind-release it first (inject KEYEVENTF_KEYUP) so the OS does not fold
+    it into the Ctrl+Tab combo — no need to re-press it, the physical key
+    does not re-fire a down edge while held. For `forward=False` the real
+    Shift already provides the modifier for Ctrl+Shift+Tab, so nothing extra
+    is injected for it.
+    """
+    if forward:
+        _keys((VK_SHIFT, _U_), (VK_CONTROL, _D), (VK_TAB, _D), (VK_TAB, _U_), (VK_CONTROL, _U_))
+    else:
+        _keys((VK_CONTROL, _D), (VK_TAB, _D), (VK_TAB, _U_), (VK_CONTROL, _U_))
+
 
 

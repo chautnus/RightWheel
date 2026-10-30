@@ -8,6 +8,7 @@ import features.i18n as i18n
 from features.licensing import LicenseState, get_info
 from features.mouse_mapper import HotkeyConfig, MouseHookService, MouseMapperLogic
 from features.mouse_mapper.ui.tray_ui import TrayUI
+from features.mouse_mapper.logic.tab_switch_logic import handle_scroll_for_tab_switch
 from features.shortcut_panel import PanelLogic, PanelWindow
 
 
@@ -28,6 +29,7 @@ def main() -> None:
     hook = MouseHookService(
         on_event=mapper.handle,
         wants_move_events=mapper.wants_moves,
+        on_scroll_modifier=handle_scroll_for_tab_switch,
     )
     hook.start()
 
