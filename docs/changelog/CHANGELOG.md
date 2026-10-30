@@ -6,8 +6,8 @@ tags: [changelog, versions]
 keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
-updated: 2026-05-14
-summary: "Version history for RightWheel from v1.0.0 to v2.11.0."
+updated: 2026-10-30
+summary: "Version history for RightWheel from v1.0.0 to v2.12.0."
 ---
 
 # Changelog
@@ -16,6 +16,13 @@ All notable changes to RightWheel are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+
+## [2.12.0] — 2026-10-30
+
+### Added
+- **Shift+Scroll browser tab switch (F-001)** — hold Shift + scroll wheel to switch tabs in Chrome/Edge/Chromium-based browsers (Brave, Opera, Vivaldi). Scroll UP = next tab (Ctrl+Tab), DOWN = previous tab (Ctrl+Shift+Tab). Gated to the active foreground window being a known Chromium exe.
+- Implementation: no new OS hook added. `GetAsyncKeyState(VK_SHIFT)` is polled directly inside the existing `WM_MOUSEWHEEL` branch of `mouse_hook_service.py` via a new optional `on_scroll_modifier` callback (default `None`, backward compatible). `hotkey_service.switch_tab(forward)` sends Ctrl+Tab/Ctrl+Shift+Tab using the blind-release-modifier technique (inject a `KEYEVENTF_KEYUP` for Shift right before Ctrl+Tab, only for the `forward` direction) instead of suppressing the real Shift key continuously — avoids breaking Shift+Click, uppercase typing, and Shift+Tab in forms. See `docs/adr/ADR-001-poll-shift-blind-release.md`.
+- New module `src/features/mouse_mapper/logic/tab_switch_logic.py` (pure gate/direction helpers + orchestrator).
 
 ## [2.11.0] — 2026-05-14
 
