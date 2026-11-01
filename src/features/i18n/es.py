@@ -86,6 +86,7 @@ STRINGS: dict[str, str] = {
     "tray.enable":                 "Activar",
     "tray.settings":               "Ajustes…",
     "tray.exit":                   "Salir",
+    "tray.restart":                "Reiniciar",
     "tray.trial":                  "RightWheel (Prueba — {n}d restantes)",
     "tray.activate":               "RightWheel (Activación requerida)",
 }

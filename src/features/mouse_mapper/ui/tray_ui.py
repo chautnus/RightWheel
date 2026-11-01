@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import sys
 from typing import TYPE_CHECKING, Callable
 
 import pystray
@@ -45,6 +47,7 @@ class TrayUI:
         if self._on_settings:
             items.append(pystray.MenuItem(t("tray.settings"), self._settings))
             items.append(pystray.Menu.SEPARATOR)
+        items.append(pystray.MenuItem(t("tray.restart"), self._restart))
         items.append(pystray.MenuItem(t("tray.exit"), self._exit))
 
         self._icon = pystray.Icon(
@@ -70,3 +73,7 @@ class TrayUI:
 
     def _exit(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
         icon.stop()
+
+    def _restart(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
+        icon.stop()
+        os.execv(sys.executable, [sys.executable] + sys.argv)
