@@ -6,8 +6,8 @@ tags: [changelog, versions]
 keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
-updated: 2026-10-30
-summary: "Version history for RightWheel from v1.0.0 to v2.12.0."
+updated: 2026-11-01
+summary: "Version history for RightWheel from v1.0.0 to v2.13.0."
 ---
 
 # Changelog
@@ -16,6 +16,11 @@ All notable changes to RightWheel are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+
+## [2.13.0] — 2026-11-01
+
+### Added
+- **Restart button in tray menu (F-002)** — new "Restart" menu item next to Exit. Calls `icon.stop()` then `os.execv(sys.executable, [sys.executable] + sys.argv)` to relaunch the whole process in place, as a quick workaround when the gesture stops responding for unknown reasons (not covered by the existing sleep/wake/lock watchdog). Works both running from source and from the frozen PyInstaller exe. Localized `tray.restart` key added to all 9 locales.
 
 ## [2.12.0] — 2026-10-30
 
