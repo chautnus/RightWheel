@@ -6,8 +6,8 @@ tags: [changelog, versions]
 keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
-updated: 2026-11-01
-summary: "Version history for RightWheel from v1.0.0 to v2.13.0."
+updated: 2026-11-08
+summary: "Version history for RightWheel from v1.0.0 to v2.14.0."
 ---
 
 # Changelog
@@ -16,6 +16,18 @@ All notable changes to RightWheel are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+
+## [2.14.0] — 2026-11-08
+
+### Added
+- **Mouse-only tab switch + gesture engine (F-003)** — two new mouse-only ways to control browser tabs while holding RMB, no keyboard needed:
+  1. **X1/X2 tab switch**: press the side mouse button (X1=Back, X2=Forward) while holding RMB on a Chromium window to switch to the previous/next tab. New `WM_XBUTTONDOWN` handling in `mouse_hook_service.py`; new `hotkey_service.switch_tab_x1x2(forward)` (self-contained, does not depend on a physically-held Shift — unlike `switch_tab()` used by F-001). X1/X2 is suppressed for ANY foreground app while RMB is held (not just Chromium), reserved for future RMB+X1/X2 combos; released normally when RMB is not held.
+  2. **8-direction mouse gesture → shortcut**: drawing a directional stroke sequence (U/D/L/R + 4 diagonals) while holding RMB executes a configurable shortcut (default: Down→Right = `Ctrl+W`, closes the tab). New `GestureRecognizer` module (`gesture_recognizer.py`, streaming O(1)/point, 15-18px stroke threshold, consecutive-direction dedup). Gestures that don't match any preset fall back to the existing Edge/extension passthrough unchanged.
+  3. New `GestureSettingsDialog` (own file, opened from the tray menu) to add/edit/enable/disable gesture presets — kept out of `settings_window.py`, which stays at 149 lines.
+  4. `shortcuts.json` schema bumped to `version: 3` with a new `"gestures"` list; migration from v1/v2 is automatic and additive (`default`/`profiles` untouched).
+- **Bug fix found during design**: `MouseMapperLogic.wants_moves()` was only returning `True` for `RIGHT_HELD`, so move events stopped reaching the logic once a drag crossed into the `GESTURE` state — harmless before (GESTURE only re-injected `right_down` once), but would have silently broken gesture recognition. Fixed to include `GESTURE`.
+- **Reverse-cancellation for RMB drag**: new `hotkey_service.inject_right_up()` (tagged `INJECTED_MARKER`), called only when a gesture matches a preset in the `GESTURE` state, to cleanly close out the `right_down` that was retroactively injected earlier for Edge/extension tracking. Deliberately scoped to the `GESTURE`+matched case only — the project previously removed an `inject_right_cleanup()` call (v2.0.0) because an orphaned synthetic `right_up` caused a spurious context menu; this one is narrower and was manually verified not to touch the `SCROLLING`/`RIGHT_HELD` paths.
+- See `docs/adr/ADR-002-gesture-engine-architecture.md` for the architecture decision (GestureRecognizer as an independent module vs. embedding in the state machine).
 
 ## [2.13.0] — 2026-11-01
 
