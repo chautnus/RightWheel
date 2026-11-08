@@ -102,11 +102,13 @@ def end_switch() -> None:
 # ── Mouse helpers ──────────────────────────────────────────────────────────
 
 def inject_right_down() -> None:
+    # Deprecated — no longer called from GESTURE path as of F-004, kept for API surface
     """Retroactive right_down at current cursor pos so apps can start gesture tracking."""
     _mouse(MOUSEEVENTF_RIGHTDOWN)
 
 
 def inject_right_up() -> None:
+    # Deprecated — no longer called from GESTURE path as of F-004, kept for API surface
     """Inject synthetic right_up with INJECTED_MARKER for gesture completion."""
     _mouse(MOUSEEVENTF_RIGHTUP)
 

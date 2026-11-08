@@ -8,9 +8,9 @@ import features.i18n as i18n
 from features.licensing import LicenseState, get_info
 from features.mouse_mapper import HotkeyConfig, MouseHookService, MouseMapperLogic
 from features.mouse_mapper.ui.tray_ui import TrayUI
+from features.mouse_mapper.ui.trail_overlay import TrailOverlay
 from features.mouse_mapper.logic.tab_switch_logic import handle_scroll_for_tab_switch
 from features.shortcut_panel import PanelLogic, PanelWindow
-from features.shortcut_panel.ui.gesture_settings_dialog import GestureSettingsDialog
 
 
 def main() -> None:
@@ -23,8 +23,11 @@ def main() -> None:
     # Shortcut panel — starts its own tkinter daemon thread
     panel        = PanelLogic()
     panel_window = PanelWindow(panel)
+    trail        = TrailOverlay(getattr(panel_window, "_root", None))
     mapper.panel = panel                                    # scroll-up → show panel
     panel.on_open_settings = panel_window.open_settings    # action → open settings
+    mapper.on_gesture_start = trail.start
+    mapper.on_gesture_end = trail.stop
 
     # Global mouse hook
     hook = MouseHookService(
@@ -44,19 +47,11 @@ def main() -> None:
     else:
         tray_title = app_name
 
-    def open_gestures() -> None:
-        root = getattr(panel_window, "_root", None)
-        if root:
-            root.after(0, lambda: GestureSettingsDialog(root))
-        else:
-            GestureSettingsDialog(root)
-
     try:
         TrayUI(
             mapper,
             on_settings=panel_window.open_settings,
             title=tray_title,
-            on_gestures=open_gestures,
         ).run()
     finally:
         hook.stop()

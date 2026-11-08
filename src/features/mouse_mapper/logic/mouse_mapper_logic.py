@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 import ctypes
 import threading
 
@@ -29,6 +30,8 @@ class MouseMapperLogic:
         self._down_x     = 0
         self._down_y     = 0
         self.enabled     = True
+        self.on_gesture_start: Callable[[int, int], None] | None = None
+        self.on_gesture_end: Callable[[], None] | None = None
         self._gesture_recognizer = GestureRecognizer(threshold=18)
 
     def handle(self, event: MouseEvent) -> bool:
@@ -77,7 +80,8 @@ class MouseMapperLogic:
             self._gesture_recognizer.reset()
             self._gesture_recognizer.feed_point(self._down_x, self._down_y)
             self._gesture_recognizer.feed_point(x, y)
-            hotkey_service.inject_right_down()   # retroactive — Edge can now track
+            if self.on_gesture_start:
+                self.on_gesture_start(self._down_x, self._down_y)
         return False   # never suppress mouse moves
 
     def _on_scroll(self, direction: ScrollDirection | None) -> bool:
@@ -130,15 +134,16 @@ class MouseMapperLogic:
             return True
 
         if prev == MapperState.GESTURE:
+            if self.on_gesture_end:
+                self.on_gesture_end()
             # Check gesture against presets
             presets = config_service.load().get("gestures", [])
             res = self._gesture_recognizer.finish(presets)
             if res.get("ok") and res.get("data", {}).get("matched"):
-                hotkey_service.inject_right_up()
                 shortcut_executor.execute(res["data"]["keys"])
                 return True
-            # Not matched (US-005): let real right_up reach app
-            return False
+            # Unmatched: Silent Drop — suppress completely (no context menu)
+            return True
 
         # SCROLLING: right_down was never sent to any app. Suppress right_up so
         # no context menu appears. OS hardware state (GetAsyncKeyState) is already

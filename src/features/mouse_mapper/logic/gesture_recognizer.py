@@ -5,6 +5,39 @@ from typing import Any
 
 SECTORS = ["R", "DR", "D", "DL", "L", "UL", "U", "UR"]
 
+_COLLAPSE_TRIPLETS: set[tuple[str, str, str]] = {
+    ("R", "DR", "D"),
+    ("D", "DR", "R"),
+    ("D", "DL", "L"),
+    ("L", "DL", "D"),
+    ("L", "UL", "U"),
+    ("U", "UL", "L"),
+    ("U", "UR", "R"),
+    ("R", "UR", "U"),
+}
+
+
+def normalize_directions(directions: list[str]) -> list[str]:
+    """Collapse intermediate diagonal noise at orthogonal corners.
+
+    Applies orthogonal corner collapse rules, e.g.:
+    ['R', 'DR', 'D'] -> ['R', 'D']
+    ['U', 'UR', 'R', 'DR', 'D'] -> ['U', 'R', 'D']
+    Preserves intentional diagonals like ['DR'], ['D', 'DR'], ['DR', 'R'], ['UR', 'DL'].
+    """
+    if len(directions) < 3:
+        return list(directions)
+
+    res = list(directions)
+    i = 0
+    while i <= len(res) - 3:
+        triplet = (res[i], res[i + 1], res[i + 2])
+        if triplet in _COLLAPSE_TRIPLETS:
+            res.pop(i + 1)
+        else:
+            i += 1
+    return res
+
 
 class GestureRecognizer:
     """Recognizes 8-direction mouse gestures using streaming vector quantization.
@@ -88,7 +121,7 @@ class GestureRecognizer:
                 },
             }
 
-        current_dirs = list(self._directions)
+        current_dirs = normalize_directions(self._directions)
         for preset in presets:
             if not isinstance(preset, dict):
                 continue

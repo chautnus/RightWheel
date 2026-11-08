@@ -65,20 +65,25 @@ def migrate_to_v3(data: dict) -> dict:
 
 def load() -> dict:
     if not CONFIG_PATH.exists():
-        return _DEFAULT.copy()
-    try:
-        data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-        if data.get("version", 1) == 1:
-            data = _migrate_v1(data)
-            save(data)
-        if data.get("version") == 2:
-            res = migrate_to_v3(data)
-            if res.get("ok"):
-                data = res["data"]
+        data = _DEFAULT.copy()
+    else:
+        try:
+            data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+            if data.get("version", 1) == 1:
+                data = _migrate_v1(data)
                 save(data)
-        return data
-    except Exception:
-        return _DEFAULT.copy()
+            if data.get("version") == 2:
+                res = migrate_to_v3(data)
+                if res.get("ok"):
+                    data = res["data"]
+                    save(data)
+        except Exception:
+            data = _DEFAULT.copy()
+
+    for g in data.get("gestures", []):
+        if isinstance(g, dict) and g.get("directions") == ["D", "R"] and g.get("enabled") is False:
+            g["enabled"] = True
+    return data
 
 
 def save(data: dict) -> None:

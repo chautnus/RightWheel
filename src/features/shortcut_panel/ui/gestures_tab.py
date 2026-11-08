@@ -1,4 +1,4 @@
-"""Modal dialog for managing mouse gesture presets."""
+"""Gestures tab frame for managing mouse gesture presets within SettingsWindow."""
 from __future__ import annotations
 
 import tkinter as tk
@@ -15,51 +15,50 @@ _ACC = "#0078d4"
 _RED = "#c0392b"
 
 
-class GestureSettingsDialog:
-    """Toplevel dialog for managing mouse gesture presets."""
+class GesturesTab(tk.Frame):
+    """Tab frame for managing mouse gesture presets."""
 
     def __init__(self, parent: tk.Widget, on_saved: Callable | None = None) -> None:
+        super().__init__(parent, bg=_BG)
         self._on_saved = on_saved
-        self._win = tk.Toplevel(parent)
-        self._win.title(t("tray.gestures"))
-        self._win.geometry("500x380")
-        self._win.configure(bg=_BG)
-        self._win.resizable(False, False)
-        self._win.grab_set()
-        self._win.attributes("-topmost", True)
         self._build()
-        parent.wait_window(self._win)
 
     def _build(self) -> None:
-        w = self._win
         font = ui_font()
 
         tk.Label(
-            w, text="Chuột phải + Kéo theo hướng để kích hoạt phím tắt",
-            bg=_BG, fg=_FG, font=(font, 10, "bold")
-        ).pack(anchor="w", padx=14, pady=(12, 4))
+            self,
+            text="Chuột phải + Kéo theo hướng để kích hoạt phím tắt",
+            bg=_BG,
+            fg=_FG,
+            font=(font, 10, "bold"),
+        ).pack(anchor="w", padx=4, pady=(4, 4))
 
-        body = tk.Frame(w, bg=_BG)
-        body.pack(fill="both", expand=True, padx=14, pady=4)
+        body = tk.Frame(self, bg=_BG)
+        body.pack(fill="both", expand=True, padx=4, pady=4)
 
         lf = tk.Frame(body, bg=_BG2)
         lf.pack(side="left", fill="both", expand=True)
         self._lb = tk.Listbox(
-            lf, bg=_BG2, fg=_FG, font=(font, 10),
-            selectbackground=_ACC, relief="flat", bd=0, activestyle="none"
+            lf,
+            bg=_BG2,
+            fg=_FG,
+            font=(font, 10),
+            selectbackground=_ACC,
+            relief="flat",
+            bd=0,
+            activestyle="none",
         )
         sb = tk.Scrollbar(lf, orient="vertical", command=self._lb.yview)
         self._lb.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y")
         self._lb.pack(fill="both", expand=True, padx=4, pady=4)
-        self._lb.bind("<Double-Button-1>", lambda _: self._toggle())
 
         bf = tk.Frame(body, bg=_BG)
         bf.pack(side="right", padx=(8, 0), anchor="n")
         _btn(bf, "Thêm", self._add, bg=_ACC).pack(fill="x", pady=2)
         _btn(bf, "Bật/Tắt", self._toggle, bg="#404040").pack(fill="x", pady=2)
         _btn(bf, "Xoá", self._delete, bg=_RED).pack(fill="x", pady=2)
-        _btn(bf, "Đóng", self._win.destroy, bg="#333333").pack(fill="x", pady=(12, 2))
 
         self._load_items()
 
@@ -102,9 +101,13 @@ class GestureSettingsDialog:
                 self._on_saved()
 
     def _add(self) -> None:
+        parent_win = self.winfo_toplevel()
         dirs_str = _AskDialog.ask(
-            self._win, "Thêm cử chỉ", "Các hướng di chuyển (cách nhau bởi dấu phẩy):",
-            init="D,R", hint="Các hướng: U, D, L, R, UR, DR, DL, UL"
+            parent_win,
+            "Thêm cử chỉ",
+            "Các hướng di chuyển (cách nhau bởi dấu phẩy):",
+            init="D,R",
+            hint="Các hướng: U, D, L, R, UR, DR, DL, UL",
         )
         if not dirs_str:
             return
@@ -113,8 +116,11 @@ class GestureSettingsDialog:
             return
 
         keys = _AskDialog.ask(
-            self._win, "Phím tắt", "Tổ hợp phím tắt cần gửi:",
-            init="ctrl+w", hint="Ví dụ: ctrl+w, ctrl+t, alt+f4"
+            parent_win,
+            "Phím tắt",
+            "Tổ hợp phím tắt cần gửi:",
+            init="ctrl+w",
+            hint="Ví dụ: ctrl+w, ctrl+t, alt+f4",
         )
         if not keys:
             return
