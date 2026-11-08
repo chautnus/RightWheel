@@ -7,7 +7,7 @@ keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
 updated: 2026-11-08
-summary: "Version history for RightWheel from v1.0.0 to v2.14.0."
+summary: "Version history for RightWheel from v1.0.0 to v2.14.1."
 ---
 
 # Changelog
@@ -16,6 +16,19 @@ All notable changes to RightWheel are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+
+## [2.14.1] — 2026-11-08
+
+### Fixed
+- **Mouse gesture engine (F-004)** — F-003's gesture-to-shortcut feature didn't actually work in practice; fixed 3 compounding bugs found via `docs/debug/gesture-no-trigger.debug1.md`/`.debug2.md`:
+  1. **UX**: double-clicking a row in the gesture list silently toggled it off (`enabled: false`), saved immediately — removed the `<Double-Button-1>` binding; the preset's own `enabled` state is now also auto-restored to `true` on load if it was left `false` by this bug.
+  2. **Algorithm**: `GestureRecognizer` quantized a spurious diagonal segment (e.g. `"DR"`) at the corner between two cardinal strokes — reproducible on >60% of perfectly square 90° drags, not just human hand-curve (Anchor Residual Vector Addition). Added `normalize_directions()`, a pure function that collapses `[A, diag(A,B), B]` → `[A, B]` for the 8 orthogonal pairs while leaving intentional diagonal presets (e.g. `["DR"]`) untouched.
+  3. **Context menu leak**: the "reverse cancellation" mechanism added in F-003 (`inject_right_down()` early + `inject_right_up()` on match) formed a complete right-click pair at the OS level, triggering a real `WM_CONTEXTMENU` that ate the `Ctrl+W` keystroke right after it — exactly the class of bug this project removed once before (v2.0.0, `inject_right_cleanup()`). Fixed by removing `inject_right_down()`/`inject_right_up()` from the `GESTURE` path entirely: a matched gesture executes its shortcut directly with no synthetic click at all, and an unmatched gesture is now a **Silent Drop** (nothing sent, right_up fully suppressed) instead of falling back to Edge/extension passthrough.
+- **Trade-off accepted**: removing the early `inject_right_down()` means RightWheel no longer passes through *any* application's native right-drag gesture (not just Edge's — also Explorer drag-drop, canvas pan/rotate in image/CAD tools, etc.) once a drag crosses the gesture threshold (8px) while RMB is held. User confirmed not relying on that behavior.
+
+### Added
+- **Gesture trail overlay** — while drawing a gesture (RMB held + moved past threshold), a thin cyan line now follows the cursor on a transparent always-on-top overlay (`trail_overlay.py`, polls `GetCursorPos` at ~60fps, closes instantly on release — no fade).
+- Gesture presets are now managed from a **4th tab ("Gestures") inside the main Settings window** instead of a separate tray-launched dialog — `gesture_settings_dialog.py` removed, tray no longer has a standalone "Cử chỉ chuột" entry.
 
 ## [2.14.0] — 2026-11-08
 
