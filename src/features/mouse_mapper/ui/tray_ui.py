@@ -85,4 +85,10 @@ class TrayUI:
 
     def _restart(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
         icon.stop()
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        # PyInstaller onefile sets _MEIPASS2 to the temp extraction dir; execv
+        # inherits it, so the relaunched process reuses the OLD dir (mid-cleanup
+        # by the exiting one) instead of extracting fresh — drop it so the
+        # bootloader re-extracts. No-op when running from source (unset).
+        env = os.environ.copy()
+        env.pop("_MEIPASS2", None)
+        os.execve(sys.executable, [sys.executable] + sys.argv, env)
