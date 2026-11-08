@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 import threading
 
 from ..services import hotkey_service
@@ -9,6 +10,13 @@ from ..types.mouse_mapper_types import (
     MouseEvent,
     ScrollDirection,
 )
+from ...shortcut_panel.services import (
+    config_service,
+    shortcut_executor,
+    window_service,
+)
+from . import tab_switch_logic
+from .gesture_recognizer import GestureRecognizer
 
 
 class MouseMapperLogic:
@@ -21,20 +29,22 @@ class MouseMapperLogic:
         self._down_x     = 0
         self._down_y     = 0
         self.enabled     = True
+        self._gesture_recognizer = GestureRecognizer(threshold=18)
 
     def handle(self, event: MouseEvent) -> bool:
         if not self.enabled:
             return False
         with self._lock:
-            if event.kind == "right_down": return self._on_right_down(event.x, event.y)
-            if event.kind == "right_up":   return self._on_right_up()
-            if event.kind == "scroll":     return self._on_scroll(event.scroll_dir)
-            if event.kind == "move":       return self._on_move(event.x, event.y)
+            if event.kind == "right_down":   return self._on_right_down(event.x, event.y)
+            if event.kind == "right_up":     return self._on_right_up()
+            if event.kind == "scroll":       return self._on_scroll(event.scroll_dir)
+            if event.kind == "move":         return self._on_move(event.x, event.y)
+            if event.kind == "xbutton_down": return self._on_xbutton_down(event.button)
         return False
 
     def wants_moves(self) -> bool:
-        """Fast check (no lock) — True only while waiting to decide gesture vs scroll."""
-        return self._state == MapperState.RIGHT_HELD
+        """Fast check (no lock) — True while waiting to decide gesture vs scroll or tracking gesture."""
+        return self._state in (MapperState.RIGHT_HELD, MapperState.GESTURE)
 
     # ── state transitions ──────────────────────────────────────────────────
 
@@ -44,13 +54,29 @@ class MouseMapperLogic:
         self._down_y = y
         return True   # always suppress; re-inject on right_up or move
 
+    def _on_xbutton_down(self, button: int) -> bool:
+        if self._state == MapperState.IDLE:
+            return False
+        hwnd = ctypes.windll.user32.GetForegroundWindow()
+        exe, _, _ = window_service.get_hwnd_info(hwnd)
+        if tab_switch_logic.is_chromium_browser(exe):
+            forward = (button == 2)  # XBUTTON2=next, XBUTTON1=prev
+            hotkey_service.switch_tab_x1x2(forward)
+        return True
+
     def _on_move(self, x: int, y: int) -> bool:
+        if self._state == MapperState.GESTURE:
+            self._gesture_recognizer.feed_point(x, y)
+            return False
         if self._state != MapperState.RIGHT_HELD:
             return False
         dx = abs(x - self._down_x)
         dy = abs(y - self._down_y)
         if dx >= self._cfg.move_threshold or dy >= self._cfg.move_threshold:
             self._state = MapperState.GESTURE
+            self._gesture_recognizer.reset()
+            self._gesture_recognizer.feed_point(self._down_x, self._down_y)
+            self._gesture_recognizer.feed_point(x, y)
             hotkey_service.inject_right_down()   # retroactive — Edge can now track
         return False   # never suppress mouse moves
 
@@ -104,8 +130,14 @@ class MouseMapperLogic:
             return True
 
         if prev == MapperState.GESTURE:
-            # right_down was already injected retroactively; let real right_up
-            # reach the app so the gesture completes naturally.
+            # Check gesture against presets
+            presets = config_service.load().get("gestures", [])
+            res = self._gesture_recognizer.finish(presets)
+            if res.get("ok") and res.get("data", {}).get("matched"):
+                hotkey_service.inject_right_up()
+                shortcut_executor.execute(res["data"]["keys"])
+                return True
+            # Not matched (US-005): let real right_up reach app
             return False
 
         # SCROLLING: right_down was never sent to any app. Suppress right_up so

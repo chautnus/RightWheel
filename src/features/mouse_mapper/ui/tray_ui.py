@@ -28,10 +28,12 @@ class TrayUI:
         logic: MouseMapperLogic,
         on_settings: Callable | None = None,
         title: str = "RightWheel",
+        on_gestures: Callable | None = None,
     ) -> None:
         self._logic       = logic
         self._on_settings = on_settings
         self._title       = title
+        self._on_gestures = on_gestures
         self._icon: pystray.Icon | None = None
 
     def run(self) -> None:
@@ -46,6 +48,9 @@ class TrayUI:
         ]
         if self._on_settings:
             items.append(pystray.MenuItem(t("tray.settings"), self._settings))
+            items.append(pystray.Menu.SEPARATOR)
+        if self._on_gestures:
+            items.append(pystray.MenuItem(t("tray.gestures"), self._gestures))
             items.append(pystray.Menu.SEPARATOR)
         items.append(pystray.MenuItem(t("tray.restart"), self._restart))
         items.append(pystray.MenuItem(t("tray.exit"), self._exit))
@@ -70,6 +75,10 @@ class TrayUI:
     def _settings(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
         if self._on_settings:
             self._on_settings()
+
+    def _gestures(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
+        if self._on_gestures:
+            self._on_gestures()
 
     def _exit(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
         icon.stop()

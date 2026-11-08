@@ -10,6 +10,7 @@ from features.mouse_mapper import HotkeyConfig, MouseHookService, MouseMapperLog
 from features.mouse_mapper.ui.tray_ui import TrayUI
 from features.mouse_mapper.logic.tab_switch_logic import handle_scroll_for_tab_switch
 from features.shortcut_panel import PanelLogic, PanelWindow
+from features.shortcut_panel.ui.gesture_settings_dialog import GestureSettingsDialog
 
 
 def main() -> None:
@@ -43,9 +44,20 @@ def main() -> None:
     else:
         tray_title = app_name
 
+    def open_gestures() -> None:
+        root = getattr(panel_window, "_root", None)
+        if root:
+            root.after(0, lambda: GestureSettingsDialog(root))
+        else:
+            GestureSettingsDialog(root)
+
     try:
-        TrayUI(mapper, on_settings=panel_window.open_settings,
-               title=tray_title).run()
+        TrayUI(
+            mapper,
+            on_settings=panel_window.open_settings,
+            title=tray_title,
+            on_gestures=open_gestures,
+        ).run()
     finally:
         hook.stop()
 

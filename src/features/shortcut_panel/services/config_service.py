@@ -10,7 +10,7 @@ CONFIG_DIR  = Path(os.environ.get("APPDATA", ".")) / "RightWheel"
 CONFIG_PATH = CONFIG_DIR / "shortcuts.json"
 
 _DEFAULT: dict = {
-    "version": 2,
+    "version": 3,
     "default": [
         {"type": "shortcut", "label": "🖥 Desktop",           "keys": "win+d"},
         {"type": "shortcut", "label": "🔍 Search",              "keys": "win+s"},
@@ -29,6 +29,9 @@ _DEFAULT: dict = {
         ]},
     ],
     "profiles": [],
+    "gestures": [
+        {"directions": ["D", "R"], "keys": "ctrl+w", "enabled": True},
+    ],
 }
 
 
@@ -36,6 +39,28 @@ _DEFAULT: dict = {
 
 def _migrate_v1(data: dict) -> dict:
     return {"version": 2, "default": data.get("shortcuts", []), "profiles": []}
+
+
+def migrate_to_v3(data: dict) -> dict:
+    if not isinstance(data, dict):
+        return {
+            "ok": False,
+            "error": {
+                "code": "INVALID_DATA",
+                "file": __file__,
+                "line": 48,
+                "helper": "Data must be a dictionary",
+            },
+        }
+    new_data = dict(data)
+    new_data["version"] = 3
+    if "default" not in new_data:
+        new_data["default"] = data.get("shortcuts", [])
+    if "profiles" not in new_data:
+        new_data["profiles"] = []
+    if "gestures" not in new_data:
+        new_data["gestures"] = [dict(g) for g in _DEFAULT.get("gestures", [])]
+    return {"ok": True, "data": new_data}
 
 
 def load() -> dict:
@@ -46,6 +71,11 @@ def load() -> dict:
         if data.get("version", 1) == 1:
             data = _migrate_v1(data)
             save(data)
+        if data.get("version") == 2:
+            res = migrate_to_v3(data)
+            if res.get("ok"):
+                data = res["data"]
+                save(data)
         return data
     except Exception:
         return _DEFAULT.copy()
