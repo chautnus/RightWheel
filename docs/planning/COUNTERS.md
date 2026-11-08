@@ -1,7 +1,7 @@
 # Global Counters
 last_updated: 2026-11-08
 
-feature_seq: 4
-story_seq:   11
-task_seq:    24
-adr_seq:     3
+feature_seq: 5
+story_seq:   16
+task_seq:    29
+adr_seq:     4

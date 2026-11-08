@@ -7,7 +7,7 @@ keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
 updated: 2026-11-08
-summary: "Version history for RightWheel from v1.0.0 to v2.14.1."
+summary: "Version history for RightWheel from v1.0.0 to v2.14.2."
 ---
 
 # Changelog
@@ -17,7 +17,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [2.14.1] — 2026-11-08
+## [2.14.2] — 2026-11-08
+
+### Fixed
+- **Mouse gesture engine, reliability (F-005)** — 5 bugs found via hands-on testing of F-004's `.exe` build, none of which were caught by automated verify-cmd (all are OS-level behaviors: window focus, modal menu loops, process lifecycle):
+  1. **Rocker-gesture (X1/X2) worked once per session, then went dead** — root cause: `_on_xbutton_down()` never recorded that X1/X2 had been used, so releasing RMB afterward fell into the plain "short tap" branch and called `inject_right_click()`, popping a real Chromium context menu. That menu enters a modal loop that swallows every subsequent mouse event (further X1/X2 presses, plain right-clicks) until the user dismisses it by hand — this, not focus-stealing, was the actual cause of "only works the first time." Fixed with a `_xbutton_used` flag: set when X1/X2 successfully switches a tab, reset on the next `right_down`, and checked on `right_up` to skip `inject_right_click()` entirely when set.
+  2. **Trail overlay stole focus from the browser** — the fullscreen transparent `Toplevel` never had `WS_EX_NOACTIVATE` set, so Windows made it the foreground window the moment it appeared and didn't hand focus back to Chromium when it closed; `SendInput`/`GetForegroundWindow()`-dependent calls (X1/X2, gesture shortcuts) that ran afterward could misfire. Fixed by OR-ing `WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW` onto the window's extended style via `SetWindowLongPtrW` — note the real top-level HWND on Windows Tkinter is `GetParent(widget.winfo_id())`, not `winfo_id()` itself.
+  3. **Trail line opened with a stray straight segment** — the first point was anchored to the RMB-down coordinate, but Tkinter takes ~20-50ms to construct the overlay window, during which the real cursor had already moved; the first `_poll()` tick then drew a chord from the stale down-position to the now-distant cursor. Fixed by sampling `GetCursorPos()` fresh right after the canvas is ready, instead of reusing the down-event coordinates.
+  4. **Plain right-clicks occasionally ate the context menu** — `main.py` hardcoded `move_threshold=8`, overriding the project's own `50`px tremor-tolerance default (set a while back for exactly this reason). Combined with F-004's Silent Drop (an unmatched gesture now sends nothing at all), any natural hand tremor above 8px during a normal right-click got misread as a failed gesture and swallowed the context menu. Fixed by dropping the override and letting `MouseMapperLogic()` use its real default.
+  5. **Restart (tray menu) intermittently showed "Failed to remove temporary folder"** — `os.execve` on Windows doesn't replace the process atomically like POSIX; it spawns a new one while the old one's DLL handles inside PyInstaller's onefile `%TEMP%\_MEIxxxxxx` extraction dir are still closing, racing the bootloader's own cleanup. Replaced with a detached `subprocess.Popen` (`shell=True`, `DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP`) that waits ~1s (`ping -n 2`, not `timeout` — the latter errors out with no console to redirect from) before relaunching, then `sys.exit(0)`s cleanly so the old process's bootloader can finish deleting its temp folder.
+- Root-caused via `docs/debug/gesture-trail-x1x2-flaky.debug1.md` + `.debug2.md` (verdict: both reports' findings contributed — debug2's independent pass caught the X1/X2 root cause debug1 had missed).
+
+
 
 ### Fixed
 - **Mouse gesture engine (F-004)** — F-003's gesture-to-shortcut feature didn't actually work in practice; fixed 3 compounding bugs found via `docs/debug/gesture-no-trigger.debug1.md`/`.debug2.md`:
