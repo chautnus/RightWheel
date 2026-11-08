@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 from typing import TYPE_CHECKING, Callable
 
@@ -82,4 +83,13 @@ class TrayUI:
         # bootloader re-extracts. No-op when running from source (unset).
         env = os.environ.copy()
         env.pop("_MEIPASS2", None)
-        os.execve(sys.executable, [sys.executable] + sys.argv, env)
+        args_str = " ".join(f'"{a}"' for a in sys.argv[1:])
+        cmd = f'ping 127.0.0.1 -n 2 > nul & "{sys.executable}" {args_str}'.strip()
+        subprocess.Popen(
+            cmd,
+            shell=True,
+            env=env,
+            creationflags=0x00000008 | 0x00000200,  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+            close_fds=True,
+        )
+        sys.exit(0)

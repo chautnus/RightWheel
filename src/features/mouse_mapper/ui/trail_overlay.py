@@ -5,6 +5,20 @@ import ctypes
 from ctypes import wintypes
 import tkinter as tk
 
+GWL_EXSTYLE = -20
+WS_EX_NOACTIVATE = 0x08000000
+WS_EX_TRANSPARENT = 0x00000020
+WS_EX_LAYERED = 0x00080000
+WS_EX_TOOLWINDOW = 0x00000080
+
+_GetWindowLongPtr = getattr(ctypes.windll.user32, "GetWindowLongPtrW", ctypes.windll.user32.GetWindowLongW)
+_GetWindowLongPtr.argtypes = [wintypes.HWND, ctypes.c_int]
+_GetWindowLongPtr.restype = ctypes.c_ssize_t
+
+_SetWindowLongPtr = getattr(ctypes.windll.user32, "SetWindowLongPtrW", ctypes.windll.user32.SetWindowLongW)
+_SetWindowLongPtr.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_ssize_t]
+_SetWindowLongPtr.restype = ctypes.c_ssize_t
+
 
 class TrailOverlay:
     """Fullscreen transparent overlay canvas displaying real-time mouse gesture trails."""
@@ -70,9 +84,22 @@ class TrailOverlay:
         canvas = tk.Canvas(win, bg="#000001", highlightthickness=0, bd=0)
         canvas.pack(fill="both", expand=True)
 
+        win.update_idletasks()
+        hwnd = ctypes.windll.user32.GetParent(win.winfo_id()) or win.winfo_id()
+        cur = _GetWindowLongPtr(hwnd, GWL_EXSTYLE)
+        _SetWindowLongPtr(
+            hwnd,
+            GWL_EXSTYLE,
+            cur | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW,
+        )
+
         self._win = win
         self._canvas = canvas
-        self._last_point = (x - vx, y - vy)
+        pt = wintypes.POINT()
+        if ctypes.windll.user32.GetCursorPos(ctypes.byref(pt)):
+            self._last_point = (pt.x - vx, pt.y - vy)
+        else:
+            self._last_point = (x - vx, y - vy)
         self._active = True
         self._poll()
 

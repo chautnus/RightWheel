@@ -29,6 +29,7 @@ class MouseMapperLogic:
         self._panel_mode = False   # True = this scroll session opened the panel
         self._down_x     = 0
         self._down_y     = 0
+        self._xbutton_used: bool = False
         self.enabled     = True
         self.on_gesture_start: Callable[[int, int], None] | None = None
         self.on_gesture_end: Callable[[], None] | None = None
@@ -55,6 +56,7 @@ class MouseMapperLogic:
         self._state  = MapperState.RIGHT_HELD
         self._down_x = x
         self._down_y = y
+        self._xbutton_used = False
         return True   # always suppress; re-inject on right_up or move
 
     def _on_xbutton_down(self, button: int) -> bool:
@@ -65,6 +67,7 @@ class MouseMapperLogic:
         if tab_switch_logic.is_chromium_browser(exe):
             forward = (button == 2)  # XBUTTON2=next, XBUTTON1=prev
             hotkey_service.switch_tab_x1x2(forward)
+            self._xbutton_used = True
         return True
 
     def _on_move(self, x: int, y: int) -> bool:
@@ -129,6 +132,9 @@ class MouseMapperLogic:
             self._alt_held = False
 
         if prev == MapperState.RIGHT_HELD:
+            if self._xbutton_used:
+                self._xbutton_used = False
+                return True
             # Short tap — re-inject clean down+up so context menu appears
             hotkey_service.inject_right_click()
             return True

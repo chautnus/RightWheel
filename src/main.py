@@ -6,7 +6,7 @@ if sys.platform != "win32":
 
 import features.i18n as i18n
 from features.licensing import LicenseState, get_info
-from features.mouse_mapper import HotkeyConfig, MouseHookService, MouseMapperLogic
+from features.mouse_mapper import MouseHookService, MouseMapperLogic
 from features.mouse_mapper.ui.tray_ui import TrayUI
 from features.mouse_mapper.ui.trail_overlay import TrailOverlay
 from features.mouse_mapper.logic.tab_switch_logic import handle_scroll_for_tab_switch
@@ -18,7 +18,7 @@ def main() -> None:
     i18n.init()
 
     # Core mouse logic
-    mapper = MouseMapperLogic(HotkeyConfig(move_threshold=8))
+    mapper = MouseMapperLogic()
 
     # Shortcut panel — starts its own tkinter daemon thread
     panel        = PanelLogic()
