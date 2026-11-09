@@ -26,6 +26,7 @@ _DEFAULT: dict = {
         {"type": "folder",   "label": "📁 App",                "children": [
             {"type": "action", "label": "⚙ App Settings",      "action": "open_settings"},
             {"type": "action", "label": "⏸ Pause RightWheel", "action": "toggle_pause"},
+            {"type": "action", "label": "🔊 Volume Control",   "action": "show_volume_slider"},
         ]},
     ],
     "profiles": [],

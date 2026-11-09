@@ -41,7 +41,7 @@ class UrlItem:
 @dataclass
 class ActionItem:
     label:  str
-    action: str         # "open_settings" | "toggle_pause"
+    action: str         # "open_settings" | "toggle_pause" | "show_volume_slider"
     type:   str = "action"
 
 

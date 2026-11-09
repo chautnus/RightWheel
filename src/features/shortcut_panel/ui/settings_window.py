@@ -81,6 +81,7 @@ class SettingsWindow:
         self._build_default_tab(nb, font)
         self._build_profiles_tab(nb, font)
         self._build_gestures_tab(nb, font)
+        self._build_reference_tab(nb, font)
         self._build_license_tab(nb, font)
 
         # Footer
@@ -148,6 +149,12 @@ class SettingsWindow:
         frame = tk.Frame(nb, bg=_BG)
         nb.add(frame, text=t("tray.gestures"))
         GesturesTab(frame).pack(fill="both", expand=True, padx=8, pady=8)
+
+    def _build_reference_tab(self, nb: ttk.Notebook, font: str) -> None:
+        from .reference_tab import ReferenceTab
+        frame = tk.Frame(nb, bg=_BG)
+        nb.add(frame, text="Reference")
+        ReferenceTab(frame).pack(fill="both", expand=True, padx=8, pady=8)
 
     def _build_license_tab(self, nb: ttk.Notebook, font: str) -> None:
         from features.licensing.ui.license_window import LicenseFrame

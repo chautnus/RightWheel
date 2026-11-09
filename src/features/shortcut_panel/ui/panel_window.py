@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
+    from .volume_overlay import VolumeOverlay
 
 _W       = 230
 _BG      = "#1a1a1a"
@@ -31,15 +32,20 @@ class PanelWindow:
         self._root: tk.Tk | None      = None
         self._win:  tk.Toplevel | None = None
         self._overlay: tk.Toplevel | None = None
+        self._volume_overlay: VolumeOverlay | None = None
 
         logic.on_show   = lambda: self._q.put("show")
         logic.on_hide   = lambda: self._q.put("hide")
         logic.on_update = lambda: self._q.put("update")
+        logic.on_show_volume_slider = lambda: self._q.put("volume")
 
         threading.Thread(target=self._run, daemon=True).start()
 
     def open_settings(self) -> None:
         self._q.put("settings")
+
+    def open_volume_slider(self) -> None:
+        self._q.put("volume")
 
     # ── tkinter thread ─────────────────────────────────────────────────────
 
@@ -56,7 +62,8 @@ class PanelWindow:
             while True:
                 cmd = self._q.get_nowait()
                 {"show": self._do_show, "hide": self._do_hide,
-                 "update": self._do_update, "settings": self._do_settings
+                 "update": self._do_update, "settings": self._do_settings,
+                 "volume": self._do_volume,
                  }.get(cmd, lambda: None)()
         except queue.Empty:
             pass
@@ -114,6 +121,12 @@ class PanelWindow:
     def _do_settings(self) -> None:
         from .settings_window import SettingsWindow
         SettingsWindow(self._root, self._logic).show()
+
+    def _do_volume(self) -> None:
+        if not self._volume_overlay:
+            from .volume_overlay import VolumeOverlay
+            self._volume_overlay = VolumeOverlay(self._root)
+        self._volume_overlay.show()
 
     # ── rendering ──────────────────────────────────────────────────────────
 

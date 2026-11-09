@@ -26,6 +26,7 @@ def main() -> None:
     trail        = TrailOverlay(getattr(panel_window, "_root", None))
     mapper.panel = panel                                    # scroll-up → show panel
     panel.on_open_settings = panel_window.open_settings    # action → open settings
+    panel.on_show_volume_slider = panel_window.open_volume_slider
     mapper.on_gesture_start = trail.start
     mapper.on_gesture_end = trail.stop
 

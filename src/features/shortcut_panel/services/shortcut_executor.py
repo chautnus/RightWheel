@@ -12,6 +12,10 @@ INPUT_KEYBOARD    = 1
 KEYEVENTF_KEYUP   = 0x0002
 KEYEVENTF_EXTENDEDKEY = 0x0001
 
+VK_VOLUME_MUTE = 0xAD
+VK_VOLUME_DOWN = 0xAE
+VK_VOLUME_UP   = 0xAF
+
 # Virtual key map
 _VK: dict[str, int] = {
     "ctrl": 0x11, "control": 0x11,
@@ -119,6 +123,24 @@ def execute(keys: str) -> None:
 
     n_sent = ctypes.windll.user32.SendInput(n, arr, _SZ)
     _log.debug(f"SendInput({n} events, cbSize={_SZ}) → sent {n_sent}")
+
+
+def send_volume_step(delta: int) -> None:
+    """Adjust system master volume by one step up or down."""
+    if delta == 0:
+        return
+    vk = VK_VOLUME_UP if delta > 0 else VK_VOLUME_DOWN
+    arr = (_INPUT * 2)()
+
+    arr[0].type = INPUT_KEYBOARD
+    arr[0].ki.wVk = vk
+    arr[0].ki.dwFlags = KEYEVENTF_EXTENDEDKEY
+
+    arr[1].type = INPUT_KEYBOARD
+    arr[1].ki.wVk = vk
+    arr[1].ki.dwFlags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP
+
+    ctypes.windll.user32.SendInput(2, arr, _SZ)
 
 
 def execute_app(path: str, args: str = "") -> None:
