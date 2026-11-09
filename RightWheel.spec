@@ -22,6 +22,7 @@ a = Analysis(
         'features.i18n.en', 'features.i18n.fr', 'features.i18n.pt',
         'features.i18n.es', 'features.i18n.it', 'features.i18n.vi',
         'features.i18n.id', 'features.i18n.th', 'features.i18n.zh',
+        'features.shortcut_panel.services.volume_service',
     ],
     hookspath=[],
     hooksconfig={},

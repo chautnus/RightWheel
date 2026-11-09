@@ -17,6 +17,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.17.0] — 2026-11-09
+
+### Added
+- **Real Windows Master Volume & Click-to-Slider Flow (F-008)**:
+  1. **Direct Windows Core Audio Integration (`volume_service.py`)**: Giao tiếp trực tiếp với `IAudioEndpointVolume` từ `ole32.dll` qua pure `ctypes` (0 dependency). Đọc và gán chính xác 100% âm lượng thực tế của hệ điều hành Windows thay vì giả lập 50% hay gửi phím ảo tương đối.
+  2. **Click-to-Slider Flow on Shortcut Panel**: Loại bỏ hoàn toàn thanh mini widget nhồi nhét trên header. Bố trí dòng mục Volume độc lập ở trang đầu của Shortcut Panel: `🔊 Volume (XX%)`. Người dùng click chuột hoặc ấn phím số tương ứng (ví dụ phím 0) để đóng Panel và hiện thanh trượt Volume Slider.
+  3. **Synchronized Capsule Volume HUD**: Thanh trượt hiển thị đúng âm lượng thật của máy tại thời điểm mở, hỗ trợ cả cuộn chuột (`<MouseWheel>`) lẫn click/kéo trực tiếp (`<Button-1>`, `<B1-Motion>`) trên thanh tiến trình để thay đổi âm lượng thực tế của Windows.
+
+---
+
 ## [2.16.0] — 2026-11-09
 
 ### Added

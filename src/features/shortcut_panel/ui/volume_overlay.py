@@ -1,9 +1,9 @@
-"""Volume overlay HUD — displays master volume level and responds to mouse scroll."""
+"""Volume overlay HUD — displays real Windows master volume and responds to mouse scroll/click."""
 from __future__ import annotations
 
 import tkinter as tk
 
-from ..services import config_service, shortcut_executor
+from ..services import config_service, volume_service
 from features.i18n import ui_font
 
 _BG = "#18181b"
@@ -26,7 +26,7 @@ def _speaker_icon(level: float) -> str:
 
 
 class VolumeOverlay:
-    """Floating Capsule HUD for volume adjustment via mouse scroll."""
+    """Floating Capsule HUD for volume adjustment via mouse scroll/click."""
 
     def __init__(self, root: tk.Tk) -> None:
         self._root = root
@@ -37,8 +37,9 @@ class VolumeOverlay:
         self._level: float = 0.5
 
     def show(self) -> None:
-        """Create and display the volume overlay near cursor."""
+        """Create and display the volume overlay with actual system volume."""
         self.hide()
+        self._level = volume_service.get_master_volume()
 
         # Fullscreen transparent backdrop for outside-click dismiss
         sw = self._root.winfo_screenwidth()
@@ -83,6 +84,8 @@ class VolumeOverlay:
             )
             self._canvas.pack(padx=1, pady=1)
             self._canvas.bind("<MouseWheel>", self._on_scroll)
+            self._canvas.bind("<Button-1>", self._on_click_slider)
+            self._canvas.bind("<B1-Motion>", self._on_click_slider)
         else:
             self._canvas.delete("all")
 
@@ -140,12 +143,26 @@ class VolumeOverlay:
         self._win.geometry(f"{_WIDTH}x{_HEIGHT}+{x}+{y}")
 
     def _on_scroll(self, event) -> None:
-        """Handle scroll event to change volume and update timer."""
+        """Handle scroll event to change real volume and update timer."""
         delta = 1 if getattr(event, "delta", 0) > 0 else -1
-        shortcut_executor.send_volume_step(delta)
-
         step = config_service.get_volume_step()
-        self._level = max(0.0, min(1.0, self._level + step * delta))
+        self._level = volume_service.step_volume(delta, step)
+        self._render()
+
+        if self._dismiss_timer:
+            try:
+                self._root.after_cancel(self._dismiss_timer)
+            except Exception:
+                pass
+        self._dismiss_timer = self._root.after(3000, self.hide)
+
+    def _on_click_slider(self, event) -> None:
+        """Handle click/drag on slider to directly set system volume."""
+        cw = _WIDTH - 2
+        tx1, tx2 = 36, cw - 48
+        new_lvl = max(0.0, min(1.0, (event.x - tx1) / float(tx2 - tx1)))
+        volume_service.set_master_volume(new_lvl)
+        self._level = new_lvl
         self._render()
 
         if self._dismiss_timer:

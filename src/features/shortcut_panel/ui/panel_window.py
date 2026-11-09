@@ -31,7 +31,6 @@ class PanelWindow:
         self._win:  tk.Toplevel | None = None
         self._overlay: tk.Toplevel | None = None
         self._volume_overlay: VolumeOverlay | None = None
-        self._volume_level: float = 0.5
 
         logic.on_show   = lambda: self._q.put("show")
         logic.on_hide   = lambda: self._q.put("hide")
@@ -128,40 +127,6 @@ class PanelWindow:
 
     # ── rendering ──────────────────────────────────────────────────────────
 
-    def _render_vol_bar(self) -> None:
-        """Render modern volume widget at the top of the panel."""
-        from ..services import config_service, shortcut_executor
-        if not config_service.get_show_panel_volume():
-            return
-
-        vf = tk.Frame(self._win, bg=_BG, padx=10, pady=4)
-        vf.pack(fill="x")
-        cw, ch = _W - 20, 20
-        vc = tk.Canvas(vf, width=cw, height=ch, bg=_BG, highlightthickness=0)
-        vc.pack(fill="x")
-
-        lvl = self._volume_level
-        icon = "🔇" if lvl <= 0.001 else "🔈" if lvl < 0.34 else "🔉" if lvl < 0.67 else "🔊"
-        vc.create_text(10, 10, text=icon, font=("Segoe UI Emoji", 9), fill="#fff", anchor="center")
-
-        tx1, tx2 = 24, cw - 36
-        vc.create_rectangle(tx1, 8, tx2, 12, fill="#27272a", outline="")
-        fill_w = int((tx2 - tx1) * lvl)
-        if fill_w > 0:
-            vc.create_rectangle(tx1, 8, min(tx2, tx1 + fill_w), 12, fill=_ACC, outline="")
-        vc.create_oval(min(tx2, tx1 + fill_w) - 3, 6, min(tx2, tx1 + fill_w) + 3, 14, fill="#fff", outline="")
-        vc.create_text(cw - 2, 10, text=f"{int(round(lvl * 100))}%", font=_FONT_BC, fill="#a1a1aa", anchor="e")
-
-        def _on_vol_scroll(e):
-            d = 1 if getattr(e, "delta", 0) > 0 else -1
-            shortcut_executor.send_volume_step(d)
-            self._volume_level = max(0.0, min(1.0, self._volume_level + config_service.get_volume_step() * d))
-            self._render()
-
-        for w in (vc, vf):
-            w.bind("<MouseWheel>", _on_vol_scroll)
-        tk.Frame(self._win, bg=_BORDER, height=1).pack(fill="x", pady=(2, 4))
-
     def _render(self) -> None:
         if not self._win:
             return
@@ -191,15 +156,19 @@ class PanelWindow:
                      anchor="w", padx=10, pady=2).pack(fill="x")
             tk.Frame(self._win, bg=_BORDER, height=1).pack(fill="x")
 
-        # Quick Volume Bar at the top of panel
-        self._render_vol_bar()
-
         _ICON = {"folder": "📁 ", "app": "🚀 ", "url": "🌐 ", "action": "⚡ "}
         _CLR  = {"folder": _FG_DIR, "app": "#c586c0",
                  "url": "#4fc1ff", "action": "#dcdcaa"}
         for i, item in enumerate(st.items):
             sel  = (i == st.index)
             icon = _ICON.get(item.type, "")
+            label_text = item.label
+            if item.type == "action" and getattr(item, "action", "") == "show_volume_slider":
+                from ..services import volume_service
+                pct = int(round(volume_service.get_master_volume() * 100))
+                icon = "🔊 "
+                label_text = f"Volume ({pct}%)"
+
             fg   = _FG_SEL if sel else _CLR.get(item.type, _FG)
             row  = tk.Frame(self._win, bg=_BG_SEL if sel else _BG, padx=8, pady=4)
             row.pack(fill="x", padx=4, pady=1)
@@ -210,7 +179,7 @@ class PanelWindow:
                                font=_FONT_NUM, width=2, relief="flat")
             num_lbl.pack(side="left", padx=(0, 6))
 
-            lbl = tk.Label(row, text=f"{icon}{item.label}",
+            lbl = tk.Label(row, text=f"{icon}{label_text}",
                            bg=_BG_SEL if sel else _BG, fg=fg,
                            font=_FONT_SEL if sel else _FONT, anchor="w")
             lbl.pack(side="left", fill="x", expand=True)

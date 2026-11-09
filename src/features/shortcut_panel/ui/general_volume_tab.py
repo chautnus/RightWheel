@@ -1,11 +1,11 @@
-"""General & Volume Settings Tab — startup, language, volume step size, and panel widget toggle."""
+"""General & Volume Settings Tab — startup, language, and real volume step size."""
 from __future__ import annotations
 
 import tkinter as tk
 import tkinter.ttk as ttk
 from typing import TYPE_CHECKING
 
-from ..services import config_service, startup_service
+from ..services import config_service, startup_service, volume_service
 from features.i18n import available, current, set_locale, t, ui_font
 
 if TYPE_CHECKING:
@@ -26,7 +26,6 @@ class GeneralVolumeTab(tk.Frame):
         super().__init__(parent, bg=_BG)
         self._logic = logic
         self._startup_var = tk.BooleanVar(value=startup_service.is_enabled())
-        self._panel_vol_var = tk.BooleanVar(value=config_service.get_show_panel_volume())
         self._step_var = tk.StringVar(value=f"{int(config_service.get_volume_step() * 100)}%")
         self._build()
 
@@ -35,24 +34,22 @@ class GeneralVolumeTab(tk.Frame):
 
         # ── Card 1: Volume Control ──────────────────────────────────────────
         c_vol = self._make_card(self, "🔊 " + t("action.show_volume_slider"))
+        real_pct = int(round(volume_service.get_master_volume() * 100))
         tk.Label(
             c_vol,
-            text=t("settings.volume_desc") if "settings.volume_desc" in t("settings.title") else "Adjust volume via mouse scroll on Shortcut Panel and Capsule HUD.",
+            text=f"Windows Master Volume: {real_pct}% (Hardware Synced)",
+            bg=_CARD_BG, fg=_ACC, font=(font, 10, "bold")
+        ).pack(anchor="w", padx=14, pady=(0, 4))
+
+        tk.Label(
+            c_vol,
+            text="Selecting 'Volume' on Shortcut Panel opens the interactive Capsule HUD at cursor position.",
             bg=_CARD_BG, fg=_FG_MUTED, font=(font, 9), wraplength=480, justify="left"
         ).pack(anchor="w", padx=14, pady=(0, 10))
 
-        # Show on panel toggle
-        cb_panel = tk.Checkbutton(
-            c_vol, text="Show Volume Bar on Shortcut Panel",
-            variable=self._panel_vol_var, command=self._on_panel_vol_toggle,
-            bg=_CARD_BG, fg=_FG, selectcolor=_BG, activebackground=_CARD_BG,
-            activeforeground=_FG, font=(font, 10), cursor="hand2"
-        )
-        cb_panel.pack(anchor="w", padx=14, pady=2)
-
         # Step size selector
         row_step = tk.Frame(c_vol, bg=_CARD_BG)
-        row_step.pack(anchor="w", padx=14, pady=(8, 12))
+        row_step.pack(anchor="w", padx=14, pady=(4, 12))
         tk.Label(
             row_step, text="Volume step per scroll: ",
             bg=_CARD_BG, fg=_FG, font=(font, 10)
@@ -121,11 +118,6 @@ class GeneralVolumeTab(tk.Frame):
 
     def _on_startup_toggle(self) -> None:
         (startup_service.enable if self._startup_var.get() else startup_service.disable)()
-
-    def _on_panel_vol_toggle(self) -> None:
-        d = config_service.load()
-        d["show_panel_volume"] = self._panel_vol_var.get()
-        config_service.save(d)
 
     def _on_step_change(self) -> None:
         val_str = self._step_var.get().replace("%", "")
