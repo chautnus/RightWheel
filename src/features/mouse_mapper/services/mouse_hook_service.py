@@ -15,9 +15,6 @@ WM_MOUSEMOVE   = 0x0200
 WM_RBUTTONDOWN = 0x0204
 WM_RBUTTONUP   = 0x0205
 WM_MOUSEWHEEL  = 0x020A
-WM_XBUTTONDOWN = 0x020B
-XBUTTON1       = 0x0001
-XBUTTON2       = 0x0002
 WM_APP_REHOOK  = 0x8001   # custom thread msg: re-register hook after sleep/wake
 
 user32   = ctypes.windll.user32
@@ -162,9 +159,6 @@ class MouseHookService:
                         suppress = True
                     else:
                         suppress = self._on_event(MouseEvent("scroll", scroll_dir=direction))
-                elif w_param == WM_XBUTTONDOWN:
-                    btn = (data.mouseData >> 16) & 0xFFFF
-                    suppress = self._on_event(MouseEvent("xbutton_down", x=x, y=y, button=btn))
 
                 if suppress:
                     return 1

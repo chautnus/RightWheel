@@ -136,15 +136,5 @@ def switch_tab(forward: bool) -> None:
         _keys((VK_CONTROL, _D), (VK_TAB, _D), (VK_TAB, _U_), (VK_CONTROL, _U_))
 
 
-def switch_tab_x1x2(forward: bool) -> dict:
-    """Send Ctrl+Tab (forward/next) or Ctrl+Shift+Tab (back/previous) for X1/X2 gesture."""
-    if forward:
-        _keys((VK_CONTROL, _D), (VK_TAB, _D), (VK_TAB, _U_), (VK_CONTROL, _U_))
-        return {"ok": True, "data": {"combo": "ctrl+tab"}}
-    else:
-        _keys((VK_CONTROL, _D), (VK_SHIFT, _D), (VK_TAB, _D), (VK_TAB, _U_), (VK_SHIFT, _U_), (VK_CONTROL, _U_))
-        return {"ok": True, "data": {"combo": "ctrl+shift+tab"}}
-
-
 
 

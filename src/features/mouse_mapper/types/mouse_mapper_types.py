@@ -22,8 +22,7 @@ class HotkeyConfig:
 
 @dataclass
 class MouseEvent:
-    kind:       str                        # "right_down"|"right_up"|"scroll"|"move"|"xbutton_down"
+    kind:       str                        # "right_down"|"right_up"|"scroll"|"move"
     scroll_dir: ScrollDirection | None = None
     x:          int = 0
     y:          int = 0
-    button:     int = 0

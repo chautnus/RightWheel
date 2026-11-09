@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-import ctypes
 import threading
 
 from ..services import hotkey_service
@@ -14,9 +13,7 @@ from ..types.mouse_mapper_types import (
 from ...shortcut_panel.services import (
     config_service,
     shortcut_executor,
-    window_service,
 )
-from . import tab_switch_logic
 from .gesture_recognizer import GestureRecognizer
 
 
@@ -29,7 +26,6 @@ class MouseMapperLogic:
         self._panel_mode = False   # True = this scroll session opened the panel
         self._down_x     = 0
         self._down_y     = 0
-        self._xbutton_used: bool = False
         self.enabled     = True
         self.on_gesture_start: Callable[[int, int], None] | None = None
         self.on_gesture_end: Callable[[], None] | None = None
@@ -43,7 +39,6 @@ class MouseMapperLogic:
             if event.kind == "right_up":     return self._on_right_up()
             if event.kind == "scroll":       return self._on_scroll(event.scroll_dir)
             if event.kind == "move":         return self._on_move(event.x, event.y)
-            if event.kind == "xbutton_down": return self._on_xbutton_down(event.button)
         return False
 
     def wants_moves(self) -> bool:
@@ -56,19 +51,7 @@ class MouseMapperLogic:
         self._state  = MapperState.RIGHT_HELD
         self._down_x = x
         self._down_y = y
-        self._xbutton_used = False
         return True   # always suppress; re-inject on right_up or move
-
-    def _on_xbutton_down(self, button: int) -> bool:
-        if self._state == MapperState.IDLE:
-            return False
-        hwnd = ctypes.windll.user32.GetForegroundWindow()
-        exe = window_service.get_hwnd_exe(hwnd)
-        if exe and tab_switch_logic.is_chromium_browser(exe):
-            forward = (button == 2)  # XBUTTON2=next, XBUTTON1=prev
-            hotkey_service.switch_tab_x1x2(forward)
-            self._xbutton_used = True
-        return True
 
     def _on_move(self, x: int, y: int) -> bool:
         if self._state == MapperState.GESTURE:
@@ -132,9 +115,6 @@ class MouseMapperLogic:
             self._alt_held = False
 
         if prev == MapperState.RIGHT_HELD:
-            if self._xbutton_used:
-                self._xbutton_used = False
-                return True
             # Short tap — re-inject clean down+up so context menu appears
             hotkey_service.inject_right_click()
             return True

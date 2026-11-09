@@ -15,7 +15,6 @@ _DEFAULT_SHORTCUTS: list[tuple[str, str, str]] = [
     ("RightWheel", "RMB + Scroll Up", "Open Shortcut Panel"),
     ("RightWheel", "RMB + Scroll Down", "Switch app (Alt+Tab)"),
     ("RightWheel", "RMB + Drag", "Draw gesture to run custom shortcut"),
-    ("RightWheel", "RMB + X1/X2", "Switch browser tab prev/next"),
     ("RightWheel", "Panel item: Volume", "Open volume slider HUD, scroll to adjust"),
     ("Windows System", "Win + D", "Show/hide desktop"),
     ("Windows System", "Win + E", "Open File Explorer"),

@@ -17,6 +17,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.18.0] — 2026-11-09
+
+### Removed & Fixed
+- **Remove X1/X2 Rocker Gesture & Fix Mouse Button Hangs (F-009)**:
+  1. **Fixed Left-Click Stuck & RMB Not Activating**: Triệt tiêu dứt điểm hiện tượng kẹt nút chuột trái (left click vô tác dụng) và chuột phải không hiện context menu. Nguyên nhân do hook chuột `WH_MOUSE_LL` trước đây chặn `WM_XBUTTONDOWN` nhưng không chặn `WM_XBUTTONUP`, làm lệch pha chuỗi sự kiện chuột trong driver của Windows.
+  2. **Removed X1/X2 Side Button Interception**: Gỡ bỏ hoàn toàn việc chặn `WM_XBUTTONDOWN` khỏi `mouse_hook_service.py`. Các nút phụ chuột X1/X2 được trả lại 100% cho Windows và driver chuột gốc xử lý (chức năng Back/Forward mặc định).
+  3. **Cleaned Mouse Mapper State Machine**: Xóa bỏ cờ `_xbutton_used`, hàm `_on_xbutton_down()`, các import liên quan đến Win32 foreground window checks trong `mouse_mapper_logic.py`, và hàm `switch_tab_x1x2()` trong `hotkey_service.py`.
+  4. **Updated Documentation**: Xóa mục tra cứu "RMB + X1/X2" trong tab Reference.
+
+---
+
 ## [2.17.0] — 2026-11-09
 
 ### Added
