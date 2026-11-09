@@ -63,8 +63,8 @@ class MouseMapperLogic:
         if self._state == MapperState.IDLE:
             return False
         hwnd = ctypes.windll.user32.GetForegroundWindow()
-        exe, _, _ = window_service.get_hwnd_info(hwnd)
-        if tab_switch_logic.is_chromium_browser(exe):
+        exe = window_service.get_hwnd_exe(hwnd)
+        if exe and tab_switch_logic.is_chromium_browser(exe):
             forward = (button == 2)  # XBUTTON2=next, XBUTTON1=prev
             hotkey_service.switch_tab_x1x2(forward)
             self._xbutton_used = True

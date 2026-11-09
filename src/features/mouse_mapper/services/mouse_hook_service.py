@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ctypes
 import ctypes.wintypes as wt
+import logging
 import threading
 import time
 from typing import Callable
@@ -62,6 +63,7 @@ class MouseHookService:
         self._hook_id        = None
         self._thread_id: int = 0
         self._alive          = True
+        self._watchdog_started = False
         self._thread         = threading.Thread(target=self._run, daemon=True)
         self._proc           = _HookProc(self._hook_proc)
 
@@ -93,17 +95,39 @@ class MouseHookService:
                 user32.DispatchMessageW(ctypes.byref(msg))
         if self._hook_id:
             user32.UnhookWindowsHookEx(self._hook_id)
+            self._hook_id = None
+        self._thread_id = 0
 
     def _start_watchdog(self) -> None:
         """Daemon thread that re-registers the hook every 10 s.
 
         WH_MOUSE_LL is silently killed by Windows after sleep, lock, or UAC.
         Periodic re-registration guarantees recovery within 10 s of any such event.
+        Also restarts the hook thread if it has terminated.
         """
+        if self._watchdog_started:
+            return
+        self._watchdog_started = True
+
         def _watch() -> None:
             while self._alive:
                 time.sleep(10)
-                if self._alive and self._thread_id:
+                if not self._alive:
+                    break
+                if not self._thread.is_alive():
+                    logging.warning(
+                        "MouseHookService: hook thread is dead, restarting new hook thread..."
+                    )
+                    if self._hook_id:
+                        try:
+                            user32.UnhookWindowsHookEx(self._hook_id)
+                        except Exception:
+                            pass
+                        self._hook_id = None
+                    self._thread = threading.Thread(target=self._run, daemon=True)
+                    self._thread.start()
+                    continue
+                if self._thread_id:
                     user32.PostThreadMessageW(self._thread_id, WM_APP_REHOOK, 0, 0)
         threading.Thread(target=_watch, daemon=True).start()
 

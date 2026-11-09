@@ -14,8 +14,10 @@ CHROMIUM_EXES = {"chrome.exe", "msedge.exe", "brave.exe", "opera.exe", "vivaldi.
 _user32 = ctypes.windll.user32
 
 
-def is_chromium_browser(exe_basename: str) -> bool:
+def is_chromium_browser(exe_basename: str | None) -> bool:
     """True if exe_basename (case-insensitive) is a known Chromium-based browser."""
+    if not exe_basename:
+        return False
     return exe_basename.lower() in CHROMIUM_EXES
 
 
@@ -35,8 +37,8 @@ def handle_scroll_for_tab_switch(scroll_dir: ScrollDirection) -> bool:
     if not _shift_held():
         return False
     hwnd = _user32.GetForegroundWindow()
-    exe, _title, _cls = window_service.get_hwnd_info(hwnd)
-    if not is_chromium_browser(exe):
+    exe = window_service.get_hwnd_exe(hwnd)
+    if not exe or not is_chromium_browser(exe):
         return False
     hotkey_service.switch_tab(resolve_tab_direction(scroll_dir))
     return True

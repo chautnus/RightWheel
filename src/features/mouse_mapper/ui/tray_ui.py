@@ -82,7 +82,10 @@ class TrayUI:
         # by the exiting one) instead of extracting fresh — drop it so the
         # bootloader re-extracts. No-op when running from source (unset).
         env = os.environ.copy()
-        env.pop("_MEIPASS2", None)
+        for k in list(env.keys()):
+            if k == "_MEIPASS2" or k.startswith("_PYI_"):
+                env.pop(k, None)
+        env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
         args_str = " ".join(f'"{a}"' for a in sys.argv[1:])
         cmd = f'ping 127.0.0.1 -n 2 > nul & "{sys.executable}" {args_str}'.strip()
         subprocess.Popen(
