@@ -17,6 +17,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.16.0] — 2026-11-09
+
+### Added
+- **Modern Minimalist UI & Volume Fronting (F-007)**:
+  1. **Quick Volume Bar on Shortcut Panel**: Tích hợp thanh điều khiển âm lượng trực tiếp trên đỉnh Shortcut Panel (`panel_window.py`). Hỗ trợ cuộn chuột tăng/giảm âm lượng tức thì, hiển thị icon loa động và nhãn phần trăm.
+  2. **Capsule Volume Overlay HUD**: Tái thiết kế `volume_overlay.py` thành dạng Capsule HUD hiện đại (phong cách Windows 11 Flyout / macOS) với icon loa động (🔇/🔈/🔉/🔊), thanh tiến trình bo tròn và nhãn %.
+  3. **Sidebar Navigation for Settings**: Chuyển đổi toàn diện `settings_window.py` từ `ttk.Notebook` ngang sang bố cục 2 cột với Navigation Sidebar bên trái và Content Cards bên phải theo phong cách Slate/Zinc tối giản.
+  4. **General & Volume Configuration Tab**: Module mới `general_volume_tab.py` cho phép cấu hình khởi động cùng Windows, ngôn ngữ hiển thị, bước nhảy volume (2%, 5%, 10%) và tùy chọn bật/tắt Volume Bar trên Panel.
+  5. **Root Menu Default**: Đưa action `show_volume_slider` ra ngoài root menu của `shortcuts.json` thay vì nằm ẩn trong folder con `📁 App`.
+
+---
+
 ## [2.15.0] — 2026-11-09
 
 ### Fixed

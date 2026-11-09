@@ -1,34 +1,36 @@
-"""Settings window — orchestrates Default tab, Profiles tab, License tab, footer."""
+"""Settings window — modern two-column sidebar layout hosting settings tabs."""
 from __future__ import annotations
 
 import tkinter as tk
-import tkinter.ttk as ttk
 from typing import TYPE_CHECKING
 
-from ..services import config_service, startup_service
+from ..services import config_service
 from .ask_dialog import _AskDialog, _btn  # re-export for backward-compat
-from features.i18n import t, available, set_locale, current, ui_font
+from features.i18n import t, ui_font
 
 if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
 
 VERSION = "2.10.8"
 
-_BG  = "#1e1e1e"
-_BG2 = "#2d2d2d"
-_FG  = "#cccccc"
-_ACC = "#0078d4"
-_SAV = "#16825d"
+_BG_SIDEBAR = "#121214"
+_BG_CONTENT = "#18181b"
+_BG_NAV_ACT = "#27272a"
+_FG         = "#a1a1aa"
+_FG_ACT     = "#ffffff"
+_ACC        = "#0078d4"
+_BORDER     = "#27272a"
+_SAV        = "#16825d"
 
 
 class SettingsWindow:
     def __init__(self, root: tk.Tk, logic: PanelLogic) -> None:
-        self._root  = root
-        self._logic = logic
-        self._win:  tk.Toplevel | None = None
-        self._startup_var: tk.BooleanVar | None = None
-
-    # ── lifecycle ─────────────────────────────────────────────────────────
+        self._root   = root
+        self._logic  = logic
+        self._win:   tk.Toplevel | None = None
+        self._active_tab = "general"
+        self._nav_btns: dict[str, tk.Button] = {}
+        self._frames: dict[str, tk.Frame] = {}
 
     def show(self) -> None:
         if self._win and self._win.winfo_exists():
@@ -37,127 +39,127 @@ class SettingsWindow:
             return
         self._win = tk.Toplevel(self._root)
         self._win.title(t("settings.title", v=VERSION))
-        self._win.geometry("720x600")
-        self._win.configure(bg=_BG)
+        self._win.geometry("760x600")
+        self._win.configure(bg=_BG_CONTENT)
         self._win.resizable(False, False)
         self._win.protocol("WM_DELETE_WINDOW", self._save)
         self._build()
 
     def _save(self) -> None:
-        if self._startup_var is not None:
-            (startup_service.enable
-             if self._startup_var.get()
-             else startup_service.disable)()
         if self._win and self._win.winfo_exists():
             self._win.withdraw()
 
-    # ── layout ────────────────────────────────────────────────────────────
-
     def _build(self) -> None:
-        w    = self._win
+        w = self._win
         font = ui_font()
 
-        # Header
-        hdr = tk.Frame(w, bg=_BG)
-        hdr.pack(fill="x", padx=16, pady=(14, 2))
-        tk.Label(hdr, text=t("settings.header"), bg=_BG, fg="#fff",
-                 font=(font, 14, "bold")).pack(side="left")
-        tk.Label(hdr, text=f"v{VERSION}", bg=_BG, fg="#555",
-                 font=(font, 10)).pack(side="right", pady=4)
+        # ── Sidebar (Left) ────────────────────────────────────────────────
+        sb = tk.Frame(w, bg=_BG_SIDEBAR, width=190)
+        sb.pack(side="left", fill="y")
+        sb.pack_propagate(False)
 
-        # Notebook — "clam" theme so dark colors aren't overridden by Windows
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("TNotebook",     background=_BG,  borderwidth=0, tabmargins=0)
-        style.configure("TNotebook.Tab", background=_BG2, foreground=_FG,
-                        padding=[14, 6], font=(font, 10))
-        style.map("TNotebook.Tab",
-                  background=[("selected", _ACC), ("active", "#3a3a3a")],
-                  foreground=[("selected", "#fff"), ("active", "#fff")])
+        # App branding header
+        hdr = tk.Frame(sb, bg=_BG_SIDEBAR)
+        hdr.pack(fill="x", padx=16, pady=(18, 16))
+        tk.Label(
+            hdr, text="RightWheel", bg=_BG_SIDEBAR, fg="#ffffff",
+            font=(font, 13, "bold")
+        ).pack(anchor="w")
+        tk.Label(
+            hdr, text=f"v{VERSION} • Minimalist", bg=_BG_SIDEBAR, fg="#71717a",
+            font=(font, 9)
+        ).pack(anchor="w", pady=(2, 0))
 
-        nb = ttk.Notebook(w)
-        nb.pack(fill="both", expand=True, padx=16, pady=8)
+        tk.Frame(sb, bg=_BORDER, height=1).pack(fill="x", padx=12, pady=(0, 10))
 
-        self._build_default_tab(nb, font)
-        self._build_profiles_tab(nb, font)
-        self._build_gestures_tab(nb, font)
-        self._build_reference_tab(nb, font)
-        self._build_license_tab(nb, font)
+        # Navigation items
+        nav_items = [
+            ("general",   "⚙  General & Volume"),
+            ("default",   "⌨  " + t("settings.tab.default")),
+            ("profiles",  "◈  " + t("settings.tab.profiles")),
+            ("gestures",  "🖱  " + t("tray.gestures")),
+            ("reference", "📖  Reference"),
+            ("license",   "🔑  " + t("settings.tab.license")),
+        ]
 
-        # Footer
-        bot = tk.Frame(w, bg=_BG)
-        bot.pack(fill="x", padx=16, pady=10)
+        self._nav_btns.clear()
+        for tab_id, label in nav_items:
+            btn = tk.Button(
+                sb, text=label, anchor="w", relief="flat", bd=0,
+                padx=14, pady=8, font=(font, 10), cursor="hand2",
+                command=lambda tid=tab_id: self._switch_tab(tid),
+            )
+            btn.pack(fill="x", padx=8, pady=2)
+            self._nav_btns[tab_id] = btn
 
-        self._startup_var = tk.BooleanVar(value=startup_service.is_enabled())
-        tk.Checkbutton(bot, text=t("settings.run_on_startup"),
-                       variable=self._startup_var,
-                       bg=_BG, fg=_FG, selectcolor=_BG2,
-                       font=(font, 10)).pack(side="left")
+        # Bottom Save button in sidebar
+        bot_sb = tk.Frame(sb, bg=_BG_SIDEBAR)
+        bot_sb.pack(side="bottom", fill="x", padx=12, pady=16)
+        _btn(bot_sb, "✓ " + t("settings.save_close"), self._save, bg=_SAV).pack(fill="x")
 
-        # Language selector
-        self._build_lang_selector(bot, font)
+        # ── Content Area (Right) ──────────────────────────────────────────
+        content_wrap = tk.Frame(w, bg=_BG_CONTENT)
+        content_wrap.pack(side="right", fill="both", expand=True)
 
-        _btn(bot, t("settings.save_close"), self._save,
-             bg=_SAV).pack(side="right")
+        self._build_tabs(content_wrap, font)
+        self._switch_tab("general")
 
-    def _build_lang_selector(self, parent: tk.Frame, font: str) -> None:
-        """Compact language dropdown in the footer."""
-        frame = tk.Frame(parent, bg=_BG)
-        frame.pack(side="left", padx=(20, 0))
+    def _switch_tab(self, tab_id: str) -> None:
+        font = ui_font()
+        self._active_tab = tab_id
+        for tid, btn in self._nav_btns.items():
+            if tid == tab_id:
+                btn.configure(
+                    bg=_BG_NAV_ACT, fg=_FG_ACT, font=(font, 10, "bold"),
+                    activebackground=_BG_NAV_ACT, activeforeground=_FG_ACT
+                )
+            else:
+                btn.configure(
+                    bg=_BG_SIDEBAR, fg=_FG, font=(font, 10),
+                    activebackground=_BG_NAV_ACT, activeforeground=_FG_ACT
+                )
 
-        tk.Label(frame, text=t("settings.language"), bg=_BG, fg=_FG,
-                 font=(font, 10)).pack(side="left")
+        for tid, frame in self._frames.items():
+            if tid == tab_id:
+                frame.pack(fill="both", expand=True)
+            else:
+                frame.pack_forget()
 
-        langs = available()
-        codes  = [c for c, _ in langs]
-        names  = [n for _, n in langs]
+    def _build_tabs(self, parent: tk.Frame, font: str) -> None:
+        self._frames.clear()
 
-        var = tk.StringVar(value=dict(langs).get(current(), "English"))
-        cb  = ttk.Combobox(frame, textvariable=var, values=names,
-                           state="readonly", width=12,
-                           font=(font, 10))
-        cb.pack(side="left", padx=(4, 0))
+        # 1. General & Volume tab
+        from .general_volume_tab import GeneralVolumeTab
+        f_gen = tk.Frame(parent, bg=_BG_CONTENT)
+        GeneralVolumeTab(f_gen, self._logic).pack(fill="both", expand=True)
+        self._frames["general"] = f_gen
 
-        restart_lbl = tk.Label(frame, text="", bg=_BG, fg="#f0a030",
-                               font=(font, 9))
-        restart_lbl.pack(side="left", padx=(6, 0))
-
-        def _on_change(event=None) -> None:
-            name = var.get()
-            code = codes[names.index(name)]
-            if code != current():
-                set_locale(code)
-                restart_lbl.config(text=t("settings.restart_required"))
-
-        cb.bind("<<ComboboxSelected>>", _on_change)
-
-    def _build_default_tab(self, nb: ttk.Notebook, font: str) -> None:
+        # 2. Default shortcuts tab
         from .default_tab import DefaultTab
-        frame = tk.Frame(nb, bg=_BG)
-        nb.add(frame, text=t("settings.tab.default"))
-        tab = DefaultTab(frame, self._logic)
-        tab.pack(fill="both", expand=True, padx=8, pady=8)
+        f_def = tk.Frame(parent, bg=_BG_CONTENT)
+        DefaultTab(f_def, self._logic).pack(fill="both", expand=True, padx=8, pady=8)
+        self._frames["default"] = f_def
 
-    def _build_profiles_tab(self, nb: ttk.Notebook, font: str) -> None:
+        # 3. Profiles tab
         from .profile_editor import ProfileEditor
-        frame = tk.Frame(nb, bg=_BG)
-        nb.add(frame, text=t("settings.tab.profiles"))
-        ProfileEditor(frame).pack(fill="both", expand=True)
+        f_prof = tk.Frame(parent, bg=_BG_CONTENT)
+        ProfileEditor(f_prof).pack(fill="both", expand=True, padx=8, pady=8)
+        self._frames["profiles"] = f_prof
 
-    def _build_gestures_tab(self, nb: ttk.Notebook, font: str) -> None:
+        # 4. Gestures tab
         from .gestures_tab import GesturesTab
-        frame = tk.Frame(nb, bg=_BG)
-        nb.add(frame, text=t("tray.gestures"))
-        GesturesTab(frame).pack(fill="both", expand=True, padx=8, pady=8)
+        f_gest = tk.Frame(parent, bg=_BG_CONTENT)
+        GesturesTab(f_gest).pack(fill="both", expand=True, padx=8, pady=8)
+        self._frames["gestures"] = f_gest
 
-    def _build_reference_tab(self, nb: ttk.Notebook, font: str) -> None:
+        # 5. Reference tab
         from .reference_tab import ReferenceTab
-        frame = tk.Frame(nb, bg=_BG)
-        nb.add(frame, text="Reference")
-        ReferenceTab(frame).pack(fill="both", expand=True, padx=8, pady=8)
+        f_ref = tk.Frame(parent, bg=_BG_CONTENT)
+        ReferenceTab(f_ref).pack(fill="both", expand=True, padx=8, pady=8)
+        self._frames["reference"] = f_ref
 
-    def _build_license_tab(self, nb: ttk.Notebook, font: str) -> None:
+        # 6. License tab
         from features.licensing.ui.license_window import LicenseFrame
-        frame = tk.Frame(nb, bg=_BG)
-        nb.add(frame, text=t("settings.tab.license"))
-        LicenseFrame(frame).pack(fill="both", expand=True)
+        f_lic = tk.Frame(parent, bg=_BG_CONTENT)
+        LicenseFrame(f_lic).pack(fill="both", expand=True, padx=8, pady=8)
+        self._frames["license"] = f_lic

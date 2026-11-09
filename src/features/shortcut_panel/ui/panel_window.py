@@ -1,28 +1,26 @@
-"""Floating shortcut panel — narrow, tall, dark, always-on-top tkinter window.
-
-Runs entirely on its own daemon thread; communicates with the hook thread via
-a queue + root.after() pump so tkinter stays single-threaded.
-"""
+"""Floating shortcut panel — narrow, dark, always-on-top tkinter window."""
 from __future__ import annotations
 
-import queue
-import threading
-import tkinter as tk
+import queue, threading, tkinter as tk
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
     from .volume_overlay import VolumeOverlay
 
-_W       = 230
-_BG      = "#1a1a1a"
-_BG_SEL  = "#2a2a2a"
-_FG      = "#777777"
-_FG_SEL  = "#ffffff"
-_FG_DIR  = "#4ec9b0"
-_FONT    = ("Segoe UI", 12)
-_FONT_SEL= ("Segoe UI", 15, "bold")
-_FONT_BC = ("Segoe UI", 9)
+_W        = 240
+_BG       = "#121214"
+_BG_CARD  = "#18181b"
+_BG_SEL   = "#27272a"
+_FG       = "#a1a1aa"
+_FG_SEL   = "#ffffff"
+_FG_DIR   = "#4ec9b0"
+_BORDER   = "#27272a"
+_ACC      = "#0078d4"
+_FONT     = ("Segoe UI", 11)
+_FONT_SEL = ("Segoe UI", 11, "bold")
+_FONT_BC  = ("Segoe UI", 9)
+_FONT_NUM = ("Segoe UI", 8, "bold")
 
 
 class PanelWindow:
@@ -33,6 +31,7 @@ class PanelWindow:
         self._win:  tk.Toplevel | None = None
         self._overlay: tk.Toplevel | None = None
         self._volume_overlay: VolumeOverlay | None = None
+        self._volume_level: float = 0.5
 
         logic.on_show   = lambda: self._q.put("show")
         logic.on_hide   = lambda: self._q.put("hide")
@@ -92,13 +91,12 @@ class PanelWindow:
         self._win.overrideredirect(True)
         self._win.attributes("-topmost", True)
         self._win.configure(bg=_BG)
-        self._win.bind("<Escape>",    lambda _: self._logic.hide())
+        self._win.bind("<Escape>", lambda _: self._logic.hide())
         self._win.bind("<BackSpace>", lambda _: self._logic.go_back())
-        self._win.bind("<Return>",    lambda _: self._logic.select_current())
-        self._win.bind("<Up>",        lambda _: self._logic.navigate(-1))
-        self._win.bind("<Down>",      lambda _: self._logic.navigate(1))
-        self._win.bind("<MouseWheel>",
-                       lambda e: self._logic.navigate(-1 if e.delta > 0 else 1))
+        self._win.bind("<Return>", lambda _: self._logic.select_current())
+        self._win.bind("<Up>", lambda _: self._logic.navigate(-1))
+        self._win.bind("<Down>", lambda _: self._logic.navigate(1))
+        self._win.bind("<MouseWheel>", lambda e: self._logic.navigate(-1 if e.delta > 0 else 1))
         for k in "0123456789":
             self._win.bind(k, lambda e, c=k: self._jump(int(c)))
         self._render()
@@ -130,6 +128,40 @@ class PanelWindow:
 
     # ── rendering ──────────────────────────────────────────────────────────
 
+    def _render_vol_bar(self) -> None:
+        """Render modern volume widget at the top of the panel."""
+        from ..services import config_service, shortcut_executor
+        if not config_service.get_show_panel_volume():
+            return
+
+        vf = tk.Frame(self._win, bg=_BG, padx=10, pady=4)
+        vf.pack(fill="x")
+        cw, ch = _W - 20, 20
+        vc = tk.Canvas(vf, width=cw, height=ch, bg=_BG, highlightthickness=0)
+        vc.pack(fill="x")
+
+        lvl = self._volume_level
+        icon = "🔇" if lvl <= 0.001 else "🔈" if lvl < 0.34 else "🔉" if lvl < 0.67 else "🔊"
+        vc.create_text(10, 10, text=icon, font=("Segoe UI Emoji", 9), fill="#fff", anchor="center")
+
+        tx1, tx2 = 24, cw - 36
+        vc.create_rectangle(tx1, 8, tx2, 12, fill="#27272a", outline="")
+        fill_w = int((tx2 - tx1) * lvl)
+        if fill_w > 0:
+            vc.create_rectangle(tx1, 8, min(tx2, tx1 + fill_w), 12, fill=_ACC, outline="")
+        vc.create_oval(min(tx2, tx1 + fill_w) - 3, 6, min(tx2, tx1 + fill_w) + 3, 14, fill="#fff", outline="")
+        vc.create_text(cw - 2, 10, text=f"{int(round(lvl * 100))}%", font=_FONT_BC, fill="#a1a1aa", anchor="e")
+
+        def _on_vol_scroll(e):
+            d = 1 if getattr(e, "delta", 0) > 0 else -1
+            shortcut_executor.send_volume_step(d)
+            self._volume_level = max(0.0, min(1.0, self._volume_level + config_service.get_volume_step() * d))
+            self._render()
+
+        for w in (vc, vf):
+            w.bind("<MouseWheel>", _on_vol_scroll)
+        tk.Frame(self._win, bg=_BORDER, height=1).pack(fill="x", pady=(2, 4))
+
     def _render(self) -> None:
         if not self._win:
             return
@@ -155,9 +187,12 @@ class PanelWindow:
 
         if st.breadcrumb:
             tk.Label(self._win, text=" › ".join(st.breadcrumb),
-                     bg=_BG, fg="#555", font=_FONT_BC,
+                     bg=_BG, fg="#71717a", font=_FONT_BC,
                      anchor="w", padx=10, pady=2).pack(fill="x")
-            tk.Frame(self._win, bg="#333", height=1).pack(fill="x")
+            tk.Frame(self._win, bg=_BORDER, height=1).pack(fill="x")
+
+        # Quick Volume Bar at the top of panel
+        self._render_vol_bar()
 
         _ICON = {"folder": "📁 ", "app": "🚀 ", "url": "🌐 ", "action": "⚡ "}
         _CLR  = {"folder": _FG_DIR, "app": "#c586c0",
@@ -165,19 +200,23 @@ class PanelWindow:
         for i, item in enumerate(st.items):
             sel  = (i == st.index)
             icon = _ICON.get(item.type, "")
-            text = f"  {i}  {icon}{item.label}"
             fg   = _FG_SEL if sel else _CLR.get(item.type, _FG)
-            lbl  = tk.Label(
-                self._win, text=text,
-                bg=_BG_SEL if sel else _BG,
-                fg=fg,
-                font=_FONT_SEL if sel else _FONT,
-                anchor="w", padx=4,
-                pady=7 if sel else 4,
-                width=20, cursor="hand2",
-            )
-            lbl.pack(fill="x")
-            lbl.bind("<Button-1>", lambda _, ii=i: self._logic.select_at(ii))
+            row  = tk.Frame(self._win, bg=_BG_SEL if sel else _BG, padx=8, pady=4)
+            row.pack(fill="x", padx=4, pady=1)
+
+            num_bg = "#3f3f46" if sel else "#1e1e24"
+            num_fg = "#ffffff" if sel else "#71717a"
+            num_lbl = tk.Label(row, text=str(i), bg=num_bg, fg=num_fg,
+                               font=_FONT_NUM, width=2, relief="flat")
+            num_lbl.pack(side="left", padx=(0, 6))
+
+            lbl = tk.Label(row, text=f"{icon}{item.label}",
+                           bg=_BG_SEL if sel else _BG, fg=fg,
+                           font=_FONT_SEL if sel else _FONT, anchor="w")
+            lbl.pack(side="left", fill="x", expand=True)
+
+            for widget in (row, num_lbl, lbl):
+                widget.bind("<Button-1>", lambda _, ii=i: self._logic.select_at(ii))
 
         self._win.update_idletasks()
 

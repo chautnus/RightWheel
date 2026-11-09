@@ -3,15 +3,30 @@ from __future__ import annotations
 
 import tkinter as tk
 
-_BG = "#1e1e1e"
-_TRACK_BG = "#333333"
+from ..services import config_service, shortcut_executor
+from features.i18n import ui_font
+
+_BG = "#18181b"
+_BORDER = "#3f3f46"
+_TRACK_BG = "#27272a"
 _ACC = "#0078d4"
-_WIDTH = 200
-_HEIGHT = 50
+_WIDTH = 224
+_HEIGHT = 46
+
+
+def _speaker_icon(level: float) -> str:
+    """Return appropriate speaker glyph based on volume percentage."""
+    if level <= 0.001:
+        return "🔇"
+    if level < 0.34:
+        return "🔈"
+    if level < 0.67:
+        return "🔉"
+    return "🔊"
 
 
 class VolumeOverlay:
-    """Floating HUD for volume adjustment via mouse scroll."""
+    """Floating Capsule HUD for volume adjustment via mouse scroll."""
 
     def __init__(self, root: tk.Tk) -> None:
         self._root = root
@@ -25,7 +40,7 @@ class VolumeOverlay:
         """Create and display the volume overlay near cursor."""
         self.hide()
 
-        # Fullscreen transparent backdrop
+        # Fullscreen transparent backdrop for outside-click dismiss
         sw = self._root.winfo_screenwidth()
         sh = self._root.winfo_screenheight()
         self._backdrop = tk.Toplevel(self._root)
@@ -36,11 +51,11 @@ class VolumeOverlay:
         self._backdrop.bind("<ButtonPress>", lambda _: self.hide())
         self._backdrop.bind("<MouseWheel>", self._on_scroll)
 
-        # Small volume indicator window
+        # Capsule volume indicator window with 1px modern border
         self._win = tk.Toplevel(self._root)
         self._win.overrideredirect(True)
         self._win.attributes("-topmost", True)
-        self._win.configure(bg=_BG)
+        self._win.configure(bg=_BORDER)
         self._win.bind("<Escape>", lambda _: self.hide())
         self._win.bind("<MouseWheel>", self._on_scroll)
 
@@ -52,12 +67,12 @@ class VolumeOverlay:
         self._dismiss_timer = self._root.after(3000, self.hide)
 
     def _render(self) -> None:
-        """Render the volume slider on canvas."""
+        """Render the capsule slider, dynamic icon, and percentage."""
         if not self._win:
             return
 
-        cw = 180
-        ch = 20
+        cw = _WIDTH - 2
+        ch = _HEIGHT - 2
         if self._canvas is None:
             self._canvas = tk.Canvas(
                 self._win,
@@ -66,28 +81,49 @@ class VolumeOverlay:
                 bg=_BG,
                 highlightthickness=0,
             )
-            self._canvas.pack(padx=10, pady=15)
+            self._canvas.pack(padx=1, pady=1)
             self._canvas.bind("<MouseWheel>", self._on_scroll)
         else:
             self._canvas.delete("all")
 
-        # Track
-        self._canvas.create_rectangle(0, 6, cw, 14, fill=_TRACK_BG, outline="")
-
-        # Fill
-        fill_w = int(cw * self._level)
-        if fill_w > 0:
-            self._canvas.create_rectangle(0, 6, fill_w, 14, fill=_ACC, outline="")
-
-        # Thumb
-        thumb_x = min(cw, max(0, fill_w))
-        self._canvas.create_oval(
-            max(0, thumb_x - 5),
-            3,
-            min(cw, thumb_x + 5),
-            17,
+        # 1. Dynamic speaker icon
+        icon = _speaker_icon(self._level)
+        self._canvas.create_text(
+            18, ch // 2,
+            text=icon,
+            font=("Segoe UI Emoji", 11),
             fill="#ffffff",
-            outline="",
+            anchor="center",
+        )
+
+        # 2. Track & Fill
+        tx1, tx2 = 36, cw - 48
+        ty1, ty2 = (ch // 2) - 3, (ch // 2) + 3
+        self._canvas.create_rectangle(tx1, ty1, tx2, ty2, fill=_TRACK_BG, outline="")
+
+        fill_w = int((tx2 - tx1) * self._level)
+        if fill_w > 0:
+            self._canvas.create_rectangle(
+                tx1, ty1, min(tx2, tx1 + fill_w), ty2,
+                fill=_ACC, outline=""
+            )
+
+        # 3. Thumb indicator
+        thumb_x = min(tx2, max(tx1, tx1 + fill_w))
+        self._canvas.create_oval(
+            thumb_x - 5, (ch // 2) - 5,
+            thumb_x + 5, (ch // 2) + 5,
+            fill="#ffffff", outline="",
+        )
+
+        # 4. Percentage label
+        pct = f"{int(round(self._level * 100))}%"
+        self._canvas.create_text(
+            cw - 8, ch // 2,
+            text=pct,
+            font=(ui_font(), 9, "bold"),
+            fill="#e4e4e7",
+            anchor="e",
         )
 
     def _position(self) -> None:
@@ -105,11 +141,11 @@ class VolumeOverlay:
 
     def _on_scroll(self, event) -> None:
         """Handle scroll event to change volume and update timer."""
-        from ..services import shortcut_executor
-
         delta = 1 if getattr(event, "delta", 0) > 0 else -1
         shortcut_executor.send_volume_step(delta)
-        self._level = max(0.0, min(1.0, self._level + 0.05 * delta))
+
+        step = config_service.get_volume_step()
+        self._level = max(0.0, min(1.0, self._level + step * delta))
         self._render()
 
         if self._dismiss_timer:
