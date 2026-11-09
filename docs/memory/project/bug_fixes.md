@@ -6,13 +6,41 @@ tags: [bugs, ctypes, hook, alt-tab, context-menu]
 keywords: [ghost-right-up, suppress, INJECTED_MARKER, freeze, hook-timeout]
 status: active
 created: 2026-04-30
-updated: 2026-05-13
-summary: "Root causes and fixes for all critical bugs found during v1→v2→v2.5 development."
+updated: 2026-11-09
+summary: "Root causes and fixes for all critical bugs found during v1→v2.15 development (including PyInstaller restart DLL & hook hang recovery)."
 ---
 
 ## Critical Bugs and Fixes
 
 ---
+
+### [v2.15.0] Restart "Failed to load Python DLL" & Gesture/Hook Thread Hang Recovery
+
+**Bối cảnh:** Sau các bản phát hành cử chỉ chuột (F-003, F-004, F-005), người dùng gặp 2 lỗi nghiêm trọng: (1) khi đang sử dụng thì toàn bộ gesture (RMB drag, X1/X2, Shift+Scroll) mất tác dụng vĩnh viễn, và (2) khi bấm Restart ở menu khay để khắc phục thì hiện hộp thoại lỗi `Failed to load Python DLL '...\AppData\Local\Temp\_MEI<PID>\python314.dll'. LoadLibrary: The specified module could not be found.`
+
+**1. Lỗi "Failed to load Python DLL" khi Restart (PyInstaller 6.20.0 env leak)**
+- **Symptom:** Bấm "Restart" trên khay hệ thống, RightWheel tắt và báo lỗi không tìm thấy `python314.dll` trong thư mục `_MEIxxxxxx`.
+- **Root cause:** 
+  - Trong PyInstaller 6.20.0, bootloader dùng `_MEI%d` với PID của tiến trình cha để tạo thư mục tạm.
+  - Khi khởi động, bootloader kiểm tra `PYINSTALLER_RESET_ENVIRONMENT` và các biến môi trường `_PYI_*` (`_PYI_APPLICATION_HOME_DIR`, `_PYI_ARCHIVE_FILE`, `_PYI_PARENT_PROCESS_LEVEL`).
+  - Code `_restart()` trong `tray_ui.py` trước đây chỉ `pop("_MEIPASS2")` (biến cũ đã bị PyInstaller loại bỏ).
+  - Tiến trình mới kế thừa `_PYI_APPLICATION_HOME_DIR` trỏ về `_MEI<PID_cha>`. Bootloader mới ngộ nhận mình là child worker process, bỏ qua việc giải nén mới và gọi `LoadLibrary` vào thư mục tạm của cha. Do tiến trình cha đã `sys.exit(0)`, bootloader cha đã xoá sạch thư mục tạm đó, dẫn đến văng lỗi `LoadLibrary`.
+- **Fix:**
+  - Trong `tray_ui.py`: xoá toàn bộ biến bắt đầu bằng `_PYI_` và `_MEIPASS2` trong `env`.
+  - Thiết lập rõ ràng `env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"`.
+
+**2. Lỗi Gesture, X1/X2, Shift+Scroll tê liệt vĩnh viễn (Same-Process Win32 Hang & Hook Thread Death)**
+- **Symptom:** Trong lúc dùng bình thường, đột ngột mọi gesture chuột, phím X1/X2 và cuộn tab Shift+Scroll đều không hoạt động; chuột vật lý vẫn bình thường.
+- **Root cause (layered):**
+  - **Điểm treo same-process:** `handle_scroll_for_tab_switch()` và `_on_xbutton_down()` đều chạy trực tiếp trên luồng hook cấp thấp `WH_MOUSE_LL` và gọi `window_service.get_hwnd_info(hwnd)`. Hàm này gọi `GetWindowTextW`. Nếu cửa sổ active thuộc chính tiến trình RightWheel (ví dụ: Settings Window, Shortcut Panel, Welcome Window), theo đặc tả Win32, `GetWindowTextW` gửi message `WM_GETTEXT` đồng bộ sang luồng Tkinter. Nếu luồng Tkinter đang bận hoặc vướng GIL, luồng hook bị block hoàn toàn, vượt ngưỡng `LowLevelHooksTimeout` (200ms) khiến Windows âm thầm gỡ bỏ hook hoặc treo luồng.
+  - Cả 2 caller trên thực chất chỉ cần `exe` (để kiểm tra trình duyệt Chromium), không hề cần `title` hay `class_name`.
+  - **Lỗ hổng watchdog:** Watchdog 10s trong `MouseHookService` chỉ gửi `WM_APP_REHOOK` qua `PostThreadMessageW(self._thread_id, ...)`. Nếu luồng hook đã bị kết thúc (`GetMessageW` loop kết thúc), watchdog gửi vào thread id đã chết và không thể phục hồi hook.
+- **Fix:**
+  - `window_service.py`: Thêm hàm `get_hwnd_exe(hwnd)` tối ưu, chỉ mở process handle và gọi `QueryFullProcessImageNameW`, hoàn toàn không gọi `GetWindowTextW` hay `GetClassNameW`.
+  - `window_service.get_hwnd_info(hwnd)`: Thêm guard kiểm tra `pid == os.getpid()`, bỏ qua `GetWindowTextW` nếu là cửa sổ nội bộ để tránh treo same-process.
+  - `mouse_mapper_logic.py` & `tab_switch_logic.py`: Chuyển sang dùng `get_hwnd_exe(hwnd)` thay vì `get_hwnd_info(hwnd)`.
+  - `mouse_hook_service.py`: Watchdog kiểm tra `if not self._thread.is_alive():`, nếu luồng đã chết thì giải phóng hook cũ và tự động spawn luồng hook mới.
+- **Tham chiếu:** `docs/debug/restart-dll-gesture-dead.debug1.md` và `docs/debug/restart-dll-gesture-dead.debug2.md`.
 
 ---
 

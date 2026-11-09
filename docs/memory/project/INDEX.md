@@ -3,7 +3,7 @@
 | id | summary | tags | status | file |
 |----|---------|------|--------|------|
 | proj_architecture_20260430 | Core architectural decisions for ctypes hook, state machine, and UI threading | architecture, ctypes, hook | active | [architecture.md](architecture.md) |
-| proj_bug_fixes_20260430 | Root causes and fixes for all critical bugs found during v1→v2 development | bugs, ctypes, alt-tab | active | [bug_fixes.md](bug_fixes.md) |
+| proj_bug_fixes_20260430 | Root causes and fixes for all critical bugs found during v1→v2.15 development (incl. PyInstaller restart DLL & hook hang recovery) | bugs, ctypes, alt-tab, pyinstaller, hook | active | [bug_fixes.md](bug_fixes.md) |
 | proj_key_recorder_build_fix_20260506 | Added key recorder dialog for capturing shortcuts; fixed tkinter missing from PyInstaller build | settings, tkinter, pyinstaller | active | [key_recorder_and_build_fix.md](key_recorder_and_build_fix.md) |
 | proj_focus_restore_fix_20260507 | SetForegroundWindow must be called before hide() while process is still foreground — shortcut fire fix | focus, SendInput, overrideredirect | active | [bug_fixes.md](bug_fixes.md) |
 | proj_context_aware_profiles_20260507 | Schema v2 + window detection + profile CRUD UI — different shortcut sets per active application | profiles, config-v2, window-detection, ui | active | [context_aware_profiles.md](context_aware_profiles.md) |
