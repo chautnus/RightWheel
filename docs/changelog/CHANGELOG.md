@@ -6,8 +6,8 @@ tags: [changelog, versions]
 keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
-updated: 2026-11-08
-summary: "Version history for RightWheel from v1.0.0 to v2.14.2."
+updated: 2026-11-09
+summary: "Version history for RightWheel from v1.0.0 to v2.15.0."
 ---
 
 # Changelog
@@ -17,7 +17,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [2.14.2] — 2026-11-08
+## [2.15.0] — 2026-11-09
+
+### Added
+- **Windows shortcut reference tab (F-006)** — new "Reference" tab in Settings listing 20+ common Windows and RightWheel shortcuts (`Win+D`, `Win+E`, `Win+Shift+S`, `Alt+Tab`, the app's own RMB gestures, etc.) with English descriptions, as a read-only `ttk.Treeview` lookup — no wiring to the shortcut-add form, just a cheatsheet. (Note: `Win+<letter>` combos already worked before this — `shortcut_executor.py`'s key map already had `"win"` and a-z mapped; this tab just documents what's available.)
+- **Volume control via scroll (F-006)** — a new `show_volume_slider` action for the shortcut panel (same pattern as `open_settings`/`toggle_pause`) opens a small HUD at the cursor position; scrolling while it's shown sends `VK_VOLUME_UP`/`VK_VOLUME_DOWN` (0xAF/0xAE) via `SendInput` per tick, no `pycaw`/Core Audio dependency added. The slider starts at a neutral 50% (relative delta only, since media-key injection can't read the OS's actual volume %) and auto-dismisses after 3s idle, on `Escape`, or on an outside click. Built as a fully independent module (`volume_overlay.py`) reusing the existing transparent-backdrop overlay pattern from `PanelWindow` — unlike `TrailOverlay` (which must avoid stealing focus with `WS_EX_NOACTIVATE`), this overlay needs real focus to receive scroll/`Escape`, and is positioned via Tkinter's own `winfo_pointerx()`/`winfo_pointery()` rather than a Win32 `GetCursorPos` call. Does not touch `mouse_mapper`/the gesture engine at all.
+
+
 
 ### Fixed
 - **Mouse gesture engine, reliability (F-005)** — 5 bugs found via hands-on testing of F-004's `.exe` build, none of which were caught by automated verify-cmd (all are OS-level behaviors: window focus, modal menu loops, process lifecycle):
