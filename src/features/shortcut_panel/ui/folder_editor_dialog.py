@@ -5,6 +5,7 @@ import tkinter as tk
 import tkinter.filedialog as fd
 
 from ..services import config_service
+from .action_picker_dialog import ActionPickerDialog
 from .ask_dialog import _AskDialog, _btn
 from .key_recorder_dialog import KeyRecorderDialog
 from features.i18n import t, ui_font
@@ -37,7 +38,7 @@ class FolderEditorDialog:
         font = ui_font()
         folder_label = config_service.load()["default"][self._idx].get("label", "Folder")
         w.title(t("folder.title", label=folder_label))
-        w.geometry("480x420")
+        w.geometry("480x440")
 
         tk.Label(w, text=t("folder.subtitle", label=folder_label),
                  bg=_BG, fg=_FG, font=(font, 10, "bold")).pack(
@@ -63,6 +64,7 @@ class FolderEditorDialog:
             (t("btn.shortcut"), self._add_shortcut,    _ACC),
             (t("btn.app"),      self._add_app,          _ACC),
             (t("btn.url"),      self._add_url,          _ACC),
+            (t("btn.action"),   self._add_action,       _ACC),
             (t("btn.edit"),     self._edit,             "#404040"),
             (t("btn.del"),      self._delete,           _RED),
             (t("btn.up"),       lambda: self._move(-1), "#404040"),
@@ -100,6 +102,10 @@ class FolderEditorDialog:
                 self._lb.insert("end",
                     f"  🌐  {ch.get('label','')}   →   {ch.get('url','')}")
                 self._lb.itemconfigure(i, foreground="#4fc1ff")
+            elif ctype == "action":
+                self._lb.insert("end",
+                    f"  ⚡  {ch.get('label','')}   →   {ch.get('action','')}")
+                self._lb.itemconfigure(i, foreground="#dcdcaa")
             else:
                 self._lb.insert("end",
                     f"  ⌨  {ch.get('label','')}   →   {ch.get('keys','')}")
@@ -149,6 +155,19 @@ class FolderEditorDialog:
         config_service.save(data)
         self._refresh(); self._logic.reload()
 
+    def _add_action(self) -> None:
+        label = self._ask(t("dlg.add_action"), t("dlg.display_name"))
+        if not label:
+            return
+        action = ActionPickerDialog.ask(self._win)
+        if not action:
+            return
+        data = config_service.load()
+        data["default"][self._idx]["children"].append(
+            {"type": "action", "label": label, "action": action})
+        config_service.save(data)
+        self._refresh(); self._logic.reload()
+
     def _edit(self) -> None:
         idx = self._sel()
         if idx is None:
@@ -174,6 +193,10 @@ class FolderEditorDialog:
             if url is None:
                 return
             ch["url"] = url
+        elif ctype == "action":
+            action = ActionPickerDialog.ask(self._win, init=ch.get("action", ""))
+            if action:
+                ch["action"] = action
         else:
             keys = self._record_keys(init=ch.get("keys", ""))
             if keys is None:

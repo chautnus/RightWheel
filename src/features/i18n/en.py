@@ -67,6 +67,7 @@ STRINGS: dict[str, str] = {
     "btn.shortcut":                "➕ Shortcut",
     "btn.app":                     "🚀 App",
     "btn.url":                     "🌐 URL",
+    "btn.action":                  "⚡ Action",
     "btn.folder":                  "📁 Folder",
     "btn.edit":                    "✏  Edit",
     "btn.delete":                  "✕  Delete",
@@ -83,6 +84,9 @@ STRINGS: dict[str, str] = {
     "dlg.add_folder":              "Add Folder",
     "dlg.add_app":                 "Add App",
     "dlg.add_url":                 "Add URL",
+    "dlg.add_action":              "Add Action",
+    "dlg.edit_action":             "Edit Action",
+    "dlg.select_action":           "Select Action",
     "dlg.edit":                    "Edit",
     "dlg.edit_url":                "Edit URL",
     "dlg.display_name":            "Display name:",
@@ -92,6 +96,9 @@ STRINGS: dict[str, str] = {
     "dlg.url":                     "URL:",
     "dlg.url_hint":                "e.g.  https://example.com",
     "dlg.select_exe":              "Select executable",
+    "action.open_settings":        "⚙ App Settings",
+    "action.toggle_pause":         "⏸ Pause RightWheel",
+    "action.show_volume_slider":   "🔊 Volume Control",
 
     # Key recorder
     "recorder.title":              "Record Shortcut",
