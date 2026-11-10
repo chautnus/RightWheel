@@ -17,6 +17,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.18.2] — 2026-11-10
+
+### Added
+- **Key Recorder Click-Buttons (F-010)**: `key_recorder_dialog.py` now shows a row of click buttons — Ctrl/Shift/Alt/⊞ Win (toggle, highlight while "held") and ←/→/↑/↓ (click to finalize the combo using the currently toggled modifiers, then auto-reset). Fixes the case where physically pressing the Win key gets intercepted by Windows at the OS level (opens Start Menu / steals focus) before the dialog's own `<KeyPress>` binding ever sees it, making it impossible to record a Win-containing shortcut by pressing it directly. Physical key capture for normal keys (letters, numbers, F-keys, Enter, etc.) is unchanged. `ask(parent, init="") -> str | None` contract and the `_MOD_ORDER` string format are unchanged — no changes needed in either of the 2 consumers (`folder_editor_dialog.py`, `default_tab.py`).
+
+---
+
 ## [2.18.1] — 2026-11-10
 
 ### Fixed
