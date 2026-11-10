@@ -6,6 +6,7 @@ from typing import Callable
 
 from ..services import config_service
 from .ask_dialog import _AskDialog, _btn
+from .key_recorder_dialog import KeyRecorderDialog
 from features.i18n import t, ui_font
 
 _BG  = "#1e1e1e"
@@ -57,6 +58,7 @@ class GesturesTab(tk.Frame):
         bf = tk.Frame(body, bg=_BG)
         bf.pack(side="right", padx=(8, 0), anchor="n")
         _btn(bf, "Thêm", self._add, bg=_ACC).pack(fill="x", pady=2)
+        _btn(bf, "Sửa", self._edit, bg="#404040").pack(fill="x", pady=2)
         _btn(bf, "Bật/Tắt", self._toggle, bg="#404040").pack(fill="x", pady=2)
         _btn(bf, "Xoá", self._delete, bg=_RED).pack(fill="x", pady=2)
 
@@ -100,6 +102,26 @@ class GesturesTab(tk.Frame):
             if self._on_saved:
                 self._on_saved()
 
+    def _edit(self) -> None:
+        sel = self._lb.curselection()
+        if not sel:
+            return
+        idx = sel[0]
+        cfg = config_service.load()
+        gestures = cfg.get("gestures", [])
+        if not (0 <= idx < len(gestures)):
+            return
+
+        parent_win = self.winfo_toplevel()
+        keys = KeyRecorderDialog.ask(parent_win, init=gestures[idx].get("keys", ""))
+        if keys is not None:
+            gestures[idx]["keys"] = keys.strip().lower()
+            config_service.save(cfg)
+            self._load_items()
+            self._lb.selection_set(idx)
+            if self._on_saved:
+                self._on_saved()
+
     def _add(self) -> None:
         parent_win = self.winfo_toplevel()
         dirs_str = _AskDialog.ask(
@@ -115,13 +137,7 @@ class GesturesTab(tk.Frame):
         if not directions:
             return
 
-        keys = _AskDialog.ask(
-            parent_win,
-            "Phím tắt",
-            "Tổ hợp phím tắt cần gửi:",
-            init="ctrl+w",
-            hint="Ví dụ: ctrl+w, ctrl+t, alt+f4",
-        )
+        keys = KeyRecorderDialog.ask(parent_win)
         if not keys:
             return
 
