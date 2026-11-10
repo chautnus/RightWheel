@@ -17,6 +17,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.18.1] — 2026-11-10
+
+### Fixed
+- **Real volume control was silently non-functional since F-008**: `volume_service.py`'s `_CLSID_MMDeviceEnumerator` GUID had a missing byte in `Data4` (7 of 8 bytes), causing `CoCreateInstance` to always fail with `0x80040154` (`REGDB_E_CLASSNOTREG`) and `_get_endpoint_volume()` to always return `(None, None)`. Every read/write silently fell back to the 0.5 stub via a broad `try/except` — `py_compile` and line-count checks never caught it since nothing raised. Found only by actually calling `get_master_volume()`/`set_master_volume()` and observing the Windows volume never changed. Fixed by reading the real CLSID bytes from `HKCR\CLSID` directly; verified with a full round-trip (set 0.37 → get 0.37, mute toggle, restore original).
+
+---
+
 ## [2.18.0] — 2026-11-09
 
 ### Removed & Fixed
