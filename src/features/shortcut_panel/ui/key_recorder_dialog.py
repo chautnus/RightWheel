@@ -66,6 +66,28 @@ class KeyRecorderDialog(tk.Toplevel):
                                  width=22, pady=10)
         self._preview.pack(padx=28, pady=4)
 
+        bar = tk.Frame(self, bg=_BG)
+        bar.pack(pady=(4, 6))
+
+        self._mod_buttons: dict[str, tk.Button] = {}
+        for text, mod in (("Ctrl", "ctrl"), ("Shift", "shift"), ("Alt", "alt"), ("⊞ Win", "win")):
+            btn = tk.Button(
+                bar, text=text,
+                command=lambda m=mod: self._on_modifier_click(m),
+                bg=_BG2, fg=_FG, font=(font, 9),
+                relief="flat", cursor="hand2", padx=6, pady=2,
+            )
+            btn.pack(side="left", padx=2)
+            self._mod_buttons[mod] = btn
+
+        for text, key in (("←", "left"), ("→", "right"), ("↑", "up"), ("↓", "down")):
+            tk.Button(
+                bar, text=text,
+                command=lambda k=key: self._on_arrow_click(k),
+                bg=_BG2, fg=_FG, font=(font, 9),
+                relief="flat", cursor="hand2", padx=6, pady=2,
+            ).pack(side="left", padx=2)
+
         tk.Label(self, text=t("recorder.sub"),
                  bg=_BG, fg="#555", font=(font, 9)).pack(pady=(2, 8))
 
@@ -106,6 +128,26 @@ class KeyRecorderDialog(tk.Toplevel):
         if mod:
             self._held_mods.discard(mod)
         return "break"
+
+    # ── button clicks ─────────────────────────────────────────────────────
+
+    def _on_modifier_click(self, mod: str) -> None:
+        if mod in self._held_mods:
+            self._held_mods.discard(mod)
+            if mod in self._mod_buttons:
+                self._mod_buttons[mod].config(bg=_BG2)
+        else:
+            self._held_mods.add(mod)
+            if mod in self._mod_buttons:
+                self._mod_buttons[mod].config(bg=_ACC)
+
+    def _on_arrow_click(self, key: str) -> None:
+        mods = [m for m in _MOD_ORDER if m in self._held_mods]
+        self._combo = "+".join(mods + [key])
+        self._preview.config(text=self._combo)
+        self._held_mods.clear()
+        for btn in self._mod_buttons.values():
+            btn.config(bg=_BG2)
 
     # ── result ────────────────────────────────────────────────────────────
 
