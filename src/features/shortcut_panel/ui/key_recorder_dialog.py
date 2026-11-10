@@ -69,10 +69,15 @@ class KeyRecorderDialog(tk.Toplevel):
         bar = tk.Frame(self, bg=_BG)
         bar.pack(pady=(4, 6))
 
+        row1 = tk.Frame(bar, bg=_BG)
+        row1.pack(pady=1)
+        row2 = tk.Frame(bar, bg=_BG)
+        row2.pack(pady=1)
+
         self._mod_buttons: dict[str, tk.Button] = {}
         for text, mod in (("Ctrl", "ctrl"), ("Shift", "shift"), ("Alt", "alt"), ("⊞ Win", "win")):
             btn = tk.Button(
-                bar, text=text,
+                row1, text=text,
                 command=lambda m=mod: self._on_modifier_click(m),
                 bg=_BG2, fg=_FG, font=(font, 9),
                 relief="flat", cursor="hand2", padx=6, pady=2,
@@ -82,7 +87,15 @@ class KeyRecorderDialog(tk.Toplevel):
 
         for text, key in (("←", "left"), ("→", "right"), ("↑", "up"), ("↓", "down")):
             tk.Button(
-                bar, text=text,
+                row2, text=text,
+                command=lambda k=key: self._on_arrow_click(k),
+                bg=_BG2, fg=_FG, font=(font, 9),
+                relief="flat", cursor="hand2", padx=6, pady=2,
+            ).pack(side="left", padx=2)
+
+        for text, key in (("Home", "home"), ("End", "end"), ("PgUp", "pgup"), ("PgDn", "pgdn")):
+            tk.Button(
+                row2, text=text,
                 command=lambda k=key: self._on_arrow_click(k),
                 bg=_BG2, fg=_FG, font=(font, 9),
                 relief="flat", cursor="hand2", padx=6, pady=2,
