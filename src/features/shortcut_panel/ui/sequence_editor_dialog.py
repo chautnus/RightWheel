@@ -5,6 +5,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog
 from typing import Callable
 
+from .ask_dialog import _AskDialog
+from .key_recorder_dialog import KeyRecorderDialog
+
 _BG = "#1e1e24"
 _FG = "#ffffff"
 _FG_MUTED = "#858590"
@@ -125,7 +128,7 @@ class SequenceEditorDialog(tk.Toplevel):
             return
         self._dialog_open = True
         try:
-            keys = simpledialog.askstring("Add Shortcut Step", "Keys (e.g. ctrl+c, alt+tab):", parent=self)
+            keys = KeyRecorderDialog.ask(self)
             if keys and keys.strip():
                 delay = self._ask_delay()
                 self._steps.append({"type": "shortcut", "keys": keys.strip(), "delay_ms": delay})
@@ -142,7 +145,7 @@ class SequenceEditorDialog(tk.Toplevel):
                 title="Select App", filetypes=[("Executables", "*.exe"), ("All", "*.*")], parent=self
             )
             if path:
-                args = simpledialog.askstring("App Args", "Optional arguments:", parent=self) or ""
+                args = _AskDialog.ask(self, "App Args", "Optional arguments:") or ""
                 delay = self._ask_delay()
                 self._steps.append({"type": "app", "path": path, "args": args.strip(), "delay_ms": delay})
                 self._refresh_list()
@@ -154,7 +157,7 @@ class SequenceEditorDialog(tk.Toplevel):
             return
         self._dialog_open = True
         try:
-            url = simpledialog.askstring("Add Web Step", "URL (e.g. https://google.com):", parent=self)
+            url = _AskDialog.ask(self, "Add Web Step", "URL (e.g. https://google.com):")
             if url and url.strip():
                 delay = self._ask_delay()
                 self._steps.append({"type": "url", "url": url.strip(), "delay_ms": delay})
@@ -167,7 +170,7 @@ class SequenceEditorDialog(tk.Toplevel):
             return
         self._dialog_open = True
         try:
-            cmd = simpledialog.askstring("Add Script Step", "Command (e.g. echo hello):", parent=self)
+            cmd = _AskDialog.ask(self, "Add Script Step", "Command (e.g. echo hello):")
             if cmd and cmd.strip():
                 delay = self._ask_delay()
                 self._steps.append({"type": "command", "cmd": cmd.strip(), "cwd": "", "delay_ms": delay})
