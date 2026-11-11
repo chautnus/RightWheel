@@ -17,6 +17,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.20.1] — 2026-11-11
+
+### Fixed
+- **Renaming a Sequence item did nothing, and editing an existing Sequence's steps silently didn't save**: `DefaultTab`'s Edit flow for `type: "sequence"` never asked for a new label, and `_save_edited_sequence()` re-`config_service.load()`ed from disk and saved *that* fresh copy — discarding the in-memory edit entirely, with no error. Fixed: renaming now saves immediately (independent of the steps dialog), and the steps-save path reloads + mutates by index instead of holding a stale reference.
+
+### Added
+- **"Web (Clip)" step for Sequence**: a 5th step type for the Sequence feature (F-014) — reads the *actual* clipboard text at run time via raw Win32 (`OpenClipboard`/`GetClipboardData(CF_UNICODETEXT)`, no Tkinter dependency so it's safe to call from the background execution thread), URL-encodes it, substitutes it into a `{text}` placeholder in a URL template you type yourself (e.g. `https://chatgpt.com/?q={text}`), and opens the result. Lets you build a sequence like Ctrl+C → Web (Clip) to ask an AI chat about whatever you just selected — note there's no official documentation confirming any given AI site's URL actually pre-fills a prompt this way, so this is a general mechanism you test per-service, not a guaranteed integration.
+
+---
+
 ## [2.20.0] — 2026-11-11
 
 ### Added
