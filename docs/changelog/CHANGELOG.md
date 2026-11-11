@@ -17,6 +17,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.20.2] — 2026-11-11
+
+### Fixed
+- **Running a Sequence right after editing one in Settings could hang the whole app**: `PanelLogic.select_current()` called `SetForegroundWindow(self._prev_hwnd)` unconditionally before firing a Shortcut/Sequence's keystrokes. If the panel had been opened while a RightWheel window (e.g. Settings) was itself in the foreground — the exact situation right after closing the Sequence Editor — this brought RightWheel's *own* UI back to front and then injected the sequence's keys (e.g. Ctrl+V, Enter) into its own Tkinter interface, causing internal event conflicts severe enough to freeze the app (confirmed via debug1/debug2 — Tkinter window destruction itself only takes ~1.5ms, so the real cause was this self-targeting, not a destroy-timing race). Fixed with a PID check: `SetForegroundWindow` is now skipped whenever `_prev_hwnd` belongs to RightWheel's own process. Also synced `SequenceItem`'s firing delay from 100ms to 250ms to match `ShortcutItem`'s established margin for the OS to release modifier/physical key state.
+
+---
+
 ## [2.20.1] — 2026-11-11
 
 ### Fixed
