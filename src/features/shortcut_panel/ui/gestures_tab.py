@@ -22,6 +22,7 @@ class GesturesTab(tk.Frame):
     def __init__(self, parent: tk.Widget, on_saved: Callable | None = None) -> None:
         super().__init__(parent, bg=_BG)
         self._on_saved = on_saved
+        self._dialog_open = False
         self._build()
 
     def _build(self) -> None:
@@ -103,6 +104,8 @@ class GesturesTab(tk.Frame):
                 self._on_saved()
 
     def _edit(self) -> None:
+        if self._dialog_open:
+            return
         sel = self._lb.curselection()
         if not sel:
             return
@@ -112,45 +115,55 @@ class GesturesTab(tk.Frame):
         if not (0 <= idx < len(gestures)):
             return
 
-        parent_win = self.winfo_toplevel()
-        keys = KeyRecorderDialog.ask(parent_win, init=gestures[idx].get("keys", ""))
-        if keys is not None:
-            gestures[idx]["keys"] = keys.strip().lower()
-            config_service.save(cfg)
-            self._load_items()
-            self._lb.selection_set(idx)
-            if self._on_saved:
-                self._on_saved()
+        self._dialog_open = True
+        try:
+            parent_win = self.winfo_toplevel()
+            keys = KeyRecorderDialog.ask(parent_win, init=gestures[idx].get("keys", ""))
+            if keys is not None:
+                gestures[idx]["keys"] = keys.strip().lower()
+                config_service.save(cfg)
+                self._load_items()
+                self._lb.selection_set(idx)
+                if self._on_saved:
+                    self._on_saved()
+        finally:
+            self._dialog_open = False
 
     def _add(self) -> None:
-        parent_win = self.winfo_toplevel()
-        dirs_str = _AskDialog.ask(
-            parent_win,
-            "Thêm cử chỉ",
-            "Các hướng di chuyển (cách nhau bởi dấu phẩy):",
-            init="D,R",
-            hint="Các hướng: U, D, L, R, UR, DR, DL, UL",
-        )
-        if not dirs_str:
+        if self._dialog_open:
             return
-        directions = [d.strip().upper() for d in dirs_str.split(",") if d.strip()]
-        if not directions:
-            return
+        self._dialog_open = True
+        try:
+            parent_win = self.winfo_toplevel()
+            dirs_str = _AskDialog.ask(
+                parent_win,
+                "Thêm cử chỉ",
+                "Các hướng di chuyển (cách nhau bởi dấu phẩy):",
+                init="D,R",
+                hint="Các hướng: U, D, L, R, UR, DR, DL, UL",
+            )
+            if not dirs_str:
+                return
+            directions = [d.strip().upper() for d in dirs_str.split(",") if d.strip()]
+            if not directions:
+                return
 
-        keys = KeyRecorderDialog.ask(parent_win)
-        if not keys:
-            return
+            keys = KeyRecorderDialog.ask(parent_win)
+            if not keys:
+                return
 
-        cfg = config_service.load()
-        gestures = cfg.get("gestures", [])
-        gestures.append({
-            "directions": directions,
-            "keys": keys.strip().lower(),
-            "enabled": True,
-        })
-        cfg["gestures"] = gestures
-        config_service.save(cfg)
-        self._load_items()
-        self._lb.selection_set("end")
-        if self._on_saved:
-            self._on_saved()
+            cfg = config_service.load()
+            gestures = cfg.get("gestures", [])
+            gestures.append({
+                "directions": directions,
+                "keys": keys.strip().lower(),
+                "enabled": True,
+            })
+            cfg["gestures"] = gestures
+            config_service.save(cfg)
+            self._load_items()
+            self._lb.selection_set("end")
+            if self._on_saved:
+                self._on_saved()
+        finally:
+            self._dialog_open = False

@@ -47,6 +47,14 @@ class SettingsWindow:
 
     def _save(self) -> None:
         if self._win and self._win.winfo_exists():
+            # Destroy any open child Toplevel dialogs before withdrawing parent
+            # to avoid orphan wait_window deadlocks.
+            try:
+                for child in self._win.winfo_children():
+                    if isinstance(child, tk.Toplevel) and child.winfo_exists():
+                        child.destroy()
+            except Exception:
+                pass
             self._win.withdraw()
 
     def _build(self) -> None:

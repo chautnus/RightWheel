@@ -10,6 +10,7 @@ from .panel_item_renderer import PanelItemRenderer
 if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
     from .volume_overlay import VolumeOverlay
+    from .settings_window import SettingsWindow
 
 _W = 264
 _BG = "#121214"
@@ -30,6 +31,7 @@ class PanelWindow:
         self._volume_overlay: VolumeOverlay | None = None
         self._volume_widget: PanelVolumeWidget | None = None
         self._item_renderer: PanelItemRenderer | None = None
+        self._settings_window: SettingsWindow | None = None
 
         logic.on_show = lambda: self._q.put("show")
         logic.on_hide = lambda: self._q.put("hide")
@@ -125,8 +127,19 @@ class PanelWindow:
             self._render()
 
     def _do_settings(self) -> None:
+        if (
+            self._settings_window is not None
+            and self._settings_window._win is not None
+            and self._settings_window._win.winfo_exists()
+        ):
+            self._settings_window._win.deiconify()
+            self._settings_window._win.lift()
+            self._settings_window._win.focus_force()
+            return
+
         from .settings_window import SettingsWindow
-        SettingsWindow(self._root, self._logic).show()
+        self._settings_window = SettingsWindow(self._root, self._logic)
+        self._settings_window.show()
 
     def _do_volume(self) -> None:
         if not self._volume_overlay:
