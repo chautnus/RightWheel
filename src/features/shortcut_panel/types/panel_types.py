@@ -60,7 +60,14 @@ class FolderItem:
     type:     str  = "folder"
 
 
-MenuItem = Union[ShortcutItem, AppItem, UrlItem, ActionItem, CommandItem, FolderItem]
+@dataclass
+class SequenceItem:
+    label: str
+    steps: list[dict] = field(default_factory=list)
+    type:  str = "sequence"
+
+
+MenuItem = Union[ShortcutItem, AppItem, UrlItem, ActionItem, CommandItem, FolderItem, SequenceItem]
 
 
 @dataclass

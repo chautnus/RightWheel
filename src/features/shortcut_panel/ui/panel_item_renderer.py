@@ -28,6 +28,7 @@ _TYPE_LABEL = {
     "action": "System",
     "shortcut": "Keys",
     "command": "Script",
+    "sequence": "Sequence",
 }
 
 # Regex matching Unicode emoticons and pictographs

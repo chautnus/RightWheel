@@ -107,6 +107,18 @@ class _DefaultTabCRUDMixin:
             return
         if itype == "action":
             return  # built-in actions are not editable
+        if itype == "sequence":
+            self._dialog_open = True
+            try:
+                from .sequence_editor_dialog import SequenceEditorDialog
+                SequenceEditorDialog(
+                    self.winfo_toplevel(),
+                    init_steps=item.get("steps", []),
+                    on_saved=lambda new_steps: self._save_edited_sequence(item, new_steps),
+                )
+            finally:
+                self._dialog_open = False
+            return
         self._dialog_open = True
         try:
             label = self._ask(t("dlg.edit"), t("dlg.display_name"),
@@ -166,6 +178,36 @@ class _DefaultTabCRUDMixin:
             self._refresh(); self._logic.reload()
         finally:
             self._dialog_open = False
+
+    def _add_sequence(self) -> None:
+        if self._dialog_open:
+            return
+        self._dialog_open = True
+        try:
+            label = self._ask("Add Sequence", "Display name")
+            if not label:
+                return
+            from .sequence_editor_dialog import SequenceEditorDialog
+            SequenceEditorDialog(
+                self.winfo_toplevel(),
+                on_saved=lambda steps: self._save_new_sequence(label, steps),
+            )
+        finally:
+            self._dialog_open = False
+
+    def _save_new_sequence(self, label: str, steps: list[dict]) -> None:
+        data = config_service.load()
+        data.setdefault("default", []).append({"type": "sequence", "label": label, "steps": steps})
+        config_service.save(data)
+        self._refresh()
+        self._logic.reload()
+
+    def _save_edited_sequence(self, item: dict, steps: list[dict]) -> None:
+        item["steps"] = steps
+        data = config_service.load()
+        config_service.save(data)
+        self._refresh()
+        self._logic.reload()
 
     def _import(self) -> None:
         if self._dialog_open:

@@ -4,6 +4,7 @@ import ctypes.wintypes as wt
 import logging
 import os
 import subprocess
+import time
 import webbrowser
 
 _log = logging.getLogger("mousehotkey")
@@ -157,3 +158,35 @@ def execute_url(url: str) -> None:
         _log.debug(f"execute_url()  url={url!r}")
     except Exception as exc:
         _log.warning(f"execute_url() failed: {exc}")
+
+
+def execute_sequence(steps: list[dict]) -> None:
+    """Execute a list of steps sequentially. Errors in a step log a warning and continue."""
+    for i, step in enumerate(steps):
+        if not isinstance(step, dict):
+            continue
+        stype = step.get("type", "shortcut")
+        delay_raw = step.get("delay_ms", 100)
+        try:
+            delay_ms = int(delay_raw)
+            if delay_ms < 0:
+                delay_ms = 100
+        except (ValueError, TypeError):
+            delay_ms = 100
+
+        try:
+            if stype == "shortcut":
+                execute(step.get("keys", ""))
+            elif stype == "app":
+                execute_app(step.get("path", ""), step.get("args", ""))
+            elif stype == "url":
+                execute_url(step.get("url", ""))
+            elif stype == "command":
+                execute_command(step.get("cmd", ""), step.get("cwd", ""))
+            else:
+                _log.warning(f"execute_sequence() unknown step type at {i}: {stype!r}")
+        except Exception as exc:
+            _log.warning(f"execute_sequence() step {i} ({stype}) failed: {exc}")
+
+        if delay_ms > 0:
+            time.sleep(delay_ms / 1000.0)

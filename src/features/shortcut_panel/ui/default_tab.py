@@ -54,6 +54,7 @@ class DefaultTab(tk.Frame, _DefaultTabCRUDMixin):
             (t("btn.url"),      self._add_url,          _ACC),
             (t("btn.folder"),   self._add_folder,       _ACC),
             ("▶ Command",       self._add_command,      "#6a5acd"),
+            ("⛓ Sequence",      self._add_sequence,     _ACC),
             (t("btn.edit"),     self._edit,             "#404040"),
             (t("btn.delete"),   self._delete,           _RED),
             (t("btn.up"),       lambda: self._move(-1), "#404040"),
@@ -94,6 +95,10 @@ class DefaultTab(tk.Frame, _DefaultTabCRUDMixin):
             elif t == "command":
                 self._lb.insert("end", f"  ▶  {it['label']}   →   {it.get('cmd','')}")
                 self._lb.itemconfigure(i, foreground="#ce9178")
+            elif t == "sequence":
+                n_steps = len(it.get("steps", []))
+                self._lb.insert("end", f"  ⛓  {it['label']}  ({n_steps} steps)")
+                self._lb.itemconfigure(i, foreground="#d7ba7d")
             elif t == "action":
                 self._lb.insert("end", f"  ⚡  {it['label']}")
                 self._lb.itemconfigure(i, foreground="#dcdcaa")

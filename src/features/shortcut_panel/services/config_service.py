@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from ..types.panel_types import (
-    ActionItem, AppItem, CommandItem, FolderItem, MenuItem, ShortcutItem, UrlItem,
+    ActionItem, AppItem, CommandItem, FolderItem, MenuItem, SequenceItem, ShortcutItem, UrlItem,
 )
 
 CONFIG_DIR  = Path(os.environ.get("APPDATA", ".")) / "RightWheel"
@@ -158,6 +158,11 @@ def parse_items(raw: list) -> list[MenuItem]:
                 cmd=entry.get("cmd", ""),
                 cwd=entry.get("cwd", ""),
             ))
+        elif t == "sequence":
+            result.append(SequenceItem(
+                label=entry.get("label", "Sequence"),
+                steps=entry.get("steps", []),
+            ))
         else:
             result.append(ShortcutItem(
                 label=entry.get("label", "Item"),
@@ -180,6 +185,12 @@ def items_to_raw(items: list[MenuItem]) -> list[dict]:
         elif item.type == "action":
             out.append({"type": "action", "label": item.label,
                         "action": item.action})
+        elif item.type == "command":
+            out.append({"type": "command", "label": item.label,
+                        "cmd": item.cmd, "cwd": getattr(item, "cwd", "")})
+        elif item.type == "sequence":
+            out.append({"type": "sequence", "label": item.label,
+                        "steps": getattr(item, "steps", [])})
         else:
             out.append({"type": "shortcut", "label": item.label,
                         "keys": item.keys})

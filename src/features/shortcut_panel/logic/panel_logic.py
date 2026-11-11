@@ -19,8 +19,7 @@ else:
 
 from ..services import config_service, shortcut_executor, window_service
 from ..types.panel_types import (
-
-    ActionItem, AppItem, CommandItem, FolderItem, MenuItem, NavState, ShortcutItem, UrlItem,
+    ActionItem, AppItem, CommandItem, FolderItem, MenuItem, NavState, SequenceItem, ShortcutItem, UrlItem,
 )
 
 
@@ -127,6 +126,9 @@ class PanelLogic:
         elif isinstance(item, CommandItem):
             threading.Timer(0.1, shortcut_executor.execute_command,
                             args=[item.cmd, item.cwd]).start()
+        elif isinstance(item, SequenceItem):
+            threading.Timer(0.1, shortcut_executor.execute_sequence,
+                            args=[item.steps]).start()
 
     def _handle_action(self, action: str) -> None:
         self.hide()
