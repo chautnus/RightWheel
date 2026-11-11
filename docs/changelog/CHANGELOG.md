@@ -17,6 +17,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.20.0] — 2026-11-11
+
+### Added
+- **Sequence item type — multi-step shortcuts (F-014)**: a new "Sequence" shortcut kind lets you chain several existing step types — Shortcut, App, URL, Script — into one action, each step with its own configurable delay before the next. Use it for things like "copy, then open Claude to ask about what's on the clipboard." Added `SequenceItem(label, steps, type="sequence")` to `panel_types.py`; `execute_sequence(steps)` in `shortcut_executor.py` dispatches each step to the right existing `execute_*()` and sleeps `delay_ms` between steps (a step failing — e.g. a missing app path — logs a warning and the rest of the sequence still runs). New `sequence_editor_dialog.py` builds the step list (+Keys via `KeyRecorderDialog`, +App/+Web/+Script via the existing `_AskDialog`/file picker, with Delete/▲/▼ reordering); wired into the Default tab's "Sequence" button and its Edit flow. Covered by `tests/test_sequence_integration.py` (serialization round-trip, step timing, and error-resilience).
+
+---
+
 ## [2.19.0] — 2026-11-11
 
 ### Removed
