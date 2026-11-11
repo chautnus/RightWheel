@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import ctypes
+import ctypes.wintypes as wt
 import logging
+import os
 import threading
 import time
 from typing import Callable
@@ -112,7 +114,12 @@ class PanelLogic:
         hwnd = self._prev_hwnd
         _log.debug(f"select_current()  type={item.type}  hwnd={hwnd:#010x}")
         if hwnd:
-            ctypes.windll.user32.SetForegroundWindow(hwnd)
+            pid = wt.DWORD(0)
+            ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if pid.value != os.getpid():
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+            else:
+                _log.debug("select_current()  hwnd belongs to own process — skip SetForegroundWindow (avoid self-inflicted keystroke)")
         self.hide()
 
         if isinstance(item, ShortcutItem):
@@ -127,7 +134,7 @@ class PanelLogic:
             threading.Timer(0.1, shortcut_executor.execute_command,
                             args=[item.cmd, item.cwd]).start()
         elif isinstance(item, SequenceItem):
-            threading.Timer(0.1, shortcut_executor.execute_sequence,
+            threading.Timer(0.25, shortcut_executor.execute_sequence,
                             args=[item.steps]).start()
 
     def _handle_action(self, action: str) -> None:
