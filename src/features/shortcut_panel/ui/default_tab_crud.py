@@ -110,11 +110,16 @@ class _DefaultTabCRUDMixin:
         if itype == "sequence":
             self._dialog_open = True
             try:
+                new_label = self._ask(t("dlg.edit"), t("dlg.display_name"), init=item.get("label", ""))
+                if new_label is not None:
+                    item["label"] = new_label
+                    config_service.save(data)
+                    self._refresh()
                 from .sequence_editor_dialog import SequenceEditorDialog
                 SequenceEditorDialog(
                     self.winfo_toplevel(),
                     init_steps=item.get("steps", []),
-                    on_saved=lambda new_steps: self._save_edited_sequence(item, new_steps),
+                    on_saved=lambda new_steps, i=idx: self._save_edited_sequence(i, new_steps),
                 )
             finally:
                 self._dialog_open = False
@@ -202,9 +207,11 @@ class _DefaultTabCRUDMixin:
         self._refresh()
         self._logic.reload()
 
-    def _save_edited_sequence(self, item: dict, steps: list[dict]) -> None:
-        item["steps"] = steps
+    def _save_edited_sequence(self, idx: int, steps: list[dict]) -> None:
         data = config_service.load()
+        items = data.get("default", [])
+        if 0 <= idx < len(items):
+            items[idx]["steps"] = steps
         config_service.save(data)
         self._refresh()
         self._logic.reload()
