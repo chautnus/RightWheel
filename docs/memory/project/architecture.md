@@ -6,7 +6,7 @@ tags: [architecture, ctypes, hook, state-machine, tkinter, feature-sliced]
 keywords: [WH_MOUSE_LL, INJECTED_MARKER, wants_moves, state-machine, panel, tray]
 status: active
 created: 2026-04-30
-updated: 2026-05-07
+updated: 2026-11-11
 summary: "Core architectural decisions for the ctypes mouse hook, state machine, and UI threading model."
 ---
 
@@ -26,12 +26,18 @@ src/features/
 └── shortcut_panel/
     ├── logic/         panel_logic.py
     ├── services/      config_service.py, shortcut_executor.py,
-    │                  window_service.py, startup_service.py
-    ├── types/         panel_types.py
-    └── ui/            panel_window.py, settings_window.py,
-                       profile_editor.py, folder_editor_dialog.py,
+    │                  window_service.py, startup_service.py,
+    │                  import_service.py
+    ├── types/         panel_types.py (6 MenuItem variants incl. SequenceItem)
+    └── ui/            panel_window.py (state-snapshot diffing), panel_item_renderer.py,
+                       settings_window.py, default_tab.py + default_tab_crud.py (mixin),
+                       general_tab.py, profile_editor.py, folder_editor_dialog.py,
+                       gestures_tab.py, reference_tab.py + reference_shortcuts_data.py,
+                       sequence_editor_dialog.py, key_recorder_dialog.py,
+                       action_picker_dialog.py, ask_dialog.py, import_dialog.py,
                        welcome_window.py
 ```
+(Volume subsystem — `volume_service.py`/`panel_volume_widget.py`/`volume_overlay.py`/`general_volume_tab.py` — removed entirely in F-013.)
 
 ### Why ctypes WH_MOUSE_LL (not pynput)
 pynput cannot suppress individual mouse events per-event — it either suppresses all or none. WH_MOUSE_LL via ctypes gives us `CallNextHookEx` vs return non-zero control per event.
@@ -70,11 +76,12 @@ Panel dùng `overrideredirect(True)` để frameless. Hệ quả: Windows **khô
 
 **Pattern bắt buộc khi thực thi shortcut:**
 1. `show()` (hook thread): gọi `GetForegroundWindow()` → lưu `_prev_hwnd` trước khi panel steal focus
-2. `select_current()` (tkinter thread): gọi `SetForegroundWindow(_prev_hwnd)` **trước** `hide()` — lúc này panel vẫn focused, process vẫn là foreground, Windows chấp nhận
-3. `hide()` → panel bị destroy
-4. `Timer(0.25, execute)` → đợi focus transition xong rồi `SendInput`
+2. `select_current()` (tkinter thread): **PID-guard trước** — `GetWindowThreadProcessId(_prev_hwnd, ...)`, nếu PID trùng `os.getpid()` thì BỎ QUA bước 3 hoàn toàn (xem "Self-Inflicted Keystroke" trong bug_fixes.md — nếu `_prev_hwnd` vô tình là 1 cửa sổ của chính RightWheel, ví dụ Settings vừa mở, gọi SetForegroundWindow+SendInput sẽ tự bắn phím vào chính UI của mình, gây deadlock treo cứng app).
+3. Nếu PID khác: gọi `SetForegroundWindow(_prev_hwnd)` **trước** `hide()` — lúc này panel vẫn focused, process vẫn là foreground, Windows chấp nhận
+4. `hide()` → panel bị destroy
+5. `Timer(0.25, execute)` → đợi focus transition xong rồi `SendInput` (0.25s là khoảng đệm cho OS nhả modifier/phím vật lý đang giữ — KHÔNG phải thời gian chờ Tkinter destroy xong, đo thực tế `destroy()` chỉ mất ~1.5ms)
 
-**Rule:** `SetForegroundWindow` chỉ được chấp nhận từ foreground process. Gọi sau khi window bị destroy → silently fail.
+**Rule:** `SetForegroundWindow` chỉ được chấp nhận từ foreground process. Gọi sau khi window bị destroy → silently fail. **Mọi hwnd lưu lại để dùng sau (không phải lấy trực tiếp lúc gọi) PHẢI được PID-guard trước khi SetForegroundWindow/SendInput** — đây là pattern bắt buộc, không phải optional, đã gây hang 2 lần độc lập (app-hang-suddenly-closes, sequence-paste-enter-hang).
 
 ### Quy tắc tkinter: Chỉ Một tk.Tk() Duy Nhất (v2.5)
 

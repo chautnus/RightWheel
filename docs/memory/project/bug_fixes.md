@@ -6,8 +6,8 @@ tags: [bugs, ctypes, hook, alt-tab, context-menu]
 keywords: [ghost-right-up, suppress, INJECTED_MARKER, freeze, hook-timeout]
 status: active
 created: 2026-04-30
-updated: 2026-11-09
-summary: "Root causes and fixes for all critical bugs found during v1→v2.15 development (including PyInstaller restart DLL & hook hang recovery)."
+updated: 2026-11-11
+summary: "Root causes and fixes for all critical bugs found during v1→v2.20 development (including PyInstaller restart DLL, hook hang recovery, self-inflicted keystroke into own window)."
 ---
 
 ## Critical Bugs and Fixes
@@ -232,3 +232,15 @@ threading.Timer(0.25, shortcut_executor.execute, args=[keys]).start()
 **Symptom:** `TypeError: return value should be a 'c_long' object` in hook proc.
 **Root cause:** Hook proc returned `ctypes.c_long(value)` object — ctypes expected a plain Python int when `restype = ctypes.c_long`.
 **Fix:** Return plain `int` values (0 or 1) from hook proc.
+
+### Self-Inflicted Keystroke Into Own Window (recurring bug class — seen 2x: `app-hang-suddenly-closes`, `sequence-paste-enter-hang`)
+**Symptom:** App hangs/freezes hard (Windows "Application Hang", `AppHangXProcB1`, `Sig[5]=RightWheel.exe`) right after using a feature that fires `SendInput` keystrokes (Shortcut/Sequence execution), specifically when the user had just been interacting with a RightWheel window (Settings, a dialog) immediately before.
+**Root cause:** Any code path that calls `SetForegroundWindow(hwnd)` then `SendInput(...)` using a stored `hwnd` (e.g. `PanelLogic._prev_hwnd`, captured via `GetForegroundWindow()` when the panel opened) can end up targeting **RightWheel's own window** if that window was itself foreground at capture time. This brings the app's own UI back to front and then injects the synthetic keystrokes into its own Tkinter interface, causing internal event-loop conflicts severe enough to deadlock the whole process. Two independent debug1→debug2 cycles converged on this exact mechanism from different trigger features.
+**Fix pattern:** before any `SetForegroundWindow(hwnd)`/keystroke-injection call that uses a *captured* hwnd (not necessarily user-chosen at that instant), compare its owning PID against `os.getpid()` via `GetWindowThreadProcessId(hwnd, ...)` and skip the self-targeting call entirely if they match:
+```python
+pid = wt.DWORD(0)
+ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+if pid.value != os.getpid():
+    ctypes.windll.user32.SetForegroundWindow(hwnd)
+```
+**How to apply:** this is the SAME guard pattern already used in `window_service.get_hwnd_info()` to skip `GetWindowTextW` for same-process hwnds (see restart-dll-gesture-dead fix). **Any new feature that stores an hwnd and later calls `SetForegroundWindow`/injects input against it must apply this guard** — it is not a one-off fix, it's a required pattern for this codebase. Also don't assume a "safe" fixed delay number from one context (e.g. the 250ms in `ShortcutItem`'s timer) transfers its *reasoning* to a new context without re-verifying — debug2 measured Tkinter `destroy()` at ~1.5ms and disproved the "250ms lets the window finish closing" theory; the real reason for that number is "let the OS release held modifier/physical keys," which is a different justification that happened to still apply.
