@@ -1,13 +1,15 @@
 # Verification Record
 
 status: verified
-feature: f010-raycast-command-palette
+feature: f011-cursor-click-emoji-cleanup
 verified_at: 2026-11-11
 
 ## Completed Checklist
-- [x] 1. Python syntax check passes on `panel_volume_widget.py`, `panel_item_renderer.py`, and `panel_window.py`.
-- [x] 2. `PanelWindow` preserves `open_settings()`, `open_volume_slider()`, `_root`, `on_show`, `on_hide`, `on_update`.
-- [x] 3. Item selection via mouse click and keys (0-9, Up/Down, Enter, Esc) works properly.
-- [x] 4. Inline volume slider correctly reads Windows master volume and responds to wheel and drag events.
-- [x] 5. All modified/new files are strictly <= 250 lines (SYSTEM LOCK).
-- [x] 6. Build succeeds and produces `dist/RightWheel.exe`.
+- [x] 1. Python static syntax validation passes on all modified files (`py_compile`).
+- [x] 2. Window opens precisely at the cursor location `(px - 10, py - 10)` with screen-edge clamping.
+- [x] 3. Left click on any item activates the item and restores target foreground window without getting swallowed by overlay.
+- [x] 4. Left click / drag on volume slider smoothly updates Windows master volume without closing the panel.
+- [x] 5. Click outside panel hits `self._overlay` and closes panel cleanly.
+- [x] 6. Zero emoticons/emojis displayed across shortcut panel items, volume widget, breadcrumbs, footer, and settings sidebar.
+- [x] 7. All modified files strictly ≤ 250 lines (SYSTEM LOCK).
+- [x] 8. PyInstaller build check passes and generates updated `dist/RightWheel.exe`.

@@ -17,6 +17,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.18.5] — 2026-11-11
+
+### Fixed & Cleaned
+- **Fix Cursor Position, Left Click Z-Order & Remove Emoticons (F-011)**:
+  - **Sửa vị trí mở panel**: Menu nổi mở trực tiếp tại vị trí con trỏ chuột `(px - 10, py - 10)` kèm cơ chế giới hạn biên màn hình, chấm dứt hiện tượng cửa sổ bị nhảy lên đỉnh màn hình.
+  - **Khắc phục nút chuột trái (Left Click)**: Sửa lỗi cú pháp `pady` trong separator của `panel_item_renderer.py` và gọi `self._win.lift(self._overlay)` tường minh, đảm bảo sự kiện chuột trái click chọn item và kéo volume hoạt động trơn tru.
+  - **Loại bỏ triệt để Emoticon**: Xóa toàn bộ icon emoji (`📁`, `🚀`, `🌐`, `⚡`, `⌨`, `💻`, `🔊`, `⚙`, `◈`,...) trong menu shortcut, widget volume, footer, màn hình welcome và sidebar cài đặt (`settings_window.py`). Bổ sung hàm `_strip_emojis` tự động loại bỏ emoji trong các file cấu hình cũ.
+
+---
+
 ## [2.18.4] — 2026-11-11
 
 ### Added

@@ -63,8 +63,8 @@ def show_welcome(root: tk.Tk) -> None:
         icon_lbl._icon_img = _icon_img        # pin reference on widget
         icon_lbl.pack(pady=(18, 4))
     except Exception:
-        tk.Label(top, text="🖱", bg=_TOP,
-                 font=("Segoe UI Emoji", 36)).pack(pady=(22, 4))
+        tk.Label(top, text="RightWheel", bg=_TOP, fg="#111111",
+                 font=(font, 16, "bold")).pack(pady=(22, 4))
     tk.Label(top, text=t("app.name"), bg=_TOP, fg="#111111",
              font=(font, 20, "bold")).pack()
     tk.Label(top, text=t("app.tagline"),
@@ -82,8 +82,8 @@ def show_welcome(root: tk.Tk) -> None:
     for icon, trig_key, desc_key in _FEATURE_KEYS:
         row = tk.Frame(card, bg=_BG2)
         row.pack(fill="x", padx=14, pady=4)
-        tk.Label(row, text=icon, bg=_BG2, fg="white",
-                 font=("Segoe UI Emoji", 11), width=3).pack(side="left")
+        tk.Label(row, text="•", bg=_BG2, fg=_ACC,
+                 font=(font, 10, "bold"), width=3).pack(side="left")
         tk.Label(row, text=t(trig_key), bg=_BG2, fg=_ACC,
                  font=(font, 10, "bold"), width=22,
                  anchor="w").pack(side="left")

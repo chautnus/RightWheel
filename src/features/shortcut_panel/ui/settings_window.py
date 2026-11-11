@@ -72,14 +72,14 @@ class SettingsWindow:
 
         tk.Frame(sb, bg=_BORDER, height=1).pack(fill="x", padx=12, pady=(0, 10))
 
-        # Navigation items
+        # Navigation items (clean text, no emoticons)
         nav_items = [
-            ("general",   "⚙  General & Volume"),
-            ("default",   "⌨  " + t("settings.tab.default")),
-            ("profiles",  "◈  " + t("settings.tab.profiles")),
-            ("gestures",  "🖱  " + t("tray.gestures")),
-            ("reference", "📖  Reference"),
-            ("license",   "🔑  " + t("settings.tab.license")),
+            ("general",   "General & Volume"),
+            ("default",   t("settings.tab.default")),
+            ("profiles",  t("settings.tab.profiles")),
+            ("gestures",  t("tray.gestures")),
+            ("reference", "Reference"),
+            ("license",   t("settings.tab.license")),
         ]
 
         self._nav_btns.clear()
@@ -92,10 +92,10 @@ class SettingsWindow:
             btn.pack(fill="x", padx=8, pady=2)
             self._nav_btns[tab_id] = btn
 
-        # Bottom Save button in sidebar
+        # Bottom Save button in sidebar (clean text, no emoticon)
         bot_sb = tk.Frame(sb, bg=_BG_SIDEBAR)
         bot_sb.pack(side="bottom", fill="x", padx=12, pady=16)
-        _btn(bot_sb, "✓ " + t("settings.save_close"), self._save, bg=_SAV).pack(fill="x")
+        _btn(bot_sb, t("settings.save_close"), self._save, bg=_SAV).pack(fill="x")
 
         # ── Content Area (Right) ──────────────────────────────────────────
         content_wrap = tk.Frame(w, bg=_BG_CONTENT)

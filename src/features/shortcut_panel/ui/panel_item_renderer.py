@@ -1,6 +1,7 @@
-"""Item and kbd badge renderer for Raycast-style shortcut panel."""
+"""Item and kbd badge renderer for Raycast-style shortcut panel (no emoticons)."""
 from __future__ import annotations
 
+import re
 import tkinter as tk
 from typing import Callable, TYPE_CHECKING
 
@@ -20,15 +21,6 @@ _FG_NORM = "#d4d4d8"
 _FG_SUB = "#71717a"
 _ACCENT_BAR = "#0078d4"
 
-_ICON = {
-    "folder": "📁",
-    "app": "🚀",
-    "url": "🌐",
-    "action": "⚡",
-    "shortcut": "⌨",
-    "command": "💻",
-}
-
 _TYPE_LABEL = {
     "folder": "Folder",
     "app": "App",
@@ -37,6 +29,18 @@ _TYPE_LABEL = {
     "shortcut": "Keys",
     "command": "Script",
 }
+
+# Regex matching Unicode emoticons and pictographs
+_EMOJI_PATTERN = re.compile(
+    r"[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50\u200d\ufe0f\u25a0-\u25ff\u2190-\u21ff\u2700-\u27bf\u25b6\u25c0\u25b2\u25bc\u25cb\u25cf\u25e7-\u25fe]+",
+    flags=re.UNICODE,
+)
+
+
+def _strip_emojis(text: str) -> str:
+    """Strip leading or embedded emojis from text labels."""
+    cleaned = _EMOJI_PATTERN.sub("", text).strip()
+    return cleaned if cleaned else text
 
 
 class PanelItemRenderer:
@@ -80,8 +84,8 @@ class PanelItemRenderer:
 
     def _render_separator(self, title: str) -> None:
         """Render a subtle Raycast-style section divider."""
-        sep_box = tk.Frame(self._container, bg=_BG_BASE, padx=8, pady=(6, 2))
-        sep_box.pack(fill="x")
+        sep_box = tk.Frame(self._container, bg=_BG_BASE, padx=8)
+        sep_box.pack(fill="x", pady=(6, 2))
         tk.Label(
             sep_box, text=title, bg=_BG_BASE, fg=_FG_SUB,
             font=("Segoe UI", 7, "bold"), anchor="w",
@@ -89,17 +93,15 @@ class PanelItemRenderer:
         tk.Frame(sep_box, bg="#27272a", height=1).pack(side="left", fill="x", expand=True, padx=(8, 0))
 
     def _render_row(self, index: int, item: MenuItem, sel: bool) -> None:
-        """Render a single shortcut item row."""
+        """Render a single shortcut item row without emoticons."""
         bg = _BG_SEL if sel else _BG_BASE
         itype = getattr(item, "type", "app")
-        icon = _ICON.get(itype, "•")
-        label_text = item.label
+        label_text = _strip_emojis(item.label)
 
-        # If it's a volume action, show dynamic real volume
+        # If it's a volume action, show dynamic real volume text
         if itype == "action" and getattr(item, "action", "") == "show_volume_slider":
             from ..services import volume_service
             pct = int(round(volume_service.get_master_volume() * 100))
-            icon = "🔊"
             label_text = f"Master Volume ({pct}%)"
 
         row = tk.Frame(self._container, bg=bg, cursor="hand2")
@@ -122,20 +124,14 @@ class PanelItemRenderer:
         )
         kbd_badge.pack(side="left", padx=(2, 6), pady=3)
 
-        # Icon + Main Label
-        icon_lbl = tk.Label(
-            row, text=icon, bg=bg, fg="#ffffff",
-            font=("Segoe UI Emoji", 10),
-        )
-        icon_lbl.pack(side="left", padx=(0, 4))
-
+        # Main Label (clean, no emoji)
         main_font = ("Segoe UI", 10, "bold") if sel else ("Segoe UI", 10)
         fg_text = _FG_SEL if sel else _FG_NORM
         title_lbl = tk.Label(
             row, text=label_text, bg=bg, fg=fg_text,
             font=main_font, anchor="w",
         )
-        title_lbl.pack(side="left", fill="x", expand=True)
+        title_lbl.pack(side="left", fill="x", expand=True, padx=(2, 0))
 
         # Subtitle type badge on the far right
         sub_text = _TYPE_LABEL.get(itype, "")
@@ -146,5 +142,5 @@ class PanelItemRenderer:
         sub_lbl.pack(side="right", padx=(4, 6))
 
         # Click event to select
-        for w in (row, acc_bar, kbd_badge, icon_lbl, title_lbl, sub_lbl):
+        for w in (row, acc_bar, kbd_badge, title_lbl, sub_lbl):
             w.bind("<Button-1>", lambda _, idx=index: self._on_select(idx))

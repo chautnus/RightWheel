@@ -12,19 +12,9 @@ _TRACK_BG = "#27272a"
 _TRACK_FILL = "#0078d4"
 _FG_TEXT = "#ffffff"
 _FG_MUTED = "#a1a1aa"
+_FG_WARN = "#ef4444"
 _THUMB = "#ffffff"
 _BORDER = "#27272a"
-
-
-def get_speaker_glyph(level: float, is_muted: bool = False) -> str:
-    """Return speaker glyph based on volume percentage and mute status."""
-    if is_muted or level <= 0.001:
-        return "🔇"
-    if level < 0.34:
-        return "🔈"
-    if level < 0.67:
-        return "🔉"
-    return "🔊"
 
 
 class PanelVolumeWidget:
@@ -39,21 +29,22 @@ class PanelVolumeWidget:
         self._frame = tk.Frame(parent, bg=_BG_CARD, highlightbackground=_BORDER,
                                highlightthickness=1, padx=8, pady=5)
 
-        # Header row: Speaker icon + "Volume" title + percentage badge
+        # Header row: Clean text "VOLUME" + mute indicator + percentage
         hdr = tk.Frame(self._frame, bg=_BG_CARD)
         hdr.pack(fill="x", pady=(0, 4))
 
-        self._icon_lbl = tk.Label(hdr, text="🔊", bg=_BG_CARD, fg=_FG_TEXT,
-                                  font=("Segoe UI Emoji", 10), cursor="hand2")
-        self._icon_lbl.pack(side="left", padx=(0, 4))
-        self._icon_lbl.bind("<Button-1>", self._on_toggle_mute)
-
-        self._title_lbl = tk.Label(hdr, text="Volume", bg=_BG_CARD, fg=_FG_TEXT,
-                                   font=("Segoe UI", 9, "bold"))
+        self._title_lbl = tk.Label(hdr, text="VOLUME", bg=_BG_CARD, fg=_FG_TEXT,
+                                   font=("Segoe UI", 8, "bold"), cursor="hand2")
         self._title_lbl.pack(side="left")
+        self._title_lbl.bind("<Button-1>", self._on_toggle_mute)
+
+        self._mute_lbl = tk.Label(hdr, text="", bg=_BG_CARD, fg=_FG_WARN,
+                                  font=("Segoe UI", 8, "bold"), cursor="hand2")
+        self._mute_lbl.pack(side="left", padx=(4, 0))
+        self._mute_lbl.bind("<Button-1>", self._on_toggle_mute)
 
         self._pct_lbl = tk.Label(hdr, text="50%", bg=_BG_CARD, fg=_FG_MUTED,
-                                 font=("Segoe UI", 9))
+                                 font=("Segoe UI", 8))
         self._pct_lbl.pack(side="right")
 
         # Slider canvas
@@ -64,7 +55,7 @@ class PanelVolumeWidget:
         self._canvas.pack(fill="x")
 
         # Mouse event bindings
-        for w in (self._frame, hdr, self._title_lbl, self._pct_lbl, self._canvas):
+        for w in (self._frame, hdr, self._title_lbl, self._mute_lbl, self._pct_lbl, self._canvas):
             w.bind("<MouseWheel>", self._on_wheel)
 
         self._canvas.bind("<Button-1>", self._on_click)
@@ -86,9 +77,12 @@ class PanelVolumeWidget:
             self._is_muted = False
 
         pct = int(round(self._level * 100))
-        glyph = get_speaker_glyph(self._level, self._is_muted)
-        self._icon_lbl.configure(text=glyph)
-        self._pct_lbl.configure(text=f"{pct}%")
+        if self._is_muted:
+            self._mute_lbl.configure(text="[MUTED]")
+            self._pct_lbl.configure(text=f"{pct}% (Muted)")
+        else:
+            self._mute_lbl.configure(text="")
+            self._pct_lbl.configure(text=f"{pct}%")
 
         self._canvas.delete("all")
         x1, x2 = 4, self._c_w - 4
