@@ -17,6 +17,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.18.3] — 2026-11-11
+
+### Added
+- **Reference Tab Search & Expand (F-011)**: Reference tab's shortcut list grew from ~57 to 127 rows — added "Windows (Advanced)" (virtual desktops, Quick Settings, Game Bar, snap layouts, etc.), "Office General", "Word", "Excel", and "PowerPoint" groups on top of the existing ones. Data moved out to its own `reference_shortcuts_data.py` module (keeps `reference_tab.py` under the 250-line SYSTEM LOCK). Added a live-filter search bar at the top of the tab — typing filters all 3 columns (category/shortcut/description) case-insensitively as you type, no Enter needed; clearing it restores the full list.
+
+### Added
+- **Key Recorder: more non-modifier keys (follow-up to F-010)**: Added Home/End/PgUp/PgDn click-buttons next to the arrow keys in `key_recorder_dialog.py`, reusing the existing `_on_arrow_click` handler — same finalize-and-reset behavior as the arrows.
+- **Gestures tab now uses the Key Recorder (follow-up to F-010)**: `gestures_tab.py`'s "Add" flow used to ask for the key combo via a plain text `_AskDialog` (type "ctrl+w" by hand) instead of the actual Key Recorder — it never benefited from the new click-buttons, and there was no way to edit an existing gesture's keys at all (only Add/Toggle/Delete). Both are fixed: `_add()` now opens `KeyRecorderDialog`, and a new "Sửa" (Edit) button lets you re-record an existing gesture's keys.
+
+---
+
 ## [2.18.2] — 2026-11-10
 
 ### Added
