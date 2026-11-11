@@ -17,6 +17,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.19.0] — 2026-11-11
+
+### Removed
+- **Remove Volume UI entirely (F-013)**: Deleted `volume_service.py` (Core Audio COM), `panel_volume_widget.py` (inline slider), `volume_overlay.py` (HUD) — the "🔊 Volume Control" action, its panel row, and the Volume card in Settings are all gone. `general_volume_tab.py` → `general_tab.py` (`GeneralVolumeTab` → `GeneralTab`), keeping only Startup and Language. Cleaned the `show_volume_slider` action from `panel_logic.py`, `panel_types.py`, `action_picker_dialog.py`, `config_service.py` defaults/getters, 9 i18n files, `main.py` wiring, and the user's own `shortcuts.json` (stripped the stale action item + `volume_step`/`show_panel_volume` keys). Dead code `send_volume_step()`/`VK_VOLUME_*` removed from `shortcut_executor.py`.
+
+### Fixed
+- **Shortcut panel render flicker & lag on scroll/navigate (F-013, ADR-011)**: `panel_window.py._render()` used to destroy and recreate every child widget (plus 2 synchronous Core Audio COM calls for the volume widget) on *every* `navigate()`/scroll/number-jump — visible flicker and real lag. `PanelWindow` now keeps a snapshot (`_last_items`/`_last_breadcrumb`/`_last_profile`/`_last_paused`/`_last_index`) and only does a full `_render()` when the item list/breadcrumb/profile/paused state actually changes; a plain selection change calls `PanelItemRenderer.update_selection(old_idx, new_idx)`, which restyles just the 2 affected rows via widget references kept in `_row_views` — zero destroy/recreate. Covered by `tests/test_render_flicker.py`.
+- **App randomly closing (`AppHangXProcB1`, Windows "Application Hang")**: root-caused via Windows Event Viewer/WER (`Hang Type 2129920`, `Sig[5]=RightWheel.exe` — same-process UI deadlock). Contributing causes fixed: `GesturesTab`/`DefaultTab` had no re-entrancy guard, so a fast double-click could open two modal dialogs at once and fight over the Tk grab; `SettingsWindow._save()` called `withdraw()` on the parent while a child dialog's `wait_window()` was still waiting on it, orphaning the modal loop; `PanelWindow._do_settings()` created a brand new `SettingsWindow` on every tray click instead of reusing one, compounding the above. Fixed with a `_dialog_open` guard (try/finally) on every dialog-opening method, destroying any open child `Toplevel` before the parent withdraws, and a `SettingsWindow` singleton. (debug2 also cleared two other suspects with real measurements: `ReferenceTab._on_search` costs ~0.34ms/keystroke on 127 rows — nowhere near Windows' hang threshold — and `grab_set()` without `wait_visibility()` has run safely in this codebase since v2.9.0, so it isn't the trigger either.)
+
+### Changed
+- `default_tab.py` split into `default_tab.py` (UI build + helpers) and `default_tab_crud.py` (`_DefaultTabCRUDMixin` with all CRUD methods) after the re-entrancy-guard fix pushed it past the 250-line SYSTEM LOCK — pure code move, no behavior change.
+
+---
+
 ## [2.18.5] — 2026-11-11
 
 ### Fixed & Cleaned
