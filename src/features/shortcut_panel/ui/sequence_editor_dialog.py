@@ -83,6 +83,7 @@ class SequenceEditorDialog(tk.Toplevel):
         self._btn(act_row, "+ App", self._step_add_app).pack(side="left", padx=(0, 4))
         self._btn(act_row, "+ Web", self._step_add_url).pack(side="left", padx=(0, 4))
         self._btn(act_row, "+ Script", self._step_add_command).pack(side="left", padx=(0, 4))
+        self._btn(act_row, "+ Web (Clip)", self._step_add_url_clipboard).pack(side="left", padx=(0, 4))
         self._btn(act_row, "Delete", self._step_delete, fg="#ff6b6b").pack(side="left", padx=(4, 0))
         self._btn(act_row, "▲", lambda: self._step_move(-1), width=3).pack(side="left", padx=(4, 2))
         self._btn(act_row, "▼", lambda: self._step_move(1), width=3).pack(side="left", padx=(0, 4))
@@ -178,6 +179,25 @@ class SequenceEditorDialog(tk.Toplevel):
         finally:
             self._dialog_open = False
 
+    def _step_add_url_clipboard(self) -> None:
+        if self._dialog_open:
+            return
+        self._dialog_open = True
+        try:
+            template = _AskDialog.ask(
+                self, "Add Web+Clipboard Step",
+                "URL template (use {text} for clipboard content):",
+                hint="e.g. https://chatgpt.com/?q={text}  —  not guaranteed to work, test yourself",
+            )
+            if template and template.strip() and "{text}" in template:
+                delay = self._ask_delay()
+                self._steps.append({"type": "url_clipboard", "url_template": template.strip(), "delay_ms": delay})
+                self._refresh_list()
+            elif template and "{text}" not in template:
+                messagebox.showwarning("Missing placeholder", "URL template must contain {text}.", parent=self)
+        finally:
+            self._dialog_open = False
+
     def _step_delete(self) -> None:
         sel = self._lb.curselection()
         if not sel:
@@ -214,6 +234,8 @@ class SequenceEditorDialog(tk.Toplevel):
                 detail = f"Web: {step.get('url', '')}"
             elif stype == "command":
                 detail = f"Script: {step.get('cmd', '')}"
+            elif stype == "url_clipboard":
+                detail = f"Web+Clip: {step.get('url_template', '')}"
             else:
                 detail = f"{stype}"
             self._lb.insert("end", f"[{i+1}] {detail}  ({delay}ms)")
