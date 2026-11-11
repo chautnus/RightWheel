@@ -1,11 +1,11 @@
-"""General & Volume Settings Tab — startup, language, and real volume step size."""
+"""General Settings Tab — startup and language configuration."""
 from __future__ import annotations
 
 import tkinter as tk
 import tkinter.ttk as ttk
 from typing import TYPE_CHECKING
 
-from ..services import config_service, startup_service, volume_service
+from ..services import startup_service
 from features.i18n import available, current, set_locale, t, ui_font
 
 if TYPE_CHECKING:
@@ -15,56 +15,21 @@ _BG = "#18181b"
 _CARD_BG = "#1e1e24"
 _BORDER = "#27272a"
 _FG = "#ffffff"
-_FG_MUTED = "#a1a1aa"
-_ACC = "#0078d4"
 
 
-class GeneralVolumeTab(tk.Frame):
-    """Modern card-based settings for General system options and Volume control."""
+class GeneralTab(tk.Frame):
+    """Modern card-based settings for General system options."""
 
     def __init__(self, parent: tk.Widget, logic: PanelLogic) -> None:
         super().__init__(parent, bg=_BG)
         self._logic = logic
         self._startup_var = tk.BooleanVar(value=startup_service.is_enabled())
-        self._step_var = tk.StringVar(value=f"{int(config_service.get_volume_step() * 100)}%")
         self._build()
 
     def _build(self) -> None:
         font = ui_font()
 
-        # ── Card 1: Volume Control ──────────────────────────────────────────
-        c_vol = self._make_card(self, "🔊 " + t("action.show_volume_slider"))
-        real_pct = int(round(volume_service.get_master_volume() * 100))
-        tk.Label(
-            c_vol,
-            text=f"Windows Master Volume: {real_pct}% (Hardware Synced)",
-            bg=_CARD_BG, fg=_ACC, font=(font, 10, "bold")
-        ).pack(anchor="w", padx=14, pady=(0, 4))
-
-        tk.Label(
-            c_vol,
-            text="Selecting 'Volume' on Shortcut Panel opens the interactive Capsule HUD at cursor position.",
-            bg=_CARD_BG, fg=_FG_MUTED, font=(font, 9), wraplength=480, justify="left"
-        ).pack(anchor="w", padx=14, pady=(0, 10))
-
-        # Step size selector
-        row_step = tk.Frame(c_vol, bg=_CARD_BG)
-        row_step.pack(anchor="w", padx=14, pady=(4, 12))
-        tk.Label(
-            row_step, text="Volume step per scroll: ",
-            bg=_CARD_BG, fg=_FG, font=(font, 10)
-        ).pack(side="left")
-
-        for step_val in ("2%", "5%", "10%"):
-            rb = tk.Radiobutton(
-                row_step, text=step_val, value=step_val,
-                variable=self._step_var, command=self._on_step_change,
-                bg=_CARD_BG, fg=_FG, selectcolor=_BG, activebackground=_CARD_BG,
-                activeforeground=_FG, font=(font, 9), cursor="hand2"
-            )
-            rb.pack(side="left", padx=6)
-
-        # ── Card 2: System Startup ──────────────────────────────────────────
+        # ── Card 1: System Startup ──────────────────────────────────────────
         c_sys = self._make_card(self, "⚙ " + t("settings.header"))
         cb_start = tk.Checkbutton(
             c_sys, text=t("settings.run_on_startup"),
@@ -74,7 +39,7 @@ class GeneralVolumeTab(tk.Frame):
         )
         cb_start.pack(anchor="w", padx=14, pady=(0, 12))
 
-        # ── Card 3: Language ────────────────────────────────────────────────
+        # ── Card 2: Language ────────────────────────────────────────────────
         c_lang = self._make_card(self, "🌐 " + t("settings.language"))
         l_row = tk.Frame(c_lang, bg=_CARD_BG)
         l_row.pack(anchor="w", padx=14, pady=(0, 12))
@@ -118,13 +83,3 @@ class GeneralVolumeTab(tk.Frame):
 
     def _on_startup_toggle(self) -> None:
         (startup_service.enable if self._startup_var.get() else startup_service.disable)()
-
-    def _on_step_change(self) -> None:
-        val_str = self._step_var.get().replace("%", "")
-        try:
-            val = float(val_str) / 100.0
-        except ValueError:
-            val = 0.05
-        d = config_service.load()
-        d["volume_step"] = val
-        config_service.save(d)

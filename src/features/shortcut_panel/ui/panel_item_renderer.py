@@ -51,6 +51,7 @@ class PanelItemRenderer:
         self._on_select = on_select
         self._container = tk.Frame(parent, bg=_BG_BASE)
         self._container.pack(fill="both", expand=True)
+        self._row_views: list[tuple[tk.Frame, tk.Frame, tk.Label, tk.Label, tk.Label]] = []
 
     def clear(self) -> None:
         """Clear all rendered items."""
@@ -60,6 +61,7 @@ class PanelItemRenderer:
     def render_items(self, items: list[MenuItem], selected_index: int) -> None:
         """Render the list of MenuItem objects with Raycast styling."""
         self.clear()
+        self._row_views.clear()
         if not items:
             tk.Label(
                 self._container, text="No shortcuts configured",
@@ -92,17 +94,29 @@ class PanelItemRenderer:
         ).pack(side="left")
         tk.Frame(sep_box, bg="#27272a", height=1).pack(side="left", fill="x", expand=True, padx=(8, 0))
 
+    def update_selection(self, old_idx: int, new_idx: int) -> None:
+        """Update row styles in-place without re-rendering."""
+        if 0 <= old_idx < len(self._row_views):
+            row, acc_bar, kbd_badge, title_lbl, sub_lbl = self._row_views[old_idx]
+            row.configure(bg=_BG_BASE)
+            acc_bar.configure(bg=_BG_BASE)
+            kbd_badge.configure(bg=_BG_KBD, fg=_FG_KBD, highlightbackground=_BORDER_KBD)
+            title_lbl.configure(bg=_BG_BASE, fg=_FG_NORM, font=("Segoe UI", 10))
+            sub_lbl.configure(bg=_BG_BASE)
+
+        if 0 <= new_idx < len(self._row_views):
+            row, acc_bar, kbd_badge, title_lbl, sub_lbl = self._row_views[new_idx]
+            row.configure(bg=_BG_SEL)
+            acc_bar.configure(bg=_ACCENT_BAR)
+            kbd_badge.configure(bg=_BG_KBD_SEL, fg=_FG_KBD_SEL, highlightbackground=_BORDER_KBD_SEL)
+            title_lbl.configure(bg=_BG_SEL, fg=_FG_SEL, font=("Segoe UI", 10, "bold"))
+            sub_lbl.configure(bg=_BG_SEL)
+
     def _render_row(self, index: int, item: MenuItem, sel: bool) -> None:
         """Render a single shortcut item row without emoticons."""
         bg = _BG_SEL if sel else _BG_BASE
         itype = getattr(item, "type", "app")
         label_text = _strip_emojis(item.label)
-
-        # If it's a volume action, show dynamic real volume text
-        if itype == "action" and getattr(item, "action", "") == "show_volume_slider":
-            from ..services import volume_service
-            pct = int(round(volume_service.get_master_volume() * 100))
-            label_text = f"Master Volume ({pct}%)"
 
         row = tk.Frame(self._container, bg=bg, cursor="hand2")
         row.pack(fill="x", padx=4, pady=1)
@@ -144,3 +158,5 @@ class PanelItemRenderer:
         # Click event to select
         for w in (row, acc_bar, kbd_badge, title_lbl, sub_lbl):
             w.bind("<Button-1>", lambda _, idx=index: self._on_select(idx))
+
+        self._row_views.append((row, acc_bar, kbd_badge, title_lbl, sub_lbl))

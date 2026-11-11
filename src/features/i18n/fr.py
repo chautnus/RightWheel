@@ -84,7 +84,6 @@ STRINGS: dict[str, str] = {
     "dlg.select_exe":              "Sélectionner l'exécutable",
     "action.open_settings":        "⚙ Paramètres de l'application",
     "action.toggle_pause":         "⏸ Mettre en pause RightWheel",
-    "action.show_volume_slider":   "🔊 Contrôle du volume",
     "recorder.title":              "Enregistrer un raccourci",
     "recorder.prompt":             "Appuyez sur la combinaison de touches",
     "recorder.sub":                "Maintenez les modificateurs, puis appuyez sur la touche principale",

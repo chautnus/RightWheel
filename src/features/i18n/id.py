@@ -84,7 +84,6 @@ STRINGS: dict[str, str] = {
     "dlg.select_exe":              "Pilih file eksekutabel",
     "action.open_settings":        "⚙ Pengaturan Aplikasi",
     "action.toggle_pause":         "⏸ Jeda RightWheel",
-    "action.show_volume_slider":   "🔊 Kontrol Volume",
     "recorder.title":              "Rekam pintasan",
     "recorder.prompt":             "Tekan kombinasi tombol",
     "recorder.sub":                "Tahan tombol modifier, lalu tekan tombol utama",

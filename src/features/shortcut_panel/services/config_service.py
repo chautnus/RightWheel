@@ -11,10 +11,7 @@ CONFIG_PATH = CONFIG_DIR / "shortcuts.json"
 
 _DEFAULT: dict = {
     "version": 3,
-    "volume_step": 0.05,
-    "show_panel_volume": True,
     "default": [
-        {"type": "action",   "label": "Volume Control",      "action": "show_volume_slider"},
         {"type": "shortcut", "label": "Desktop",             "keys": "win+d"},
         {"type": "shortcut", "label": "Search",              "keys": "win+s"},
         {"type": "shortcut", "label": "Screenshot",          "keys": "win+shift+s"},
@@ -189,14 +186,4 @@ def items_to_raw(items: list[MenuItem]) -> list[dict]:
     return out
 
 
-def get_volume_step(data: dict | None = None) -> float:
-    if data is None:
-        data = load()
-    return float(data.get("volume_step", 0.05))
-
-
-def get_show_panel_volume(data: dict | None = None) -> bool:
-    if data is None:
-        data = load()
-    return bool(data.get("show_panel_volume", True))
 

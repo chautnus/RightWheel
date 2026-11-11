@@ -6,7 +6,6 @@ _DEFAULT_SHORTCUTS: list[tuple[str, str, str]] = [
     ("RightWheel", "RMB + Scroll Up", "Open Shortcut Panel"),
     ("RightWheel", "RMB + Scroll Down", "Switch app (Alt+Tab)"),
     ("RightWheel", "RMB + Drag", "Draw gesture to run custom shortcut"),
-    ("RightWheel", "Panel item: Volume", "Open volume slider HUD, scroll to adjust"),
 
     # Windows System
     ("Windows System", "Win + D", "Show/hide desktop"),
@@ -153,3 +152,6 @@ _DEFAULT_SHORTCUTS: list[tuple[str, str, str]] = [
     ("PowerPoint", "Ctrl + D", "Duplicate selected slide or object"),
     ("PowerPoint", "B / W during show", "Black out or White out the slide show screen"),
 ]
+
+SHORTCUTS = _DEFAULT_SHORTCUTS
+

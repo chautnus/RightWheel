@@ -98,7 +98,6 @@ STRINGS: dict[str, str] = {
     "dlg.select_exe":              "Select executable",
     "action.open_settings":        "⚙ App Settings",
     "action.toggle_pause":         "⏸ Pause RightWheel",
-    "action.show_volume_slider":   "🔊 Volume Control",
 
     # Key recorder
     "recorder.title":              "Record Shortcut",

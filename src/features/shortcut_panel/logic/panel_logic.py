@@ -43,7 +43,6 @@ class PanelLogic:
         self.on_update:        Callable | None = None
         self.on_open_settings: Callable | None = None   # open settings window
         self.on_pause_changed: Callable[[bool], None] | None = None  # pause toggled
-        self.on_show_volume_slider: Callable | None = None
 
         self.reload()
 
@@ -139,9 +138,6 @@ class PanelLogic:
             _log.debug(f"toggle_pause → paused={self.paused}")
             if self.on_pause_changed:
                 self.on_pause_changed(self.paused)
-        elif action == "show_volume_slider":
-            if self.on_show_volume_slider:
-                self.on_show_volume_slider()
 
     def _fire(self, keys: str) -> None:
         fg = ctypes.windll.user32.GetForegroundWindow()

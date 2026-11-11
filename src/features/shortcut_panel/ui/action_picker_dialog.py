@@ -1,4 +1,4 @@
-"""Dialog for selecting an action type (open_settings, toggle_pause, show_volume_slider)."""
+"""Dialog for selecting an action type (open_settings, toggle_pause)."""
 from __future__ import annotations
 
 import tkinter as tk
@@ -17,7 +17,6 @@ class ActionPickerDialog(tk.Toplevel):
     ACTIONS: list[tuple[str, str]] = [
         ("open_settings", "action.open_settings"),
         ("toggle_pause", "action.toggle_pause"),
-        ("show_volume_slider", "action.show_volume_slider"),
     ]
 
     def __init__(self, parent: tk.Widget, init: str = "") -> None:

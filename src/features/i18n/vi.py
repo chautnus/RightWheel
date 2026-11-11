@@ -84,7 +84,6 @@ STRINGS: dict[str, str] = {
     "dlg.select_exe":              "Chọn tệp thực thi",
     "action.open_settings":        "⚙ Cài đặt ứng dụng",
     "action.toggle_pause":         "⏸ Tạm dừng RightWheel",
-    "action.show_volume_slider":   "🔊 Điều khiển âm lượng",
     "recorder.title":              "Ghi phím tắt",
     "recorder.prompt":             "Nhấn tổ hợp phím",
     "recorder.sub":                "Giữ phím modifier trước, rồi nhấn phím chính",

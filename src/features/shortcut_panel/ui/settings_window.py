@@ -82,7 +82,7 @@ class SettingsWindow:
 
         # Navigation items (clean text, no emoticons)
         nav_items = [
-            ("general",   "General & Volume"),
+            ("general",   "General"),
             ("default",   t("settings.tab.default")),
             ("profiles",  t("settings.tab.profiles")),
             ("gestures",  t("tray.gestures")),
@@ -136,10 +136,10 @@ class SettingsWindow:
     def _build_tabs(self, parent: tk.Frame, font: str) -> None:
         self._frames.clear()
 
-        # 1. General & Volume tab
-        from .general_volume_tab import GeneralVolumeTab
+        # 1. General tab
+        from .general_tab import GeneralTab
         f_gen = tk.Frame(parent, bg=_BG_CONTENT)
-        GeneralVolumeTab(f_gen, self._logic).pack(fill="both", expand=True)
+        GeneralTab(f_gen, self._logic).pack(fill="both", expand=True)
         self._frames["general"] = f_gen
 
         # 2. Default shortcuts tab

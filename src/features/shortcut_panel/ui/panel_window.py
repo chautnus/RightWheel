@@ -4,12 +4,10 @@ from __future__ import annotations
 import queue, threading, tkinter as tk
 from typing import TYPE_CHECKING
 
-from .panel_volume_widget import PanelVolumeWidget
 from .panel_item_renderer import PanelItemRenderer
 
 if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
-    from .volume_overlay import VolumeOverlay
     from .settings_window import SettingsWindow
 
 _W = 264
@@ -28,23 +26,23 @@ class PanelWindow:
         self._root: tk.Tk | None = None
         self._win: tk.Toplevel | None = None
         self._overlay: tk.Toplevel | None = None
-        self._volume_overlay: VolumeOverlay | None = None
-        self._volume_widget: PanelVolumeWidget | None = None
         self._item_renderer: PanelItemRenderer | None = None
         self._settings_window: SettingsWindow | None = None
+
+        self._last_items: list = []
+        self._last_breadcrumb: list[str] = []
+        self._last_profile: str = ""
+        self._last_paused: bool = False
+        self._last_index: int = 0
 
         logic.on_show = lambda: self._q.put("show")
         logic.on_hide = lambda: self._q.put("hide")
         logic.on_update = lambda: self._q.put("update")
-        logic.on_show_volume_slider = lambda: self._q.put("volume")
 
         threading.Thread(target=self._run, daemon=True).start()
 
     def open_settings(self) -> None:
         self._q.put("settings")
-
-    def open_volume_slider(self) -> None:
-        self._q.put("volume")
 
     # ── tkinter thread lifecycle ───────────────────────────────────────────
 
@@ -65,7 +63,6 @@ class PanelWindow:
                     "hide": self._do_hide,
                     "update": self._do_update,
                     "settings": self._do_settings,
-                    "volume": self._do_volume,
                 }.get(cmd, lambda: None)()
         except queue.Empty:
             pass
@@ -79,6 +76,12 @@ class PanelWindow:
             self._overlay.destroy()
         if self._win:
             self._win.destroy()
+
+        self._last_items = []
+        self._last_breadcrumb = []
+        self._last_profile = ""
+        self._last_paused = False
+        self._last_index = 0
 
         sw = self._root.winfo_screenwidth()
         sh = self._root.winfo_screenheight()
@@ -123,8 +126,24 @@ class PanelWindow:
             self._win = None
 
     def _do_update(self) -> None:
-        if self._win:
+        if not self._win:
+            return
+        st = self._logic.state
+        profile = self._logic.active_profile
+        paused = self._logic.paused
+
+        if (
+            st.items != self._last_items
+            or st.breadcrumb != self._last_breadcrumb
+            or profile != self._last_profile
+            or paused != self._last_paused
+            or not self._item_renderer
+        ):
             self._render()
+        elif st.index != self._last_index:
+            if self._item_renderer:
+                self._item_renderer.update_selection(self._last_index, st.index)
+            self._last_index = st.index
 
     def _do_settings(self) -> None:
         if (
@@ -141,12 +160,6 @@ class PanelWindow:
         self._settings_window = SettingsWindow(self._root, self._logic)
         self._settings_window.show()
 
-    def _do_volume(self) -> None:
-        if not self._volume_overlay:
-            from .volume_overlay import VolumeOverlay
-            self._volume_overlay = VolumeOverlay(self._root)
-        self._volume_overlay.show()
-
     # ── rendering ──────────────────────────────────────────────────────────
 
     def _render(self) -> None:
@@ -156,9 +169,10 @@ class PanelWindow:
             w.destroy()
 
         st = self._logic.state
+        paused = self._logic.paused
 
         # Paused banner (no emoticon)
-        if self._logic.paused:
+        if paused:
             tk.Label(self._win, text="[PAUSED] MouseHook Disabled", bg="#3a1a1a", fg="#f48771",
                      font=_FONT_BC, anchor="w", padx=10, pady=4).pack(fill="x")
             tk.Frame(self._win, bg="#6a2020", height=1).pack(fill="x")
@@ -176,14 +190,16 @@ class PanelWindow:
                      font=_FONT_BC, anchor="w", padx=10, pady=4).pack(fill="x")
             tk.Frame(self._win, bg=_BORDER, height=1).pack(fill="x")
 
-        # Inline Volume Slider Card (at root level)
-        if not st.breadcrumb:
-            self._volume_widget = PanelVolumeWidget(self._win)
-            self._volume_widget.pack(fill="x", padx=6, pady=(6, 4))
-
         # Items list
         self._item_renderer = PanelItemRenderer(self._win, on_select=self._logic.select_at)
         self._item_renderer.render_items(st.items, st.index)
+
+        # Update snapshot
+        self._last_items = list(st.items)
+        self._last_breadcrumb = list(st.breadcrumb)
+        self._last_profile = profile
+        self._last_paused = paused
+        self._last_index = st.index
 
         # Footer status bar (no emoticon)
         self._render_footer(profile)

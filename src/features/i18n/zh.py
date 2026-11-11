@@ -84,7 +84,6 @@ STRINGS: dict[str, str] = {
     "dlg.select_exe":              "选择可执行文件",
     "action.open_settings":        "⚙ 应用设置",
     "action.toggle_pause":         "⏸ 暂停 RightWheel",
-    "action.show_volume_slider":   "🔊 音量控制",
     "recorder.title":              "录制快捷键",
     "recorder.prompt":             "按下按键组合",
     "recorder.sub":                "先按住修饰键，再按主键",

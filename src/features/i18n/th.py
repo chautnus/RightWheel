@@ -84,7 +84,6 @@ STRINGS: dict[str, str] = {
     "dlg.select_exe":              "เลือกไฟล์โปรแกรม",
     "action.open_settings":        "⚙ ตั้งค่าแอป",
     "action.toggle_pause":         "⏸ หยุดชั่วคราว RightWheel",
-    "action.show_volume_slider":   "🔊 ควบคุมระดับเสียง",
     "recorder.title":              "บันทึกทางลัด",
     "recorder.prompt":             "กดคีย์ผสม",
     "recorder.sub":                "กด modifier ค้างก่อน แล้วกดปุ่มหลัก",
