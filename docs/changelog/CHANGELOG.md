@@ -6,14 +6,28 @@ tags: [changelog, versions]
 keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
-updated: 2026-11-09
-summary: "Version history for RightWheel from v1.0.0 to v2.15.0."
+updated: 2026-11-11
+summary: "Version history for RightWheel from v1.0.0 to v2.18.4."
 ---
 
 # Changelog
 
 All notable changes to RightWheel are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [2.18.4] — 2026-11-11
+
+### Added
+- **Raycast & Linear Command Palette Modern UI (F-010)**:
+  - Tái cấu trúc toàn diện Shortcut Panel sang phong cách Raycast / Linear Command Palette:
+    - Bảng màu Zinc Dark thanh lịch (`#121214`), viền 1px tinh tế (`#27272a`).
+    - Phím số tắt dạng mechanical kbd badges nổi bật (`#27272a` nền, viền `#3f3f46`, chữ `#ffffff` đậm).
+    - Thẻ điều khiển âm lượng inline (`panel_volume_widget.py`) tích hợp trực tiếp thanh trượt tiến trình canvas, icon loa động (`🔇`, `🔈`, `🔉`, `🔊`), cho phép kéo thả chuột hoặc cuộn bánh xe để tinh chỉnh master volume Windows tức thì.
+    - Phân tách nhóm tác vụ (`panel_item_renderer.py`) với đường divider mờ và phụ đề kiểu shortcut (`App`, `Folder`, `Web`, `System`, `Keys`, `Script`).
+    - Footer navigation hints ở đáy bảng (`◈ Profile • ↑↓ Move • ↵ Open • Esc`).
+    - Module hóa mã nguồn thành các file riêng biệt (`panel_volume_widget.py`, `panel_item_renderer.py`, `panel_window.py`) duy trì nghiêm ngặt SYSTEM LOCK (mọi file ≤ 200 dòng).
 
 ---
 
