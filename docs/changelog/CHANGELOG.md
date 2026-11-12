@@ -6,14 +6,29 @@ tags: [changelog, versions]
 keywords: [v1, v2, releases, fixes]
 status: active
 created: 2026-04-30
-updated: 2026-11-11
-summary: "Version history for RightWheel from v1.0.0 to v2.18.4."
+updated: 2026-11-12
+summary: "Version history for RightWheel from v1.0.0 to v2.21.0."
 ---
 
 # Changelog
 
 All notable changes to RightWheel are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [2.21.0] — 2026-11-12
+
+### Added
+- **"Gemini" step for Sequence (F-015)**: a 6th Sequence step type that only asks for a **Prompt** — the app reads the real clipboard text at run time, appends it to the prompt, URL-encodes the whole thing, and opens `https://gemini.google.com/app?prompt=<encoded>`. Replaces having to hand-build a `url_template` with `{text}` yourself for this specific target (that general mechanism, "Web (Clip)", still exists for other sites). Note: Gemini's `?prompt=` query param is not an officially documented Google API — it's behavior observed from the "Gemini Url Prompt" browser extension community and can change or stop working at any time; it fills the chat box but does not auto-submit, so Enter still has to be pressed manually.
+- **Edit an existing Sequence step**: `SequenceEditorDialog` only supported Add/Delete/Move(▲▼) — there was no way to fix a typo or change a step's delay without deleting and re-adding it. Added an **"Edit"** button and double-click-to-edit on the step list; it reuses the exact same per-type dialog as Add, pre-filled with the step's current values (including `delay_ms`).
+
+### Changed
+- Split `shortcut_executor.py`'s clipboard-reading logic (`_get_clipboard_text()`, `execute_url_clipboard()`) plus the new `execute_gemini()` into a new `services/clipboard_web_actions.py` — adding `execute_gemini()` in place pushed `shortcut_executor.py` to 251 lines, past the 250-line SYSTEM LOCK threshold. `shortcut_executor.py` is now 198 lines.
+- Split `sequence_editor_dialog.py`'s five `_step_add_*` methods into a new `ui/sequence_step_dialogs.py` as reusable `ask_<type>(parent, init=None)` functions (plus a `STEP_KINDS` map), shared by both Add and the new Edit. `sequence_editor_dialog.py` went from 249 to 211 lines despite gaining the Edit button and the Gemini step.
+
+### Fixed
+- Diagnosed (via this session) that a `url_clipboard`/Gemini step silently not substituting `{text}` is almost always the template literally containing percent-encoded braces (`%7Btext%7D`) instead of real `{` `}` characters — `.replace("{text}", encoded)` matches on exact characters, not decoded ones. No code change needed for this case; documented here since it's a recurring trap when typing the placeholder by hand (ADR-013, F-015 memory file has the full debug trail).
 
 ---
 

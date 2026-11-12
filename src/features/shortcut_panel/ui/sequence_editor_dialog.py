@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import messagebox
 from typing import Callable
 
-from .ask_dialog import _AskDialog
-from .key_recorder_dialog import KeyRecorderDialog
+from . import sequence_step_dialogs as stepdlg
 
 _BG = "#1e1e24"
 _FG = "#ffffff"
@@ -15,6 +14,8 @@ _BTN_BG = "#2a2a34"
 _BTN_HOVER = "#383848"
 _ACC = "#0078d4"
 _BORDER = "#333340"
+
+_STEP_ORDER = ["shortcut", "app", "url", "command", "url_clipboard", "gemini"]
 
 
 class SequenceEditorDialog(tk.Toplevel):
@@ -70,23 +71,26 @@ class SequenceEditorDialog(tk.Toplevel):
             highlightbackground=_BORDER,
         )
         self._lb.pack(side="left", fill="both", expand=True)
+        self._lb.bind("<Double-Button-1>", lambda _e: self._step_edit())
 
         sb = tk.Scrollbar(list_frame, orient="vertical", command=self._lb.yview)
         sb.pack(side="right", fill="y")
         self._lb.configure(yscrollcommand=sb.set)
 
-        # Step Actions row
+        # Step Actions row (one "+ <kind>" button per entry in stepdlg.STEP_KINDS)
         act_row = tk.Frame(pad_frame, bg=_BG)
         act_row.pack(fill="x", pady=(8, 4))
+        for stype in _STEP_ORDER:
+            label, _ = stepdlg.STEP_KINDS[stype]
+            self._btn(act_row, label, lambda t=stype: self._step_add(t)).pack(side="left", padx=(0, 4))
 
-        self._btn(act_row, "+ Keys", self._step_add_shortcut).pack(side="left", padx=(0, 4))
-        self._btn(act_row, "+ App", self._step_add_app).pack(side="left", padx=(0, 4))
-        self._btn(act_row, "+ Web", self._step_add_url).pack(side="left", padx=(0, 4))
-        self._btn(act_row, "+ Script", self._step_add_command).pack(side="left", padx=(0, 4))
-        self._btn(act_row, "+ Web (Clip)", self._step_add_url_clipboard).pack(side="left", padx=(0, 4))
-        self._btn(act_row, "Delete", self._step_delete, fg="#ff6b6b").pack(side="left", padx=(4, 0))
-        self._btn(act_row, "▲", lambda: self._step_move(-1), width=3).pack(side="left", padx=(4, 2))
-        self._btn(act_row, "▼", lambda: self._step_move(1), width=3).pack(side="left", padx=(0, 4))
+        # Edit / Delete / reorder row
+        act_row2 = tk.Frame(pad_frame, bg=_BG)
+        act_row2.pack(fill="x", pady=(0, 4))
+        self._btn(act_row2, "Edit", self._step_edit).pack(side="left", padx=(0, 4))
+        self._btn(act_row2, "Delete", self._step_delete, fg="#ff6b6b").pack(side="left", padx=(4, 0))
+        self._btn(act_row2, "▲", lambda: self._step_move(-1), width=3).pack(side="left", padx=(4, 2))
+        self._btn(act_row2, "▼", lambda: self._step_move(1), width=3).pack(side="left", padx=(0, 4))
 
         # Bottom row: Save / Cancel
         sep = tk.Frame(pad_frame, bg=_BORDER, height=1)
@@ -118,83 +122,39 @@ class SequenceEditorDialog(tk.Toplevel):
             kwargs["width"] = width
         return tk.Button(parent, **kwargs)
 
-    def _ask_delay(self) -> int:
-        res = simpledialog.askinteger(
-            "Step Delay", "Delay after this step (ms):", initialvalue=100, minvalue=0, maxvalue=10000, parent=self
-        )
-        return 100 if res is None else res
-
-    def _step_add_shortcut(self) -> None:
+    def _step_add(self, stype: str) -> None:
         if self._dialog_open:
             return
         self._dialog_open = True
         try:
-            keys = KeyRecorderDialog.ask(self)
-            if keys and keys.strip():
-                delay = self._ask_delay()
-                self._steps.append({"type": "shortcut", "keys": keys.strip(), "delay_ms": delay})
+            _, ask_fn = stepdlg.STEP_KINDS[stype]
+            step = ask_fn(self)
+            if step is not None:
+                self._steps.append(step)
                 self._refresh_list()
         finally:
             self._dialog_open = False
 
-    def _step_add_app(self) -> None:
+    def _step_edit(self) -> None:
         if self._dialog_open:
+            return
+        sel = self._lb.curselection()
+        if not sel:
+            return
+        idx = sel[0]
+        step = self._steps[idx]
+        kind = stepdlg.STEP_KINDS.get(step.get("type", "shortcut"))
+        if kind is None:
+            messagebox.showwarning("Edit Step", "Unknown step type — delete and re-add instead.", parent=self)
             return
         self._dialog_open = True
         try:
-            path = filedialog.askopenfilename(
-                title="Select App", filetypes=[("Executables", "*.exe"), ("All", "*.*")], parent=self
-            )
-            if path:
-                args = _AskDialog.ask(self, "App Args", "Optional arguments:") or ""
-                delay = self._ask_delay()
-                self._steps.append({"type": "app", "path": path, "args": args.strip(), "delay_ms": delay})
+            _, ask_fn = kind
+            new_step = ask_fn(self, init=step)
+            if new_step is not None:
+                self._steps[idx] = new_step
                 self._refresh_list()
-        finally:
-            self._dialog_open = False
-
-    def _step_add_url(self) -> None:
-        if self._dialog_open:
-            return
-        self._dialog_open = True
-        try:
-            url = _AskDialog.ask(self, "Add Web Step", "URL (e.g. https://google.com):")
-            if url and url.strip():
-                delay = self._ask_delay()
-                self._steps.append({"type": "url", "url": url.strip(), "delay_ms": delay})
-                self._refresh_list()
-        finally:
-            self._dialog_open = False
-
-    def _step_add_command(self) -> None:
-        if self._dialog_open:
-            return
-        self._dialog_open = True
-        try:
-            cmd = _AskDialog.ask(self, "Add Script Step", "Command (e.g. echo hello):")
-            if cmd and cmd.strip():
-                delay = self._ask_delay()
-                self._steps.append({"type": "command", "cmd": cmd.strip(), "cwd": "", "delay_ms": delay})
-                self._refresh_list()
-        finally:
-            self._dialog_open = False
-
-    def _step_add_url_clipboard(self) -> None:
-        if self._dialog_open:
-            return
-        self._dialog_open = True
-        try:
-            template = _AskDialog.ask(
-                self, "Add Web+Clipboard Step",
-                "URL template (use {text} for clipboard content):",
-                hint="e.g. https://chatgpt.com/?q={text}  —  not guaranteed to work, test yourself",
-            )
-            if template and template.strip() and "{text}" in template:
-                delay = self._ask_delay()
-                self._steps.append({"type": "url_clipboard", "url_template": template.strip(), "delay_ms": delay})
-                self._refresh_list()
-            elif template and "{text}" not in template:
-                messagebox.showwarning("Missing placeholder", "URL template must contain {text}.", parent=self)
+                self._lb.selection_set(idx)
         finally:
             self._dialog_open = False
 
@@ -236,6 +196,8 @@ class SequenceEditorDialog(tk.Toplevel):
                 detail = f"Script: {step.get('cmd', '')}"
             elif stype == "url_clipboard":
                 detail = f"Web+Clip: {step.get('url_template', '')}"
+            elif stype == "gemini":
+                detail = f"Gemini: {step.get('prompt', '')}"
             else:
                 detail = f"{stype}"
             self._lb.insert("end", f"[{i+1}] {detail}  ({delay}ms)")

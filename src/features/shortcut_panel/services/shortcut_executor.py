@@ -7,6 +7,8 @@ import subprocess
 import time
 import webbrowser
 
+from . import clipboard_web_actions
+
 _log = logging.getLogger("mousehotkey")
 
 INPUT_KEYBOARD    = 1
@@ -160,49 +162,6 @@ def execute_url(url: str) -> None:
         _log.warning(f"execute_url() failed: {exc}")
 
 
-def _get_clipboard_text() -> str:
-    """Read current clipboard text via raw Win32 API (no Tkinter dependency)."""
-    CF_UNICODETEXT = 13
-    user32 = ctypes.windll.user32
-    kernel32 = ctypes.windll.kernel32
-    try:
-        user32.GetClipboardData.argtypes = [wt.UINT]
-        user32.GetClipboardData.restype = ctypes.c_void_p
-        kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
-        kernel32.GlobalLock.restype = ctypes.c_void_p
-        kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
-        kernel32.GlobalUnlock.restype = wt.BOOL
-
-        if not user32.OpenClipboard(None):
-            return ""
-        try:
-            h = user32.GetClipboardData(CF_UNICODETEXT)
-            if not h:
-                return ""
-            locked = kernel32.GlobalLock(h)
-            if not locked:
-                return ""
-            try:
-                text = ctypes.wstring_at(locked)
-            finally:
-                kernel32.GlobalUnlock(h)
-            return text
-        finally:
-            user32.CloseClipboard()
-    except Exception as exc:
-        _log.warning(f"_get_clipboard_text() failed: {exc}")
-        return ""
-
-
-def execute_url_clipboard(url_template: str) -> None:
-    """Substitute clipboard text (URL-encoded) into {text} placeholder, then open URL."""
-    import urllib.parse
-    text = _get_clipboard_text()
-    encoded = urllib.parse.quote(text)
-    final_url = url_template.replace("{text}", encoded)
-    execute_url(final_url)
-
-
 def execute_sequence(steps: list[dict]) -> None:
     """Execute a list of steps sequentially. Errors in a step log a warning and continue."""
     for i, step in enumerate(steps):
@@ -225,7 +184,9 @@ def execute_sequence(steps: list[dict]) -> None:
             elif stype == "url":
                 execute_url(step.get("url", ""))
             elif stype == "url_clipboard":
-                execute_url_clipboard(step.get("url_template", ""))
+                clipboard_web_actions.execute_url_clipboard(step.get("url_template", ""))
+            elif stype == "gemini":
+                clipboard_web_actions.execute_gemini(step.get("prompt", ""))
             elif stype == "command":
                 execute_command(step.get("cmd", ""), step.get("cwd", ""))
             else:
