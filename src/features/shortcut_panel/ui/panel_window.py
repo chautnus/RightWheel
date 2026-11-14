@@ -49,9 +49,9 @@ class PanelWindow:
     def _run(self) -> None:
         self._root = tk.Tk()
         self._root.withdraw()
+        self._root.after(30, self._pump)
         from .welcome_window import show_welcome
         show_welcome(self._root)
-        self._root.after(30, self._pump)
         self._root.mainloop()
 
     def _pump(self) -> None:

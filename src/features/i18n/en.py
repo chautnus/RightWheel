@@ -30,6 +30,8 @@ STRINGS: dict[str, str] = {
     "settings.header":             "Shortcut Panel",
     "settings.tab.default":        "  Default  ",
     "settings.tab.profiles":       "  Profiles  ",
+    "settings.tab.gestures":       "  Mouse Gestures  ",
+    "tray.gestures":               "  Mouse Gestures  ",
     "settings.tab.license":        "  🔑 License  ",
     "settings.run_on_startup":     "Run on startup",
     "settings.save_close":         "  💾  Save & Close  ",

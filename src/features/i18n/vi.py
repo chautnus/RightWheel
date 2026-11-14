@@ -25,6 +25,8 @@ STRINGS: dict[str, str] = {
     "settings.header":             "Bảng Phím tắt",
     "settings.tab.default":        "  Mặc định  ",
     "settings.tab.profiles":       "  Hồ sơ  ",
+    "settings.tab.gestures":       "  Cử chỉ chuột  ",
+    "tray.gestures":               "  Cử chỉ chuột  ",
     "settings.tab.license":        "  🔑 Bản quyền  ",
     "settings.run_on_startup":     "Chạy khi khởi động",
     "settings.save_close":         "  💾  Lưu & Đóng  ",

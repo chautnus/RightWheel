@@ -85,8 +85,8 @@ class SettingsWindow:
         nav_items = [
             ("general",   "General"),
             ("default",   t("settings.tab.default")),
+            ("gestures",  t("settings.tab.gestures")),
             ("profiles",  t("settings.tab.profiles")),
-            ("gestures",  t("tray.gestures")),
             ("reference", "Reference"),
             ("license",   t("settings.tab.license")),
         ]
