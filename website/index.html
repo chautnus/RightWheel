@@ -132,18 +132,18 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:     #0b0b0b;
-      --bg2:    #111111;
-      --bg3:    #181818;
-      --bg4:    #222222;
-      --bg5:    #2a2a2a;
-      --border: #2a2a2a;
-      --text:   #d0d0d0;
-      --muted:  #777;
-      --dim:    #444;
+      --bg:     #09090b;
+      --bg2:    #121214;
+      --bg3:    #18181b;
+      --bg4:    #27272a;
+      --bg5:    #3f3f46;
+      --border: #27272a;
+      --text:   #e4e4e7;
+      --muted:  #a1a1aa;
+      --dim:    #71717a;
       --white:  #ffffff;
       --blue:   #0078d4;
-      --blue-h: #1a8fe0;
+      --blue-h: #106ebe;
       --blue-l: rgba(0,120,212,.12);
       --green:  #16825d;
       --green-h:#1a9e71;
@@ -166,6 +166,19 @@
 
     a { color: var(--blue); text-decoration: none; }
     a:hover { text-decoration: underline; }
+    a:focus-visible, button:focus-visible, .btn:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
 
     /* ─── Layout ─────────────────────────────────────────────── */
     .container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
@@ -179,10 +192,10 @@
       transition: all .2s; line-height: 1;
     }
     .btn:hover { text-decoration: none; }
-    .btn-primary   { background: var(--green); color: var(--white); }
+    .btn-primary   { background: var(--blue); color: var(--white); }
     .btn-primary:hover {
-      background: var(--green-h); color: var(--white);
-      transform: translateY(-1px); box-shadow: 0 8px 24px rgba(22,130,93,.35);
+      background: var(--blue-h); color: var(--white);
+      transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,120,212,.35);
     }
     .btn-secondary { background: var(--bg4); color: var(--text); border: 1px solid var(--border); }
     .btn-secondary:hover { background: var(--bg5); color: var(--white); }
@@ -314,8 +327,8 @@
       animation: center-pulse 2s ease-in-out infinite alternate;
     }
     @keyframes center-pulse {
-      from { box-shadow: 0 0 10px rgba(0,120,212,.25); }
-      to   { box-shadow: 0 0 26px rgba(0,120,212,.6);  }
+      from { box-shadow: 0 0 4px rgba(0,120,212,.2); }
+      to   { box-shadow: 0 0 12px rgba(0,120,212,.35); }
     }
     .wi {
       position: absolute;
