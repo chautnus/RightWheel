@@ -7,7 +7,7 @@ from typing import Callable
 from ..services import config_service
 from .ask_dialog import _AskDialog, _btn
 from .key_recorder_dialog import KeyRecorderDialog
-from ..logic.gesture_recognizer import GestureRecognizer
+from features.mouse_mapper.logic.gesture_recognizer import GestureRecognizer
 from . import theme
 from features.i18n import t, ui_font
 

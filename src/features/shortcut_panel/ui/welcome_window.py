@@ -61,11 +61,11 @@ def show_welcome(root: tk.Tk) -> None:
     try:
         from PIL import Image, ImageTk
         img = Image.open(_asset_path("assets/icon.png")).convert("RGBA")
-        img = img.resize((64, 64), Image.LANCZOS)
+        img = img.resize((72, 72), Image.LANCZOS)
         _icon_img = ImageTk.PhotoImage(img)  # keep reference to avoid GC
         icon_lbl = tk.Label(top, image=_icon_img, bg=_HEADER_BG)
         icon_lbl._icon_img = _icon_img       # pin reference on widget
-        icon_lbl.pack(pady=(18, 4))
+        icon_lbl.pack(pady=(16, 4))
     except Exception:
         tk.Label(top, text="RightWheel", bg=_HEADER_BG, fg=_FG_PRIMARY,
                  font=(font, 16, "bold")).pack(pady=(20, 4))
