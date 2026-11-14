@@ -164,7 +164,7 @@ class SettingsWindow:
         # 5. Reference tab
         from .reference_tab import ReferenceTab
         f_ref = tk.Frame(parent, bg=_BG_CONTENT)
-        ReferenceTab(f_ref).pack(fill="both", expand=True, padx=8, pady=8)
+        ReferenceTab(f_ref, self._logic).pack(fill="both", expand=True, padx=8, pady=8)
         self._frames["reference"] = f_ref
 
         # 6. License tab

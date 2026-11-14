@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import tkinter as tk
 import tkinter.ttk as ttk
+from typing import Any
 
 from features.i18n import ui_font
+from ..services import config_service
 from .reference_shortcuts_data import _DEFAULT_SHORTCUTS
 from . import theme
 
@@ -12,13 +14,15 @@ _BG = theme.BG_CONTENT
 _BG2 = theme.BG_CARD
 _FG = theme.FG_SECONDARY
 _ACC = theme.ACCENT_BLUE
+_GRN = theme.COLOR_SUCCESS
 
 
 class ReferenceTab(tk.Frame):
-    """Tab frame displaying common shortcut references with search filter."""
+    """Tab frame displaying common shortcut references with search filter and 1-click import."""
 
-    def __init__(self, parent: tk.Widget) -> None:
+    def __init__(self, parent: tk.Widget, logic: Any = None) -> None:
         super().__init__(parent, bg=_BG)
+        self._logic = logic
         self._search_var = tk.StringVar()
         self._build()
 
@@ -100,6 +104,34 @@ class ReferenceTab(tk.Frame):
 
         self._tree.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+        self._tree.bind("<Double-1>", lambda _: self._add_selected())
+
+        # Bottom action bar for 1-click import into user shortcuts
+        bot_bar = tk.Frame(self, bg=_BG)
+        bot_bar.pack(fill="x", padx=6, pady=(4, 6))
+
+        self._feedback_lbl = tk.Label(
+            bot_bar,
+            text="Nhấp đúp chuột hoặc chọn mục rồi bấm nút để thêm vào phím tắt của bạn:",
+            bg=_BG,
+            fg=theme.FG_MUTED,
+            font=(font_name, 9),
+        )
+        self._feedback_lbl.pack(side="left")
+
+        add_btn = tk.Button(
+            bot_bar,
+            text="+ Thêm vào Phím tắt của tôi",
+            command=self._add_selected,
+            bg=_ACC,
+            fg="white",
+            font=(font_name, 9, "bold"),
+            relief="flat",
+            cursor="hand2",
+            padx=10,
+            pady=3,
+        )
+        add_btn.pack(side="right")
 
         self._populate_tree(_DEFAULT_SHORTCUTS)
 
@@ -120,3 +152,40 @@ class ReferenceTab(tk.Frame):
             if keyword in cat.lower() or keyword in sc.lower() or keyword in desc.lower()
         ]
         self._populate_tree(filtered)
+
+    def _add_selected(self) -> None:
+        sel = self._tree.selection()
+        if not sel:
+            return
+        vals = self._tree.item(sel[0], "values")
+        if not vals or len(vals) < 3:
+            return
+        cat, sc, desc = vals[0], vals[1], vals[2]
+
+        # Ignore mouse combos that aren't keyboard hotkeys
+        if "rmb" in sc.lower():
+            self._feedback_lbl.configure(
+                text=f"ℹ '{sc}' là cử chỉ chuột tích hợp, không phải phím tắt bàn phím.",
+                fg=theme.COLOR_WARNING,
+            )
+            return
+
+        keys = sc.lower().replace(" ", "")
+        data = config_service.load()
+        data.setdefault("default", []).append({"type": "shortcut", "label": desc, "keys": keys})
+        config_service.save(data)
+
+        if self._logic and hasattr(self._logic, "reload"):
+            self._logic.reload()
+
+        self._feedback_lbl.configure(
+            text=f"✓ Đã thêm '{desc}' ({sc}) vào danh sách phím tắt!",
+            fg=_GRN,
+        )
+        self.after(3500, self._reset_feedback)
+
+    def _reset_feedback(self) -> None:
+        self._feedback_lbl.configure(
+            text="Nhấp đúp chuột hoặc chọn mục rồi bấm nút để thêm vào phím tắt của bạn:",
+            fg=theme.FG_MUTED,
+        )

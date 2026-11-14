@@ -15,15 +15,20 @@ class _DefaultTabCRUDMixin:
             return
         self._dialog_open = True
         try:
-            label = self._ask(t("dlg.add_shortcut"), t("dlg.display_name"))
-            if not label:
-                return
-            keys = self._record_keys()
-            if keys is None:
-                return
+            from .intent_picker_dialog import IntentPickerDialog
+            intent = IntentPickerDialog.ask(self.winfo_toplevel())
+            if intent:
+                label = intent.title_vi
+                keys = intent.keys
+            else:
+                label = self._ask(t("dlg.add_shortcut"), t("dlg.display_name"))
+                if not label:
+                    return
+                keys = self._record_keys()
+                if keys is None:
+                    return
             data = config_service.load()
-            data.setdefault("default", []).append(
-                {"type": "shortcut", "label": label, "keys": keys})
+            data.setdefault("default", []).append({"type": "shortcut", "label": label, "keys": keys})
             config_service.save(data)
             self._refresh(); self._logic.reload()
         finally:
@@ -45,8 +50,7 @@ class _DefaultTabCRUDMixin:
             if not path:
                 return
             data = config_service.load()
-            data.setdefault("default", []).append(
-                {"type": "app", "label": label, "path": path, "args": ""})
+            data.setdefault("default", []).append({"type": "app", "label": label, "path": path, "args": ""})
             config_service.save(data)
             self._refresh(); self._logic.reload()
         finally:
@@ -64,8 +68,7 @@ class _DefaultTabCRUDMixin:
             if not url:
                 return
             data = config_service.load()
-            data.setdefault("default", []).append(
-                {"type": "url", "label": label, "url": url})
+            data.setdefault("default", []).append({"type": "url", "label": label, "url": url})
             config_service.save(data)
             self._refresh(); self._logic.reload()
         finally:
