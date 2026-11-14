@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..services import config_service
 from .ask_dialog import _AskDialog, _btn  # re-export for backward-compat
+from . import theme
 from features.i18n import t, ui_font
 
 if TYPE_CHECKING:
@@ -13,14 +14,14 @@ if TYPE_CHECKING:
 
 VERSION = "2.10.8"
 
-_BG_SIDEBAR = "#121214"
-_BG_CONTENT = "#18181b"
-_BG_NAV_ACT = "#27272a"
-_FG         = "#a1a1aa"
-_FG_ACT     = "#ffffff"
-_ACC        = "#0078d4"
-_BORDER     = "#27272a"
-_SAV        = "#16825d"
+_BG_SIDEBAR = theme.BG_SIDEBAR
+_BG_CONTENT = theme.BG_CONTENT
+_BG_NAV_ACT = theme.BG_ACTIVE
+_FG         = theme.FG_MUTED
+_FG_ACT     = theme.FG_PRIMARY
+_ACC        = theme.ACCENT_BLUE
+_BORDER     = theme.BORDER_SUBTLE
+_SAV        = theme.COLOR_SUCCESS
 
 
 class SettingsWindow:

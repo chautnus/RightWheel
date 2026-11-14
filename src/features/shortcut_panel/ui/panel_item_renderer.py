@@ -5,21 +5,23 @@ import re
 import tkinter as tk
 from typing import Callable, TYPE_CHECKING
 
+from . import theme
+
 if TYPE_CHECKING:
     from ..types.panel_types import MenuItem
 
-_BG_BASE = "#121214"
-_BG_SEL = "#27272a"
-_BG_KBD = "#1e1e24"
-_BG_KBD_SEL = "#383842"
-_BORDER_KBD = "#3f3f46"
-_BORDER_KBD_SEL = "#6366f1"
-_FG_KBD = "#858590"
-_FG_KBD_SEL = "#ffffff"
-_FG_SEL = "#ffffff"
-_FG_NORM = "#d4d4d8"
-_FG_SUB = "#71717a"
-_ACCENT_BAR = "#0078d4"
+_BG_BASE = theme.BG_SIDEBAR
+_BG_SEL = theme.BG_CARD_HOVER
+_BG_KBD = theme.KBD_BG
+_BG_KBD_SEL = theme.KBD_BG_SEL
+_BORDER_KBD = theme.KBD_BORDER
+_BORDER_KBD_SEL = theme.KBD_BORDER_SEL
+_FG_KBD = theme.KBD_FG
+_FG_KBD_SEL = theme.KBD_FG_SEL
+_FG_SEL = theme.FG_PRIMARY
+_FG_NORM = theme.FG_SECONDARY
+_FG_SUB = theme.FG_MUTED
+_ACCENT_BAR = theme.ACCENT_BLUE
 
 _TYPE_LABEL = {
     "folder": "Folder",

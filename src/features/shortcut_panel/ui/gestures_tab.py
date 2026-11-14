@@ -7,13 +7,15 @@ from typing import Callable
 from ..services import config_service
 from .ask_dialog import _AskDialog, _btn
 from .key_recorder_dialog import KeyRecorderDialog
+from . import theme
 from features.i18n import t, ui_font
 
-_BG  = "#1e1e1e"
-_BG2 = "#2d2d2d"
-_FG  = "#cccccc"
-_ACC = "#0078d4"
-_RED = "#c0392b"
+_BG  = theme.BG_CONTENT
+_BG2 = theme.BG_CARD
+_FG  = theme.FG_SECONDARY
+_ACC = theme.ACCENT_BLUE
+_RED = theme.COLOR_DANGER
+_BTN_NEUTRAL = theme.BORDER_INPUT
 
 
 class GesturesTab(tk.Frame):
@@ -59,8 +61,8 @@ class GesturesTab(tk.Frame):
         bf = tk.Frame(body, bg=_BG)
         bf.pack(side="right", padx=(8, 0), anchor="n")
         _btn(bf, "Thêm", self._add, bg=_ACC).pack(fill="x", pady=2)
-        _btn(bf, "Sửa", self._edit, bg="#404040").pack(fill="x", pady=2)
-        _btn(bf, "Bật/Tắt", self._toggle, bg="#404040").pack(fill="x", pady=2)
+        _btn(bf, "Sửa", self._edit, bg=_BTN_NEUTRAL).pack(fill="x", pady=2)
+        _btn(bf, "Bật/Tắt", self._toggle, bg=_BTN_NEUTRAL).pack(fill="x", pady=2)
         _btn(bf, "Xoá", self._delete, bg=_RED).pack(fill="x", pady=2)
 
         self._load_items()

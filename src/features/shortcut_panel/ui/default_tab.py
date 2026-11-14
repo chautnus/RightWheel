@@ -8,17 +8,19 @@ from ..services import config_service
 from .ask_dialog import _AskDialog, _btn
 from .default_tab_crud import _DefaultTabCRUDMixin
 from .key_recorder_dialog import KeyRecorderDialog
+from . import theme
 from features.i18n import t, ui_font
 
 if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
 
-_BG  = "#1e1e1e"
-_BG2 = "#2d2d2d"
-_FG  = "#cccccc"
-_ACC = "#0078d4"
-_RED = "#c0392b"
-_GRN = "#16825d"
+_BG  = theme.BG_CONTENT
+_BG2 = theme.BG_CARD
+_FG  = theme.FG_SECONDARY
+_ACC = theme.ACCENT_BLUE
+_RED = theme.COLOR_DANGER
+_GRN = theme.COLOR_SUCCESS
+_BTN_NEUTRAL = theme.BORDER_INPUT
 
 
 class DefaultTab(tk.Frame, _DefaultTabCRUDMixin):
@@ -55,10 +57,10 @@ class DefaultTab(tk.Frame, _DefaultTabCRUDMixin):
             (t("btn.folder"),   self._add_folder,       _ACC),
             ("▶ Command",       self._add_command,      "#6a5acd"),
             ("⛓ Sequence",      self._add_sequence,     _ACC),
-            (t("btn.edit"),     self._edit,             "#404040"),
+            (t("btn.edit"),     self._edit,             _BTN_NEUTRAL),
             (t("btn.delete"),   self._delete,           _RED),
-            (t("btn.up"),       lambda: self._move(-1), "#404040"),
-            (t("btn.down"),     lambda: self._move(1),  "#404040"),
+            (t("btn.up"),       lambda: self._move(-1), _BTN_NEUTRAL),
+            (t("btn.down"),     lambda: self._move(1),  _BTN_NEUTRAL),
             ("⬇ Import",        self._import,           _GRN),
         ]:
             _btn(bf, txt, cmd, c).pack(fill="x", pady=2)

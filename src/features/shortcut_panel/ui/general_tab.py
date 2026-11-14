@@ -6,15 +6,16 @@ import tkinter.ttk as ttk
 from typing import TYPE_CHECKING
 
 from ..services import startup_service
+from . import theme
 from features.i18n import available, current, set_locale, t, ui_font
 
 if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
 
-_BG = "#18181b"
-_CARD_BG = "#1e1e24"
-_BORDER = "#27272a"
-_FG = "#ffffff"
+_BG = theme.BG_CONTENT
+_CARD_BG = theme.BG_CARD
+_BORDER = theme.BORDER_SUBTLE
+_FG = theme.FG_PRIMARY
 
 
 class GeneralTab(tk.Frame):

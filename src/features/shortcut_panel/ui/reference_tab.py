@@ -6,11 +6,12 @@ import tkinter.ttk as ttk
 
 from features.i18n import ui_font
 from .reference_shortcuts_data import _DEFAULT_SHORTCUTS
+from . import theme
 
-_BG = "#1e1e1e"
-_BG2 = "#2d2d2d"
-_FG = "#cccccc"
-_ACC = "#0078d4"
+_BG = theme.BG_CONTENT
+_BG2 = theme.BG_CARD
+_FG = theme.FG_SECONDARY
+_ACC = theme.ACCENT_BLUE
 
 
 class ReferenceTab(tk.Frame):
