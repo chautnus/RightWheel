@@ -29,6 +29,7 @@ _VK: dict[str, int] = {
     "pgup": 0x21, "pageup":   0x21,
     "pgdn": 0x22, "pagedown": 0x22,
     "left": 0x25, "up": 0x26, "right": 0x27, "down": 0x28,
+    "prtsc": 0x2C, "printscreen": 0x2C, "snapshot": 0x2C,
     **{f"f{i}": 0x6F + i for i in range(1, 13)},
     **{str(i): 0x30 + i for i in range(10)},
     **{chr(65 + i).lower(): 0x41 + i for i in range(26)},

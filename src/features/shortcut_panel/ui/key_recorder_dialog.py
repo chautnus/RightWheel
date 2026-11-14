@@ -19,6 +19,7 @@ _SPECIAL: dict[str, str] = {
     "Home": "home", "End": "end",
     "Prior": "pgup", "Next": "pgdn",
     "Tab": "tab", "space": "space",
+    "Print": "prtsc",
     **{f"F{i}": f"f{i}" for i in range(1, 13)},
 }
 
@@ -93,7 +94,7 @@ class KeyRecorderDialog(tk.Toplevel):
                 relief="flat", cursor="hand2", padx=6, pady=2,
             ).pack(side="left", padx=2)
 
-        for text, key in (("Home", "home"), ("End", "end"), ("PgUp", "pgup"), ("PgDn", "pgdn")):
+        for text, key in (("Home", "home"), ("End", "end"), ("PgUp", "pgup"), ("PgDn", "pgdn"), ("PrtSc", "prtsc")):
             tk.Button(
                 row2, text=text,
                 command=lambda k=key: self._on_arrow_click(k),

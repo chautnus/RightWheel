@@ -68,8 +68,20 @@ def test_sequence_error_resilience() -> None:
     print("PASS: test_sequence_error_resilience")
 
 
+def test_prtsc_virtual_key_resolution() -> None:
+    """4. Test Virtual Key Resolution: verify prtsc, printscreen, and dialog mappings."""
+    assert shortcut_executor._VK.get("prtsc") == 0x2C, "Expected prtsc to map to 0x2C"
+    assert shortcut_executor._VK.get("printscreen") == 0x2C, "Expected printscreen to map to 0x2C"
+    assert shortcut_executor._VK.get("snapshot") == 0x2C, "Expected snapshot to map to 0x2C"
+
+    from features.shortcut_panel.ui.key_recorder_dialog import _SPECIAL
+    assert _SPECIAL.get("Print") == "prtsc", "Expected Tkinter 'Print' keysym to map to 'prtsc'"
+    print("PASS: test_prtsc_virtual_key_resolution")
+
+
 if __name__ == "__main__":
     test_sequence_serialization()
     test_sequence_execution_and_timing()
     test_sequence_error_resilience()
+    test_prtsc_virtual_key_resolution()
     print("ALL SEQUENCE INTEGRATION TESTS PASSED.")
