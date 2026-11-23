@@ -192,14 +192,21 @@ def test_mouse_hook_win64_signatures_and_stats():
     # Verify 64-bit argtypes and restype
     assert user32.CallNextHookEx.restype == ctypes.c_ssize_t
     assert len(user32.CallNextHookEx.argtypes) == 4
+    assert user32.CallNextHookEx.argtypes[3] == ctypes.c_void_p
     assert user32.SetWindowsHookExW.restype == ctypes.c_void_p
     assert len(user32.SetWindowsHookExW.argtypes) == 4
 
-    hook_svc = MouseHookService(on_event=lambda ev: False)
+    hook_svc = MouseHookService(on_event=lambda ev: False, wants_move_events=lambda: False)
     assert hook_svc.is_hook_alive is False
     assert "rmb_down" in hook_svc.stats
     assert "rmb_up" in hook_svc.stats
     assert "moves" in hook_svc.stats
+
+    # Verify _hook_proc does NOT raise ctypes.ArgumentError on pointer l_param
+    from src.features.mouse_mapper.services.mouse_hook_service import MSLLHOOKSTRUCT, WM_MOUSEMOVE
+    st = MSLLHOOKSTRUCT()
+    ptr = ctypes.pointer(st)
+    assert hook_svc._hook_proc(0, WM_MOUSEMOVE, ptr) == 0
 
 
 def test_trail_overlay_root_getter():
@@ -326,4 +333,33 @@ def test_gesture_async_execution_timer():
         args, _ = mock_timer.call_args
         assert args[0] == 0.06
         assert callable(args[1])
+
+
+def test_welcome_bento_and_wizard_i18n():
+    """Verify updated 3 core welcome pillars and wizard strings across i18n locales."""
+    for lang in ["vi", "en", "fr", "es", "it", "pt", "id"]:
+        d = i18n._TRANSLATIONS[lang]
+        assert "welcome_bento_1_title" in d and len(d["welcome_bento_1_title"]) > 0
+        assert "welcome_bento_2_title" in d and len(d["welcome_bento_2_title"]) > 0
+        assert "welcome_bento_3_title" in d and len(d["welcome_bento_3_title"]) > 0
+        assert "welcome_bento_1_desc" in d and len(d["welcome_bento_1_desc"]) > 0
+        assert "welcome_bento_2_desc" in d and len(d["welcome_bento_2_desc"]) > 0
+        assert "welcome_bento_3_desc" in d and len(d["welcome_bento_3_desc"]) > 0
+
+    # Specific pillar checks for Vietnamese
+    vi = i18n._TRANSLATIONS["vi"]
+    assert "Cử chỉ vẽ chuột" in vi["welcome_bento_1_title"]
+    assert "Bảng lệnh nhanh không giới hạn" in vi["welcome_bento_2_title"]
+    assert "Chuỗi tác vụ tự động 1 cú nhấp" in vi["welcome_bento_3_title"]
+    assert "wiz_tab_gestures" in vi
+    assert "wiz_tab_commands" in vi
+
+    # Specific pillar checks for English
+    en = i18n._TRANSLATIONS["en"]
+    assert "Hold Right Mouse & Draw Gestures" == en["welcome_bento_1_title"]
+    assert "Unlimited Quick Commands" == en["welcome_bento_2_title"]
+    assert "A Series of Actions in One Click" == en["welcome_bento_3_title"]
+    assert "wiz_tab_gestures" in en
+    assert "wiz_tab_commands" in en
+
 

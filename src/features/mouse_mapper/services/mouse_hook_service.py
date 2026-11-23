@@ -21,7 +21,7 @@ user32   = ctypes.windll.user32
 kernel32 = ctypes.windll.kernel32
 
 # Win64 explicit argtypes & restype declarations
-user32.CallNextHookEx.argtypes = [ctypes.c_void_p, ctypes.c_int, wt.WPARAM, wt.LPARAM]
+user32.CallNextHookEx.argtypes = [ctypes.c_void_p, ctypes.c_int, wt.WPARAM, ctypes.c_void_p]
 user32.CallNextHookEx.restype = ctypes.c_ssize_t
 
 user32.SetWindowsHookExW.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, wt.DWORD]
@@ -223,4 +223,7 @@ class MouseHookService:
             except Exception:
                 pass
 
-        return user32.CallNextHookEx(self._hook_id, n_code, w_param, l_param)
+        try:
+            return user32.CallNextHookEx(self._hook_id, n_code, w_param, l_param)
+        except Exception:
+            return 0
