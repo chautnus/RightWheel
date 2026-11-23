@@ -333,6 +333,127 @@ class WebViewBridgeAPI:
             ))
         return _err("INVALID_SIMULATION_ACTION", "simulate_license", f"Unknown action: {action}")
 
+    def discover_apps(self) -> dict[str, Any]:
+        return self.get_installed_applications()
+
+    def record_key_combo(self, timeout_sec: float = 6.0) -> dict[str, Any]:
+        return self.capture_key_combo(timeout_sec=timeout_sec)
+
+    def get_webclip_templates(self, query: str = "") -> dict[str, Any]:
+        return self.search_webclips(query=query)
+
+    def search_intents(self, query: str = "", lang: str | None = None) -> dict[str, Any]:
+        try:
+            from src.features.shortcut_panel.services.intent_service import IntentService
+            resolved_lang = lang or get_language()
+            items = IntentService().search(query, limit=15)
+            return _ok([
+                {
+                    "intent_id": item.intent_id,
+                    "title": item.get_title(resolved_lang),
+                    "keys": item.keys,
+                    "category": item.category,
+                    "description": item.description,
+                }
+                for item in items
+            ])
+        except Exception as exc:
+            return _err("SEARCH_INTENTS_FAILED", "search_intents", str(exc))
+
+    def save_gesture_binding(self, binding: dict[str, Any], profile_id: str = "global") -> dict[str, Any]:
+        doc = self._load_profiles_doc()
+        profiles = doc.get("profiles", [])
+        prof = next((p for p in profiles if p.get("id") == profile_id), None)
+        if prof is None:
+            return _err("PROFILE_NOT_FOUND", "save_gesture_binding", f"Profile '{profile_id}' not found")
+        entries = prof.get("gestures", [])
+        bk = binding_key_for(binding)
+        entries = [g for g in entries if binding_key_for(g) != bk]
+        entries.append(binding)
+        prof["gestures"] = sort_gestures(entries)
+        doc["profiles"] = profiles
+        self._save_profiles_doc(doc)
+        return _ok(prof["gestures"])
+
+    def run_system_action(self, action: str, payload: Any = None) -> dict[str, Any]:
+        if action == "copy_diagnostics":
+            from src.core.crash_reporter import copy_diagnostic_to_clipboard
+            return _ok({"copied": bool(copy_diagnostic_to_clipboard())})
+        if action == "open_logs":
+            from src.core.crash_reporter import open_crash_logs_folder
+            return _ok({"opened": bool(open_crash_logs_folder())})
+        if action == "restart_app":
+            import os, subprocess
+            env = os.environ.copy()
+            for k in list(env.keys()):
+                if k == "_MEIPASS2" or k.startswith("_PYI_"):
+                    env.pop(k, None)
+            env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+            args_str = " ".join(f'"{a}"' for a in sys.argv[1:])
+            cmd = f'ping 127.0.0.1 -n 2 > nul & "{sys.executable}" {args_str}'.strip()
+            subprocess.Popen(
+                cmd,
+                shell=True,
+                env=env,
+                creationflags=0x00000008 | 0x00000200,
+                close_fds=True,
+            )
+            if self._window is not None:
+                try:
+                    self._window.destroy()
+                except Exception:
+                    pass
+            sys.exit(0)
+        if action == "check_license":
+            get_license_service().verify_store_license()
+            return _ok(self._build_license_info())
+        if action == "buy_license":
+            purchased = bool(get_license_service().purchase_pro())
+            return _ok({"purchased": purchased, "license": self._build_license_info()})
+        if action == "simulate_expire_trial":
+            get_license_service().simulate_expire_trial()
+            return _ok(self._build_license_info())
+        if action == "reset_trial":
+            get_license_service().reset_trial()
+            return _ok(self._build_license_info())
+        if action == "simulate_countdown":
+            p = payload if isinstance(payload, dict) else {}
+            h = int(p.get("hours", 0))
+            m = int(p.get("minutes", 1))
+            s = int(p.get("seconds", 0))
+            get_license_service().simulate_set_remaining(hours=h, minutes=m, seconds=s)
+            return _ok(self._build_license_info())
+        if action == "get_license_countdown":
+            return _ok(self._build_license_info())
+        return _err("UNKNOWN_SYSTEM_ACTION", "run_system_action", f"Unsupported action: {action}", "action")
+
+    def complete_onboarding(self) -> dict[str, Any]:
+        current = self._load_app_settings()
+        current["onboarding_completed"] = True
+        current["show_welcome"] = False
+        self._save_app_settings(current)
+        return _ok({"completed": True})
+
+    def open_view(self, view: str) -> dict[str, Any]:
+        if view not in ("settings", "welcome", "wizard"):
+            return _err("INVALID_VIEW", "open_view", f"Unsupported view: {view}", "view")
+        if self._window is not None:
+            bundle = _resolve_ui_index_url(view)
+            if bundle:
+                try:
+                    self._window.load_url(bundle)
+                except Exception:
+                    pass
+        return _ok({"view": view})
+
+    def close_window(self) -> dict[str, Any]:
+        if self._window is not None:
+            try:
+                self._window.destroy()
+            except Exception:
+                pass
+        return _ok({"closed": True})
+
 
 def resolve_ui_index_path() -> Path | None:
     if getattr(sys, "frozen", False):

@@ -136,7 +136,7 @@ class StoreLicenseService:
         trial_total_seconds = TRIAL_DAYS * 86400
         trial_end_time = install_time + trial_total_seconds
         seconds_remaining = max(0, trial_end_time - now)
-        days_remaining = int(seconds_remaining // 86400)
+        days_remaining = int((seconds_remaining + 86399) // 86400) if seconds_remaining > 0 else 0
 
         if is_pro:
             status = StoreLicenseStatus.PRO_ACTIVATED

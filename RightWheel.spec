@@ -53,6 +53,10 @@ a = Analysis(
         'src.features.webview_ui.launcher',
         'src.features.webview_ui.key_recorder_bridge',
         # i18n locale modules
+        'src.features.i18n',
+        'src.features.i18n.en', 'src.features.i18n.fr', 'src.features.i18n.pt',
+        'src.features.i18n.es', 'src.features.i18n.it', 'src.features.i18n.vi',
+        'src.features.i18n.id', 'src.features.i18n.th', 'src.features.i18n.zh',
         'features.i18n.en', 'features.i18n.fr', 'features.i18n.pt',
         'features.i18n.es', 'features.i18n.it', 'features.i18n.vi',
         'features.i18n.id', 'features.i18n.th', 'features.i18n.zh',

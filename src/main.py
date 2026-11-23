@@ -81,6 +81,12 @@ def main() -> None:
     mapper.on_gesture_start = on_gesture_start_wrap
     mapper.on_gesture_end = on_gesture_end_wrap
 
+    # Show modern Welcome onboarding on first launch if enabled
+    from src.core.config_service import load_app_settings
+    app_settings = load_app_settings()
+    if app_settings.get("show_welcome", True) and "--background" not in sys.argv and "--startup" not in sys.argv:
+        launcher.launch_or_fallback("welcome")
+
     # Global mouse hook
     hook = MouseHookService(
         on_event=mapper.handle,

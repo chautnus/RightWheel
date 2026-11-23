@@ -54,6 +54,8 @@ class PanelLogic:
         default_raw = data.get("default", data.get("shortcuts", []))
         self._root = config_service.parse_items(default_raw)
 
+    reload_config = reload
+
     def show(self) -> None:
         if self.paused:
             return

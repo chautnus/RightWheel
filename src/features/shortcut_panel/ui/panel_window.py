@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ..logic.panel_logic import PanelLogic
     from .settings_window import SettingsWindow
 
-_W = 264
+_W = 320
 _BG = "#121214"
 _BORDER = "#27272a"
 _FONT_BC = ("Segoe UI", 9)
@@ -35,6 +35,9 @@ class PanelWindow:
         self._last_paused: bool = False
         self._last_index: int = 0
 
+        from src.features.webview_ui.reload_sync import ConfigReloadWatcher
+        self._config_watcher = ConfigReloadWatcher()
+
         logic.on_show = lambda: self._q.put("show")
         logic.on_hide = lambda: self._q.put("hide")
         logic.on_update = lambda: self._q.put("update")
@@ -50,8 +53,6 @@ class PanelWindow:
         self._root = tk.Tk()
         self._root.withdraw()
         self._root.after(30, self._pump)
-        from .welcome_window import show_welcome
-        show_welcome(self._root)
         self._root.mainloop()
 
     def _pump(self) -> None:
@@ -66,6 +67,7 @@ class PanelWindow:
                 }.get(cmd, lambda: None)()
         except queue.Empty:
             pass
+        self._config_watcher.check_and_notify(self._logic.reload)
         if self._root:
             self._root.after(30, self._pump)
 
@@ -146,19 +148,25 @@ class PanelWindow:
             self._last_index = st.index
 
     def _do_settings(self) -> None:
-        if (
-            self._settings_window is not None
-            and self._settings_window._win is not None
-            and self._settings_window._win.winfo_exists()
-        ):
-            self._settings_window._win.deiconify()
-            self._settings_window._win.lift()
-            self._settings_window._win.focus_force()
-            return
+        def _fallback_tk():
+            if not self._root:
+                return
+            if (
+                self._settings_window is not None
+                and self._settings_window._win is not None
+                and self._settings_window._win.winfo_exists()
+            ):
+                self._settings_window._win.deiconify()
+                self._settings_window._win.lift()
+                self._settings_window._win.focus_force()
+                return
 
-        from .settings_window import SettingsWindow
-        self._settings_window = SettingsWindow(self._root, self._logic)
-        self._settings_window.show()
+            from .settings_window import SettingsWindow
+            self._settings_window = SettingsWindow(self._root, self._logic)
+            self._settings_window.show()
+
+        from src.features.webview_ui.launcher import WebViewLauncher
+        WebViewLauncher().launch_or_fallback("settings", fallback_fn=_fallback_tk)
 
     # ── rendering ──────────────────────────────────────────────────────────
 
