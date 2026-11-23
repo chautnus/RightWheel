@@ -363,3 +363,57 @@ def test_welcome_bento_and_wizard_i18n():
     assert "wiz_tab_commands" in en
 
 
+def test_gesture_lead_in_tremor_pruning():
+    """Verify that mechanical click wobble (<25px lead-in) is cleanly pruned."""
+    from src.features.mouse_mapper.logic.gesture_recognizer import GestureRecognizer
+
+    gr = GestureRecognizer()
+    gr.reset()
+    gr.feed_point(100, 100)
+    # 1-step lead-in tremor in UL
+    gr.feed_point(85, 85)
+    # Main stroke downward
+    for y in range(110, 260, 25):
+        gr.feed_point(85, y)
+
+    presets = [{"shape": "D", "keys": "prtsc", "enabled": True}]
+    res = gr.finish(presets)
+    assert res["data"]["matched"] is True
+    assert res["data"]["keys"] == "prtsc"
+    assert res["data"]["directions"] == ["D"]
+
+
+def test_gesture_compound_with_lead_in_tremor():
+    """Verify that compound gestures (D_R) with lead-in wobble trigger correctly."""
+    from src.features.mouse_mapper.logic.gesture_recognizer import GestureRecognizer
+
+    gr = GestureRecognizer()
+    gr.reset()
+    gr.feed_point(100, 100)
+    # Lead-in tremor
+    gr.feed_point(85, 85)
+    # Down leg
+    for y in range(110, 210, 25):
+        gr.feed_point(85, y)
+    # Right leg
+    for x in range(110, 210, 25):
+        gr.feed_point(x, 210)
+
+    presets = [{"shape": "D_R", "keys": "ctrl+w", "enabled": True}]
+    res = gr.finish(presets)
+    assert res["data"]["matched"] is True
+    assert res["data"]["keys"] == "ctrl+w"
+    assert res["data"]["directions"] == ["D", "R"]
+
+
+def test_shortcut_executor_scan_codes():
+    """Verify that _resolve_scan_code handles VK_SNAPSHOT (0x2C) without collision."""
+    from src.features.shortcut_panel.services.shortcut_executor import _resolve_scan_code
+
+    # PrtScn must return 0 to prevent SysRq duplicate snapshot in Snipping Tool
+    assert _resolve_scan_code(0x2C) == 0
+    # Common keys (Enter, Esc, letters) must return valid positive scan codes
+    assert _resolve_scan_code(0x0D) > 0  # Enter
+
+
+

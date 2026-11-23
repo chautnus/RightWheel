@@ -94,8 +94,22 @@ class _INPUT(ctypes.Structure):
 _SZ = ctypes.sizeof(_INPUT)
 
 
+def _resolve_scan_code(vk: int) -> int:
+    """Resolve hardware scan code for SendInput, excluding VK_SNAPSHOT (0x2C).
+
+    MapVirtualKeyW(0x2C, 0) returns 0x54 (SysRq), which triggers duplicate
+    screenshot captures in Windows 11 Snipping Tool / Clipboard History.
+    """
+    if vk == 0x2C:
+        return 0
+    try:
+        return int(ctypes.windll.user32.MapVirtualKeyW(vk, 0))
+    except Exception:
+        return 0
+
+
 def execute(keys: str) -> None:
-    """Execute a hotkey string like 'ctrl+shift+v'."""
+    """Execute a hotkey string like 'ctrl+shift+v' or 'prtsc' with hardware scan codes."""
     if not keys.strip():
         return
     parts = [p.strip().lower() for p in keys.split("+")]
@@ -109,23 +123,29 @@ def execute(keys: str) -> None:
         _log.warning(f"execute() no valid VKs for {keys!r} — nothing sent")
         return
 
-    n   = len(vks) * 2
-    arr = (_INPUT * n)()
-
+    # Key down batch with scan codes
+    down_arr = (_INPUT * len(vks))()
     for i, vk in enumerate(vks):
         flags = KEYEVENTF_EXTENDEDKEY if vk in _EXTENDED else 0
-        arr[i].type    = INPUT_KEYBOARD
-        arr[i].ki.wVk  = vk
-        arr[i].ki.dwFlags = flags
+        down_arr[i].type = INPUT_KEYBOARD
+        down_arr[i].ki.wVk = vk
+        down_arr[i].ki.wScan = _resolve_scan_code(vk)
+        down_arr[i].ki.dwFlags = flags
+    ctypes.windll.user32.SendInput(len(vks), down_arr, _SZ)
 
+    # 12ms physical hold delay so OS and laptop keyboard drivers (e.g. Lenovo Hotkeys) register the stroke
+    time.sleep(0.012)
+
+    # Key up batch with scan codes
+    up_arr = (_INPUT * len(vks))()
     for i, vk in enumerate(reversed(vks)):
         flags = (KEYEVENTF_EXTENDEDKEY if vk in _EXTENDED else 0) | KEYEVENTF_KEYUP
-        arr[len(vks) + i].type       = INPUT_KEYBOARD
-        arr[len(vks) + i].ki.wVk    = vk
-        arr[len(vks) + i].ki.dwFlags = flags
-
-    n_sent = ctypes.windll.user32.SendInput(n, arr, _SZ)
-    _log.debug(f"SendInput({n} events, cbSize={_SZ}) → sent {n_sent}")
+        up_arr[i].type = INPUT_KEYBOARD
+        up_arr[i].ki.wVk = vk
+        up_arr[i].ki.wScan = _resolve_scan_code(vk)
+        up_arr[i].ki.dwFlags = flags
+    ctypes.windll.user32.SendInput(len(vks), up_arr, _SZ)
+    _log.debug(f"SendInput({len(vks)*2} events with scan codes sent)")
 
 
 def execute_app(path: str, args: str = "") -> None:
