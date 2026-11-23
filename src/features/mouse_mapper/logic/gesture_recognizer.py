@@ -125,12 +125,28 @@ class GestureRecognizer:
         for preset in presets:
             if not isinstance(preset, dict):
                 continue
-            if preset.get("enabled", True) and preset.get("directions") == current_dirs:
+            if not preset.get("enabled", True):
+                continue
+
+            preset_dirs = preset.get("directions")
+            if not preset_dirs:
+                shape = str(preset.get("shape") or preset.get("direction") or "").strip()
+                if shape:
+                    if "_" in shape:
+                        preset_dirs = [d.strip().upper() for d in shape.split("_") if d.strip()]
+                    elif len(shape) <= 2 and shape.upper() in SECTORS:
+                        preset_dirs = [shape.upper()]
+                    else:
+                        preset_dirs = list(shape.upper())
+
+            if preset_dirs and normalize_directions(preset_dirs) == current_dirs:
+                keys = str(preset.get("keys") or preset.get("target") or "")
                 return {
                     "ok": True,
                     "data": {
                         "matched": True,
-                        "keys": str(preset.get("keys", "")),
+                        "keys": keys,
+                        "preset": preset,
                         "directions": current_dirs,
                     },
                 }

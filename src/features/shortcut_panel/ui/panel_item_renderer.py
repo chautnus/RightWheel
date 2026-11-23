@@ -11,17 +11,18 @@ if TYPE_CHECKING:
     from ..types.panel_types import MenuItem
 
 _BG_BASE = theme.BG_SIDEBAR
-_BG_SEL = theme.BG_CARD_HOVER
+_BG_SEL = "#0078d4"       # Vivid Windows Accent Blue highlight
 _BG_KBD = theme.KBD_BG
-_BG_KBD_SEL = theme.KBD_BG_SEL
+_BG_KBD_SEL = "#0284c7"
 _BORDER_KBD = theme.KBD_BORDER
-_BORDER_KBD_SEL = theme.KBD_BORDER_SEL
+_BORDER_KBD_SEL = "#38bdf8"
 _FG_KBD = theme.KBD_FG
-_FG_KBD_SEL = theme.KBD_FG_SEL
-_FG_SEL = theme.FG_PRIMARY
+_FG_KBD_SEL = "#ffffff"
+_FG_SEL = "#ffffff"       # Pure white for high contrast on blue
 _FG_NORM = theme.FG_SECONDARY
 _FG_SUB = theme.FG_MUTED
-_ACCENT_BAR = theme.ACCENT_BLUE
+_FG_SUB_SEL = "#e0f2fe"   # Light cyan-white subtitle on blue
+_ACCENT_BAR = "#38bdf8"   # Bright cyan indicator bar
 
 _TYPE_LABEL = {
     "folder": "Folder",
@@ -105,7 +106,7 @@ class PanelItemRenderer:
             acc_bar.configure(bg=_BG_BASE)
             kbd_badge.configure(bg=_BG_KBD, fg=_FG_KBD, highlightbackground=_BORDER_KBD)
             title_lbl.configure(bg=_BG_BASE, fg=_FG_NORM, font=("Segoe UI", 10))
-            sub_lbl.configure(bg=_BG_BASE)
+            sub_lbl.configure(bg=_BG_BASE, fg=_FG_SUB)
 
         if 0 <= new_idx < len(self._row_views):
             row, acc_bar, kbd_badge, title_lbl, sub_lbl = self._row_views[new_idx]
@@ -113,7 +114,7 @@ class PanelItemRenderer:
             acc_bar.configure(bg=_ACCENT_BAR)
             kbd_badge.configure(bg=_BG_KBD_SEL, fg=_FG_KBD_SEL, highlightbackground=_BORDER_KBD_SEL)
             title_lbl.configure(bg=_BG_SEL, fg=_FG_SEL, font=("Segoe UI", 10, "bold"))
-            sub_lbl.configure(bg=_BG_SEL)
+            sub_lbl.configure(bg=_BG_SEL, fg=_FG_SUB_SEL)
 
     def _render_row(self, index: int, item: MenuItem, sel: bool) -> None:
         """Render a single shortcut item row without emoticons."""
@@ -122,7 +123,7 @@ class PanelItemRenderer:
         label_text = _strip_emojis(item.label)
 
         row = tk.Frame(self._container, bg=bg, cursor="hand2")
-        row.pack(fill="x", padx=4, pady=1)
+        row.pack(fill="x", padx=6, pady=2)
 
         # Left Accent bar indicator (3px) for active row
         bar_color = _ACCENT_BAR if sel else bg
@@ -152,8 +153,9 @@ class PanelItemRenderer:
 
         # Subtitle type badge on the far right
         sub_text = _TYPE_LABEL.get(itype, "")
+        sub_fg = _FG_SUB_SEL if sel else _FG_SUB
         sub_lbl = tk.Label(
-            row, text=sub_text, bg=bg, fg=_FG_SUB,
+            row, text=sub_text, bg=bg, fg=sub_fg,
             font=("Segoe UI", 8), anchor="e",
         )
         sub_lbl.pack(side="right", padx=(4, 6))

@@ -222,6 +222,7 @@ class PanelWindow:
         # Footer status bar (no emoticon)
         self._render_footer(profile)
         self._win.update_idletasks()
+        self._apply_rounded_corners()
 
     def _render_footer(self, profile: str) -> None:
         tk.Frame(self._win, bg=_BORDER, height=1).pack(fill="x", pady=(4, 0))
@@ -231,6 +232,25 @@ class PanelWindow:
         tk.Label(footer, text=prof_txt, bg=_BG, fg="#71717a", font=_FONT_FOOTER).pack(side="left")
         tk.Label(footer, text="↑↓ Move • Enter Open • Esc Close", bg=_BG, fg="#71717a",
                  font=_FONT_FOOTER).pack(side="right")
+
+    def _apply_rounded_corners(self) -> None:
+        """Apply Win32 rounded corners (radius 14px) to borderless popup window."""
+        if not self._win:
+            return
+        try:
+            import ctypes
+            hwnd = self._win.winfo_id()
+            w = self._win.winfo_width()
+            h = self._win.winfo_height()
+            if w > 10 and h > 10:
+                parent = ctypes.windll.user32.GetParent(hwnd) or hwnd
+                rgn = ctypes.windll.gdi32.CreateRoundRectRgn(0, 0, w + 1, h + 1, 14, 14)
+                ctypes.windll.user32.SetWindowRgn(hwnd, rgn, True)
+                if parent != hwnd:
+                    rgn2 = ctypes.windll.gdi32.CreateRoundRectRgn(0, 0, w + 1, h + 1, 14, 14)
+                    ctypes.windll.user32.SetWindowRgn(parent, rgn2, True)
+        except Exception:
+            pass
 
     def _position(self) -> None:
         if not self._win:
@@ -253,6 +273,8 @@ class PanelWindow:
         x = max(10, min(px - 10, sw - _W - 10))
         y = max(10, min(py - 10, sh - h - 30))
         self._win.geometry(f"{_W}x{h}+{x}+{y}")
+        self._win.update_idletasks()
+        self._apply_rounded_corners()
 
     def _jump(self, n: int) -> None:
         if n < len(self._logic.state.items):

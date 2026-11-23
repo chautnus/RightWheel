@@ -55,14 +55,43 @@ DEFAULT_COMMANDS: list[dict[str, Any]] = [
 ]
 
 GESTURE_DESCRIPTIONS: dict[str, str] = {
-    "D_R": "Đóng tab trình duyệt hiện tại (Close Tab)",
+    # Nhóm U: Lên
+    "U": "Cuộn lên đầu trang / Mở tab mới",
+    "U_D": "Tải lại trang (Refresh / F5)",
     "U_R": "Mở tab trình duyệt mới (New Tab)",
+    "U_L": "Khôi phục tab vừa đóng (Reopen Closed Tab)",
+    # Nhóm D: Xuống
+    "D": "Cuộn xuống cuối trang / Thu nhỏ cửa sổ",
+    "D_U": "Mở cửa sổ mới (New Window)",
+    "D_R": "Đóng tab trình duyệt hiện tại (Close Tab)",
+    "D_L": "Mở liên kết trong tab mới ngầm",
+    # Nhóm L: Trái
     "L": "Quay lại trang trước (Back)",
+    "L_R": "Chuyển sang tab bên phải",
+    "L_U": "Chuyển sang tab bên trái",
+    "L_D": "Đóng cửa sổ hiện tại (Alt+F4)",
+    # Nhóm R: Phải
     "R": "Đi tới trang kế tiếp (Forward)",
+    "R_L": "Chuyển sang tab trước đó",
+    "R_U": "Phóng to toàn màn hình (F11)",
+    "R_D": "Thu nhỏ cửa sổ xuống Taskbar",
+    # Wheel & Action targets
     "COMMAND_PALETTE": "Mở Bảng lệnh phím tắt nhanh tại con trỏ chuột",
     "ALT_TAB": "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)",
     "TASK_VIEW_NAV": "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)",
 }
+
+_DRAW_GESTURE_ORDER = [
+    # Nhóm U: Lên, Lên Xuống, Lên Phải, Lên Trái
+    "U", "U_D", "U_R", "U_L",
+    # Nhóm D: Xuống, Xuống Lên, Xuống Phải, Xuống Trái
+    "D", "D_U", "D_R", "D_L",
+    # Nhóm L: Trái, Trái Phải, Trái Lên, Trái Xuống
+    "L", "L_R", "L_U", "L_D",
+    # Nhóm R: Phải, Phải Trái, Phải Lên, Phải Xuống
+    "R", "R_L", "R_U", "R_D",
+]
+_DRAW_GESTURE_INDEX = {code: i for i, code in enumerate(_DRAW_GESTURE_ORDER)}
 
 DEFAULT_MOUSE_GESTURES: list[dict[str, Any]] = [
     {"kind": "draw", "directions": ["D", "R"], "shape": "D_R", "keys": "ctrl+w", "type": "KEY_COMBO", "target": "ctrl+w", "enabled": True, "label": "Close Tab", "description": "Đóng tab trình duyệt hiện tại (Close Tab)"},
@@ -89,11 +118,20 @@ DEFAULT_UNIFIED_CONFIG: dict[str, Any] = {
 
 
 def sort_gestures(gestures: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Return gestures sorted by kind and shape."""
+    """Return gestures sorted by kind (wheel first) and hierarchical first-stroke order."""
     def _key(g: dict[str, Any]) -> tuple:
         kind = str(g.get("kind", "draw")).lower()
-        shape = str(g.get("shape") or "".join(g.get("directions", [])) or g.get("direction", "")).upper()
-        return (0 if kind == "wheel" else 1, shape)
+        if kind == "wheel":
+            direction = str(g.get("direction", "")).upper()
+            return (0, 0 if direction == "UP" else 1, "")
+
+        shape = str(g.get("shape") or "").upper()
+        if not shape:
+            dirs = g.get("directions") or []
+            shape = "_".join(dirs).upper() if isinstance(dirs, list) else str(dirs).upper()
+        idx = _DRAW_GESTURE_INDEX.get(shape, 999)
+        return (1, idx, shape)
+
     return sorted(gestures, key=_key)
 
 
@@ -198,6 +236,20 @@ def save_unified_profiles(doc: dict[str, Any]) -> None:
     """Save profiles.json to %APPDATA%\\RightWheel and sync shortcuts.json for compatibility."""
     config_root = get_config_root()
     config_root.mkdir(parents=True, exist_ok=True)
+
+    # Ensure top-level default/shortcuts/gestures sync into global profile if present
+    if isinstance(doc, dict):
+        default_cmds = doc.get("default") or doc.get("shortcuts")
+        gestures = doc.get("gestures")
+        profiles = doc.get("profiles", [])
+        if profiles and isinstance(profiles, list):
+            global_prof = next((p for p in profiles if p.get("is_default") or p.get("id") == "global"), profiles[0])
+            if default_cmds is not None:
+                global_prof["commands"] = list(default_cmds)
+                global_prof["shortcuts"] = list(default_cmds)
+            if gestures is not None:
+                global_prof["gestures"] = list(gestures)
+
     profiles_path = config_root / "profiles.json"
     with open(profiles_path, "w", encoding="utf-8") as f:
         json.dump(doc, f, indent=2, ensure_ascii=False)

@@ -126,3 +126,60 @@ def test_command_sync_settings_to_panel(tmp_path, monkeypatch):
     panel.show()
     assert len(panel._root) == 2
     assert panel._root[0].label == "My Custom Test Command"
+
+
+def test_reference_save_and_config_sync(tmp_path, monkeypatch):
+    monkeypatch.setattr(app_paths, "get_config_root", lambda: tmp_path)
+    monkeypatch.setattr(config_service, "get_config_root", lambda: tmp_path)
+    from src.features.shortcut_panel.services import config_service as panel_cfg
+    monkeypatch.setattr(panel_cfg, "_get_config_dir", lambda: tmp_path)
+
+    # Initial load creates default config
+    data = panel_cfg.load()
+    initial_len = len(data.get("default", []))
+    assert initial_len > 0
+
+    # Simulate ReferenceTab / IntentPicker adding a shortcut
+    new_item = {"type": "shortcut", "label": "Search Files", "keys": "win+e"}
+    data.setdefault("default", []).append(new_item)
+    panel_cfg.save(data)
+
+    # Reload from panel_cfg and unified profiles to verify persistence
+    reloaded_panel = panel_cfg.load()
+    assert len(reloaded_panel["default"]) == initial_len + 1
+    assert reloaded_panel["default"][-1]["label"] == "Search Files"
+
+    v4_doc = config_service.load_unified_profiles()
+    global_p = next(p for p in v4_doc["profiles"] if p["is_default"])
+    assert any(c.get("label") == "Search Files" for c in global_p["commands"])
+
+
+def test_gesture_recognizer_shape_and_sort():
+    from src.features.mouse_mapper.logic.gesture_recognizer import GestureRecognizer
+    gr = GestureRecognizer()
+    gr._directions = ["D", "R"]
+
+    # Modern V3 UI preset format (only shape and target)
+    ui_presets = [
+        {"shape": "D_R", "target": "ctrl+w", "enabled": True, "label": "Close Tab"},
+        {"shape": "U", "target": "ctrl+t", "enabled": True, "label": "New Tab"},
+    ]
+    res = gr.finish(ui_presets)
+    assert res["ok"] is True
+    assert res["data"]["matched"] is True
+    assert res["data"]["keys"] == "ctrl+w"
+    assert res["data"]["preset"]["shape"] == "D_R"
+
+    # Test stroke order sorting
+    raw_gestures = [
+        {"kind": "draw", "shape": "R_D"},
+        {"kind": "wheel", "direction": "DOWN"},
+        {"kind": "draw", "shape": "U"},
+        {"kind": "wheel", "direction": "UP"},
+        {"kind": "draw", "shape": "U_D"},
+        {"kind": "draw", "shape": "D_R"},
+        {"kind": "draw", "shape": "L"},
+    ]
+    sorted_g = config_service.sort_gestures(raw_gestures)
+    shapes = [g.get("shape") or g.get("direction") for g in sorted_g]
+    assert shapes == ["UP", "DOWN", "U", "U_D", "D_R", "L", "R_D"]

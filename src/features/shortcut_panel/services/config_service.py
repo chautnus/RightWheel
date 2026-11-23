@@ -152,6 +152,19 @@ def load() -> dict:
 def save(data: dict) -> None:
     config_dir = _get_config_dir()
     config_dir.mkdir(parents=True, exist_ok=True)
+
+    # Two-way sync: Ensure top-level default/shortcuts/gestures sync into global profile before saving
+    if isinstance(data, dict):
+        default_cmds = data.get("default") or data.get("shortcuts")
+        gestures = data.get("gestures")
+        if "profiles" in data and isinstance(data["profiles"], list) and data["profiles"]:
+            global_p = next((p for p in data["profiles"] if p.get("is_default") or p.get("id") == "global"), data["profiles"][0])
+            if default_cmds is not None:
+                global_p["commands"] = list(default_cmds)
+                global_p["shortcuts"] = list(default_cmds)
+            if gestures is not None:
+                global_p["gestures"] = list(gestures)
+
     shortcuts_path = config_dir / "shortcuts.json"
     shortcuts_path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"

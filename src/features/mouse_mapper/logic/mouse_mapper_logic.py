@@ -122,11 +122,40 @@ class MouseMapperLogic:
         if prev == MapperState.GESTURE:
             if self.on_gesture_end:
                 self.on_gesture_end()
-            # Check gesture against presets
-            presets = config_service.load().get("gestures", [])
+            # Check gesture against active profile presets (with global fallback)
+            presets = []
+            try:
+                import ctypes
+                from src.core.profile_service import resolve_active_profile_full
+                hwnd = ctypes.windll.user32.GetForegroundWindow() if hasattr(ctypes, "windll") else 0
+                prof_res = resolve_active_profile_full(hwnd)
+                if prof_res.get("ok"):
+                    presets = prof_res.get("data", {}).get("effective_gestures", [])
+            except Exception:
+                pass
+            if not presets:
+                presets = config_service.load().get("gestures", [])
+
             res = self._gesture_recognizer.finish(presets)
             if res.get("ok") and res.get("data", {}).get("matched"):
-                shortcut_executor.execute(res["data"]["keys"])
+                data = res.get("data", {})
+                preset = data.get("preset") or {}
+                keys = data.get("keys", "")
+                executed = False
+                try:
+                    from src.features.action_dispatcher.dispatcher import ActionDispatcher
+                    act_type = preset.get("type") or ("KEY_COMBO" if keys else "")
+                    target = preset.get("target") or keys
+                    if act_type:
+                        action_cfg = {**preset, "type": act_type, "target": target}
+                        disp = ActionDispatcher()
+                        disp_res = disp.execute(action_cfg)
+                        if disp_res.get("ok"):
+                            executed = True
+                except Exception:
+                    pass
+                if not executed and keys:
+                    shortcut_executor.execute(keys)
                 return True
             # Unmatched: Silent Drop — suppress completely (no context menu)
             return True
