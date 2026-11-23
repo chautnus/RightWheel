@@ -44,4 +44,17 @@ Finished: 2026-11-23
 - **T-96**: Run pytest suite, re-compile standalone `dist/RightWheel.exe` via PyInstaller, verify build and push to Git.
   - status: done
   - files-changed: `RightWheel.spec`, `dist/RightWheel.exe`
-  - verify: PyInstaller built `dist/RightWheel.exe` (31,235,041 bytes), smoke test started cleanly in background with exit code 0.
+  - verify: PyInstaller built `dist/RightWheel.exe` (31,239,682 bytes), smoke test started cleanly in background with exit code 0.
+
+## HOTFIX: Welcome Screen Launcher & Fallback Integrity
+- status: done
+- files-changed:
+  - `src/features/webview_ui/launcher.py` (make fallback_fn optional with defensive check)
+  - `src/main.py` (call `open_welcome_adaptive()`, eliminate non-existent `WelcomeWindow` import)
+  - `src/features/shortcut_panel/ui/panel_window.py` (thread-safe `open_welcome` queue dispatch to Tk thread)
+  - `src/features/webview_ui/bridge_api.py` (defensive `Path(config_dir)`)
+  - `C:\dev\ui-studio\src\projects\rightwheel-v3\views\WelcomeView.tsx` ("Don't show again" calls `closeWindow()`)
+  - `src/core/store_license_service.py` (clock-boundary precision in simulation)
+- verify:
+  - `pytest` passed (16/16 tests).
+  - `RightWheel.exe` recompiled and launched without `--background`; ran cleanly with 0 crashes.

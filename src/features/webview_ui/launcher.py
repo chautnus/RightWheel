@@ -58,11 +58,12 @@ class WebViewLauncher:
     def __init__(self) -> None:
         self._procs: dict[str, subprocess.Popen] = {}
 
-    def launch_or_fallback(self, view: str, fallback_fn: Callable[[], None]) -> bool:
-        """Open WebView2 subprocess if enabled & available; otherwise call fallback_fn."""
+    def launch_or_fallback(self, view: str, fallback_fn: Callable[[], None] | None = None) -> bool:
+        """Open WebView2 subprocess if enabled & available; otherwise call fallback_fn if provided."""
         if get_preferred_ui_engine() != "webview" or not is_webview_available():
             log_debug(f"WebViewLauncher using Tkinter fallback for view={view}")
-            fallback_fn()
+            if fallback_fn is not None:
+                fallback_fn()
             return False
 
         existing = self._procs.get(view)
@@ -81,5 +82,6 @@ class WebViewLauncher:
             return True
         except Exception as exc:
             log_debug(f"WebViewLauncher failed for {view}, falling back to Tkinter: {exc}")
-            fallback_fn()
+            if fallback_fn is not None:
+                fallback_fn()
             return False

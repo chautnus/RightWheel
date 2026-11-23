@@ -47,6 +47,9 @@ class PanelWindow:
     def open_settings(self) -> None:
         self._q.put("settings")
 
+    def open_welcome(self) -> None:
+        self._q.put("welcome")
+
     # ── tkinter thread lifecycle ───────────────────────────────────────────
 
     def _run(self) -> None:
@@ -64,6 +67,7 @@ class PanelWindow:
                     "hide": self._do_hide,
                     "update": self._do_update,
                     "settings": self._do_settings,
+                    "welcome": self._do_welcome,
                 }.get(cmd, lambda: None)()
         except queue.Empty:
             pass
@@ -167,6 +171,12 @@ class PanelWindow:
 
         from src.features.webview_ui.launcher import WebViewLauncher
         WebViewLauncher().launch_or_fallback("settings", fallback_fn=_fallback_tk)
+
+    def _do_welcome(self) -> None:
+        if not self._root:
+            return
+        from .welcome_window import show_welcome
+        show_welcome(self._root)
 
     # ── rendering ──────────────────────────────────────────────────────────
 

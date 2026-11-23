@@ -224,7 +224,10 @@ class StoreLicenseService:
         self._save_raw_state(state)
         self._refresh()
         log_debug(f"Simulation: Trial remaining set to {target_seconds}s ({hours}h {minutes}m {seconds}s)")
-        return self.get_status()
+        st = self.get_status()
+        if st.get("status") == StoreLicenseStatus.TRIAL_ACTIVE:
+            st["seconds_remaining"] = target_seconds
+        return st
 
     def reset_trial(self) -> dict[str, Any]:
         """Reset trial back to fresh initial 30 days."""

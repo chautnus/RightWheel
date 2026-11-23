@@ -61,11 +61,7 @@ def main() -> None:
         launcher.launch_or_fallback("settings", fallback_fn=panel_window.open_settings)
 
     def open_welcome_adaptive() -> None:
-        from features.shortcut_panel.ui.welcome_window import WelcomeWindow
-        launcher.launch_or_fallback(
-            "welcome",
-            fallback_fn=lambda: WelcomeWindow(panel_window._root, panel).show(),
-        )
+        launcher.launch_or_fallback("welcome", fallback_fn=panel_window.open_welcome)
 
     mapper.panel = panel
     panel.on_open_settings = open_settings_adaptive
@@ -85,7 +81,7 @@ def main() -> None:
     from src.core.config_service import load_app_settings
     app_settings = load_app_settings()
     if app_settings.get("show_welcome", True) and "--background" not in sys.argv and "--startup" not in sys.argv:
-        launcher.launch_or_fallback("welcome")
+        open_welcome_adaptive()
 
     # Global mouse hook
     hook = MouseHookService(

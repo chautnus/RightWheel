@@ -111,7 +111,7 @@ class WebViewBridgeAPI:
         window_ref: Any = None,
         default_view: str = "settings",
     ) -> None:
-        self._config_dir = config_dir or get_config_root()
+        self._config_dir = Path(config_dir) if config_dir is not None else get_config_root()
         self._config_dir.mkdir(parents=True, exist_ok=True)
         self._settings_path = self._config_dir / "app_settings.json"
         self._profiles_path = self._config_dir / "profiles.json"
