@@ -135,6 +135,7 @@ class MouseMapperLogic:
         if prev == MapperState.GESTURE:
             if self.on_gesture_end:
                 self.on_gesture_end()
+
             # Check gesture against active profile presets (with global fallback)
             presets = []
             try:
@@ -150,27 +151,62 @@ class MouseMapperLogic:
                 presets = config_service.load().get("gestures", [])
 
             res = self._gesture_recognizer.finish(presets)
+            from src.core.app_paths import log_debug
+
             if res.get("ok") and res.get("data", {}).get("matched"):
                 data = res.get("data", {})
                 preset = data.get("preset") or {}
                 keys = data.get("keys", "")
-                executed = False
-                try:
-                    from src.features.action_dispatcher.dispatcher import ActionDispatcher
-                    act_type = preset.get("type") or ("KEY_COMBO" if keys else "")
-                    target = preset.get("target") or keys
-                    if act_type:
-                        action_cfg = {**preset, "type": act_type, "target": target}
-                        disp = ActionDispatcher()
-                        disp_res = disp.execute(action_cfg)
-                        if disp_res.get("ok"):
+                act_type = preset.get("type") or ("KEY_COMBO" if keys else "")
+                target = preset.get("target") or keys
+
+                log_debug(
+                    f"GESTURE matched: directions={data.get('directions')} "
+                    f"raw={data.get('raw_directions')} shape={preset.get('shape')} "
+                    f"target={target} type={act_type}"
+                )
+
+                # Execute asynchronously after a brief 60ms delay so that:
+                # 1. _hook_proc returns immediately and finishes WM_RBUTTONUP in Windows.
+                # 2. TrailOverlay finishes canvas destruction on Tkinter thread before keystrokes are sent.
+                def _do_execute() -> None:
+                    executed = False
+                    # For pure keyboard shortcuts, shortcut_executor has identical proven behavior with command panel
+                    if act_type == "KEY_COMBO" and (target or keys):
+                        try:
+                            shortcut_executor.execute(target or keys)
                             executed = True
-                except Exception:
-                    pass
-                if not executed and keys:
-                    shortcut_executor.execute(keys)
+                            log_debug(f"GESTURE executed via shortcut_executor: {target or keys}")
+                        except Exception as exc:
+                            log_debug(f"GESTURE shortcut_executor error: {exc}")
+
+                    if not executed and act_type:
+                        try:
+                            from src.features.action_dispatcher.dispatcher import ActionDispatcher
+                            action_cfg = {**preset, "type": act_type, "target": target}
+                            disp = ActionDispatcher()
+                            disp_res = disp.execute(action_cfg)
+                            if disp_res.get("ok"):
+                                executed = True
+                                log_debug(f"GESTURE executed via ActionDispatcher: {action_cfg}")
+                        except Exception as exc:
+                            log_debug(f"GESTURE ActionDispatcher error: {exc}")
+
+                    if not executed and keys:
+                        try:
+                            shortcut_executor.execute(keys)
+                            log_debug(f"GESTURE executed via fallback shortcut_executor: {keys}")
+                        except Exception as exc:
+                            log_debug(f"GESTURE fallback error: {exc}")
+
+                threading.Timer(0.06, _do_execute).start()
                 return True
+
             # Unmatched: Silent Drop — suppress completely (no context menu)
+            log_debug(
+                f"GESTURE unmatched: raw={res.get('data', {}).get('raw_directions')} "
+                f"norm={res.get('data', {}).get('directions')}"
+            )
             return True
 
         # SCROLLING: right_down was never sent to any app. Suppress right_up so

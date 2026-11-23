@@ -227,3 +227,103 @@ def test_move_threshold_default_and_config():
 
     mapper = MouseMapperLogic()
     assert mapper._cfg.move_threshold == 16
+
+
+def test_gesture_recognizer_noise_tolerance_touchpad_parity():
+    from src.features.mouse_mapper.logic.gesture_recognizer import normalize_directions, _is_effectively_single_stroke
+
+    # 1. Entry wobble
+    assert normalize_directions(["DR", "D"]) == ["D"]
+    assert normalize_directions(["UL", "U"]) == ["U"]
+    assert normalize_directions(["DL", "L"]) == ["L"]
+    assert normalize_directions(["UR", "R"]) == ["R"]
+
+    # 2. Lift-off trailing wobble
+    assert normalize_directions(["D", "DR"]) == ["D"]
+    assert normalize_directions(["U", "UL"]) == ["U"]
+    assert normalize_directions(["L", "DL"]) == ["L"]
+    assert normalize_directions(["R", "UR"]) == ["R"]
+
+    # 3. Mid-stroke wobble (sandwiched diagonal)
+    assert normalize_directions(["D", "DR", "D"]) == ["D"]
+    assert normalize_directions(["R", "DR", "R"]) == ["R"]
+    assert normalize_directions(["U", "UL", "U"]) == ["U"]
+    assert normalize_directions(["L", "DL", "L"]) == ["L"]
+
+    # 4. Turnaround U-turns (180°)
+    assert normalize_directions(["D", "DR", "U"]) == ["D", "U"]
+    assert normalize_directions(["D", "DL", "U"]) == ["D", "U"]
+    assert normalize_directions(["U", "UR", "D"]) == ["U", "D"]
+    assert normalize_directions(["R", "UR", "L"]) == ["R", "L"]
+    assert normalize_directions(["L", "DL", "R"]) == ["L", "R"]
+
+    # 5. Orthogonal 90° corners
+    assert normalize_directions(["D", "DR", "R"]) == ["D", "R"]
+    assert normalize_directions(["D", "DL", "L"]) == ["D", "L"]
+    assert normalize_directions(["U", "UR", "R"]) == ["U", "R"]
+    assert normalize_directions(["U", "UL", "L"]) == ["U", "L"]
+
+    # 6. Single stroke detector
+    assert _is_effectively_single_stroke(["D", "DR"]) is True
+    assert _is_effectively_single_stroke(["DL", "D"]) is True
+    assert _is_effectively_single_stroke(["D", "R"]) is False  # 90° turn is compound
+    assert _is_effectively_single_stroke(["D", "U"]) is False  # 180° turn is compound
+
+
+def test_gesture_recognizer_single_stroke_dominant_displacement():
+    from src.features.mouse_mapper.logic.gesture_recognizer import GestureRecognizer
+
+    rec = GestureRecognizer()
+    presets = [
+        {"shape": "D", "keys": "prtsc", "enabled": True},
+        {"shape": "D_R", "keys": "ctrl+w", "enabled": True},
+        {"shape": "D_U", "keys": "win+v", "enabled": True},
+        {"shape": "L", "keys": "ctrl+shift+tab", "enabled": True},
+        {"shape": "R", "keys": "ctrl+tab", "enabled": True},
+    ]
+
+    # Slanted down (dy=160, dx=25) -> should 100% resolve to D (prtsc)
+    rec.reset()
+    rec.feed_point(500, 500)
+    rec.feed_point(520, 520)  # DR entry slant
+    rec.feed_point(525, 580)  # D
+    rec.feed_point(525, 660)  # D
+    res = rec.finish(presets)
+    assert res["ok"] is True
+    assert res["data"]["matched"] is True
+    assert res["data"]["keys"] == "prtsc"
+    assert res["data"]["directions"] == ["D"]
+
+    # 2-segment with corner noise and lift-off (D_R -> ctrl+w)
+    rec.reset()
+    rec.feed_point(500, 500)
+    rec.feed_point(500, 560)  # D
+    rec.feed_point(525, 585)  # DR corner curve
+    rec.feed_point(570, 585)  # R
+    rec.feed_point(630, 585)  # R
+    rec.feed_point(645, 570)  # UR lift-off
+    res = rec.finish(presets)
+    assert res["ok"] is True
+    assert res["data"]["matched"] is True
+    assert res["data"]["keys"] == "ctrl+w"
+    assert res["data"]["directions"] == ["D", "R"]
+
+
+def test_gesture_async_execution_timer():
+    from unittest.mock import patch
+    from src.features.mouse_mapper.logic.mouse_mapper_logic import MouseMapperLogic
+    from src.features.mouse_mapper.types.mouse_mapper_types import MouseEvent
+
+    logic = MouseMapperLogic()
+    logic.handle(MouseEvent("right_down", x=500, y=500))
+    logic.handle(MouseEvent("move", x=500, y=530))
+    logic.handle(MouseEvent("move", x=500, y=600))
+
+    with patch("threading.Timer") as mock_timer:
+        res = logic.handle(MouseEvent("right_up", x=500, y=600))
+        assert res is True
+        assert mock_timer.called
+        args, _ = mock_timer.call_args
+        assert args[0] == 0.06
+        assert callable(args[1])
+
