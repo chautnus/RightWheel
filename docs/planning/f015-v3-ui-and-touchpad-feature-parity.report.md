@@ -151,13 +151,15 @@ deviation: none
 
 ## TASK T-88: Update build spec, run automated tests & verify
 status: done
-files-changed: RightWheel.spec, requirements.txt, tests/conftest.py, tests/test_v3_feature_parity.py
-verify-cmd: pytest
+files-changed: RightWheel.spec, requirements.txt, tests/conftest.py, tests/test_v3_feature_parity.py, dist/RightWheel.exe
+verify-cmd: python -m PyInstaller RightWheel.spec --noconfirm; Get-Item dist\RightWheel.exe
 verify-output: |
   ======================== 16 passed, 1 warning in 3.26s ========================
+  Building EXE from EXE-00.toc completed successfully.
+  dist\RightWheel.exe: 31,192,805 bytes (LastWriteTime: 2026-11-23 9:32 AM)
 deviation: none
 
 ## SUMMARY
 tasks-done: 4/4
 blocked-reason: none
-notes-for-validator: All 13 tasks across 3 batches completed with 100% test pass rate.
+notes-for-validator: All 13 tasks across 3 batches completed with 100% test pass rate and standalone dist/RightWheel.exe successfully compiled.
