@@ -29,12 +29,14 @@ _code: str = "en"
 
 # ── public API ────────────────────────────────────────────────────────────────
 
-def t(key: str, **kwargs) -> str:
-    """Return translated string, falling back to English, then the key itself."""
+def t(key: str, default: str | None = None, **kwargs) -> str:
+    """Return translated string, falling back to English, then default, then the key itself."""
     s = _current.get(key)
     if s is None:
         _en = _load("en")
-        s = _en.get(key, key)
+        s = _en.get(key)
+        if s is None:
+            s = default if default is not None else key
     return s.format(**kwargs) if kwargs else s
 
 
