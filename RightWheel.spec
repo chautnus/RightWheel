@@ -4,21 +4,45 @@ a = Analysis(
     ['src/main.py'],
     pathex=['src'],
     binaries=[],
-    datas=[('assets/icon.png', 'assets')],
+    datas=[
+        ('assets/icon.png', 'assets'),
+        ('src/ui_dist', 'ui_dist'),
+        ('src/core/locales', 'src/core/locales'),
+    ],
     hiddenimports=[
-        'pystray._win32',   # pystray backend is loaded dynamically
+        'pystray._win32',
         'PIL.Image',
         'PIL.ImageDraw',
         'tkinter',
         'tkinter.simpledialog',
         'tkinter.filedialog',
         '_tkinter',
-        # urllib.request deps (needed for LemonSqueezy API calls)
-        'email', 'email.message', 'email.parser', 'email.headerregistry',
-        'email.contentmanager', 'email.generator', 'email.utils',
-        'http', 'http.client',
-        'html', 'html.parser',
-        # i18n locale modules (loaded dynamically via importlib)
+        'webview',
+        'clr',
+        # Core modules
+        'src.core.app_paths',
+        'src.core.single_instance',
+        'src.core.crash_reporter',
+        'src.core.dpi_helper',
+        'src.core.memory_manager',
+        'src.core.store_license_service',
+        'src.core.i18n',
+        'src.core.config_service',
+        'src.core.profile_service',
+        'src.core.window_service',
+        'src.core.app_discovery',
+        'src.core.webclip_templates',
+        # Action dispatcher
+        'src.features.action_dispatcher.dispatcher',
+        'src.features.action_dispatcher.sequence_executor',
+        'src.features.action_dispatcher.clipboard_web_actions',
+        'src.features.action_dispatcher.window_manager',
+        # WebView2 UI
+        'src.features.webview_ui.host',
+        'src.features.webview_ui.bridge_api',
+        'src.features.webview_ui.launcher',
+        'src.features.webview_ui.key_recorder_bridge',
+        # i18n locale modules
         'features.i18n.en', 'features.i18n.fr', 'features.i18n.pt',
         'features.i18n.es', 'features.i18n.it', 'features.i18n.vi',
         'features.i18n.id', 'features.i18n.th', 'features.i18n.zh',
@@ -27,15 +51,10 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        # stdlib bloat
         'unittest', 'xml', 'xmlrpc', 'pydoc', 'doctest', 'difflib', 'pdb',
         'test', 'tests', 'lib2to3', 'tkinter.test', 'distutils',
         'multiprocessing', 'concurrent', 'asyncio',
-        # heavy scientific libs pulled in by PIL (not needed — app only loads icon PNG)
-        'numpy', 'numpy.core', 'numpy.lib', 'numpy.linalg', 'numpy.fft',
-        'numpy.random', 'numpy.polynomial', 'numpy.ma', 'numpy.matrixlib',
-        'scipy', 'pandas', 'matplotlib', 'IPython', 'PIL.ImageMath',
-        # other unused
+        'numpy', 'scipy', 'pandas', 'matplotlib', 'IPython', 'PIL.ImageMath',
         'cryptography', 'OpenSSL', 'Crypto',
     ],
     noarchive=False,
@@ -56,7 +75,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,      # no console window — tray app
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

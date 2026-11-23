@@ -155,3 +155,8 @@ _DEFAULT_SHORTCUTS: list[tuple[str, str, str]] = [
 
 SHORTCUTS = _DEFAULT_SHORTCUTS
 
+
+
+def get_localized_shortcuts(lang: str | None = None) -> list[tuple[str, str, str]]:
+    """Return localized default shortcuts list."""
+    return list(_DEFAULT_SHORTCUTS)
