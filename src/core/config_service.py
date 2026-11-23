@@ -185,12 +185,41 @@ def load_unified_profiles() -> dict[str, Any]:
 
 
 def save_unified_profiles(doc: dict[str, Any]) -> None:
-    """Save profiles.json to %APPDATA%\\RightWheel."""
+    """Save profiles.json to %APPDATA%\\RightWheel and sync shortcuts.json for compatibility."""
     config_root = get_config_root()
     config_root.mkdir(parents=True, exist_ok=True)
     profiles_path = config_root / "profiles.json"
     with open(profiles_path, "w", encoding="utf-8") as f:
         json.dump(doc, f, indent=2, ensure_ascii=False)
+
+    # Dual-write sync to shortcuts.json for compatibility
+    try:
+        shortcuts_path = config_root / "shortcuts.json"
+        profiles = doc.get("profiles", [])
+        global_prof = next((p for p in profiles if p.get("is_default") or p.get("id") == "global"), None)
+        global_commands = global_prof.get("commands", []) if global_prof else []
+        global_gestures = global_prof.get("gestures", []) if global_prof else []
+        v3_payload = {
+            "version": 3,
+            "default": global_commands,
+            "shortcuts": global_commands,
+            "gestures": global_gestures,
+            "profiles": [
+                {
+                    "id": p.get("id", "profile"),
+                    "name": p.get("name", p.get("id", "Profile")),
+                    "match": p.get("match", []),
+                    "shortcuts": p.get("commands", []),
+                    "commands": p.get("commands", []),
+                    "gestures": p.get("gestures", []),
+                }
+                for p in profiles if not (p.get("is_default") or p.get("id") == "global")
+            ],
+        }
+        with open(shortcuts_path, "w", encoding="utf-8") as f:
+            json.dump(v3_payload, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
 
 
 def load_app_settings() -> dict[str, Any]:

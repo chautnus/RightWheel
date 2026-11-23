@@ -86,3 +86,43 @@ def test_webview_bridge_api(tmp_path, monkeypatch):
     idx = resolve_ui_index_path()
     assert idx is not None and idx.exists()
     assert is_webview_available() is True
+
+
+def test_command_sync_settings_to_panel(tmp_path, monkeypatch):
+    monkeypatch.setattr(app_paths, "get_config_root", lambda: tmp_path)
+    monkeypatch.setattr(config_service, "get_config_root", lambda: tmp_path)
+
+    from src.features.shortcut_panel.logic.panel_logic import PanelLogic
+    from src.features.shortcut_panel.services import config_service as panel_cfg
+
+    monkeypatch.setattr(panel_cfg, "_get_config_dir", lambda: tmp_path)
+
+    api = WebViewBridgeAPI(config_dir=tmp_path)
+    panel = PanelLogic()
+
+    # Modify commands via WebViewBridgeAPI (simulating Settings UI)
+    new_commands = [
+        {"type": "shortcut", "label": "My Custom Test Command", "keys": "ctrl+alt+t"},
+        {"type": "url", "label": "Open GitHub", "url": "https://github.com"},
+    ]
+    res = api.save_profile_commands("global", new_commands)
+    assert res["ok"] is True
+
+    # Both profiles.json and shortcuts.json should exist and be in sync
+    profiles_file = tmp_path / "profiles.json"
+    shortcuts_file = tmp_path / "shortcuts.json"
+    assert profiles_file.exists()
+    assert shortcuts_file.exists()
+
+    # Reload panel logic
+    panel.reload()
+    assert len(panel._root) == 2
+    assert panel._root[0].label == "My Custom Test Command"
+    assert getattr(panel._root[0], "keys", "") == "ctrl+alt+t"
+    assert panel._root[1].label == "Open GitHub"
+    assert getattr(panel._root[1], "url", "") == "https://github.com"
+
+    # Simulate show() on desktop
+    panel.show()
+    assert len(panel._root) == 2
+    assert panel._root[0].label == "My Custom Test Command"

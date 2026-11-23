@@ -51,8 +51,13 @@ class PanelLogic:
 
     def reload(self) -> None:
         data = config_service.load()
-        default_raw = data.get("default", data.get("shortcuts", []))
+        default_raw = data.get("default") or data.get("shortcuts") or []
+        if not default_raw and "profiles" in data:
+            global_prof = next((p for p in data["profiles"] if p.get("is_default") or p.get("id") == "global"), None)
+            if global_prof:
+                default_raw = global_prof.get("commands") or global_prof.get("shortcuts") or []
         self._root = config_service.parse_items(default_raw)
+        self._items = list(self._root)
 
     reload_config = reload
 

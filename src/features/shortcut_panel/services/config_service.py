@@ -63,12 +63,57 @@ def migrate_to_v3(data: dict) -> dict:
     return {"ok": True, "data": new_data}
 
 
+def _get_config_dir() -> Path:
+    try:
+        from src.core.app_paths import get_config_root
+        return get_config_root()
+    except Exception:
+        return Path(os.environ.get("APPDATA", ".")) / "RightWheel"
+
+
 def load() -> dict:
-    if not CONFIG_PATH.exists():
+    config_dir = _get_config_dir()
+    profiles_path = config_dir / "profiles.json"
+    shortcuts_path = config_dir / "shortcuts.json"
+    if profiles_path.exists():
+        try:
+            from src.core.config_service import load_unified_profiles
+            v4_doc = load_unified_profiles()
+            profiles = v4_doc.get("profiles", [])
+            global_prof = next((p for p in profiles if p.get("is_default") or p.get("id") == "global"), None)
+            if global_prof is None and profiles:
+                global_prof = profiles[0]
+
+            global_commands = list(global_prof.get("commands", [])) if global_prof else []
+            global_gestures = list(global_prof.get("gestures", [])) if global_prof else []
+
+            data = {
+                "version": 4,
+                "default": global_commands,
+                "shortcuts": global_commands,
+                "gestures": global_gestures,
+                "profiles": [
+                    {
+                        **p,
+                        "name": p.get("name", p.get("id", "Profile")),
+                        "shortcuts": p.get("commands", p.get("shortcuts", [])),
+                        "commands": p.get("commands", p.get("shortcuts", [])),
+                    }
+                    for p in profiles
+                ],
+            }
+            for g in data.get("gestures", []):
+                if isinstance(g, dict) and g.get("directions") == ["D", "R"] and g.get("enabled") is False:
+                    g["enabled"] = True
+            return data
+        except Exception:
+            pass
+
+    if not shortcuts_path.exists():
         data = _DEFAULT.copy()
     else:
         try:
-            data = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+            data = json.loads(shortcuts_path.read_text(encoding="utf-8"))
             if data.get("version", 1) == 1:
                 data = _migrate_v1(data)
                 save(data)
@@ -87,10 +132,22 @@ def load() -> dict:
 
 
 def save(data: dict) -> None:
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    CONFIG_PATH.write_text(
+    config_dir = _get_config_dir()
+    config_dir.mkdir(parents=True, exist_ok=True)
+    shortcuts_path = config_dir / "shortcuts.json"
+    shortcuts_path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
     )
+    # Also sync to profiles.json (Schema v4)
+    try:
+        from src.core.config_service import migrate_to_v4, save_unified_profiles
+        if data.get("version") == 4 and "profiles" in data:
+            save_unified_profiles(data)
+        else:
+            v4_doc = migrate_to_v4(data)
+            save_unified_profiles(v4_doc)
+    except Exception:
+        pass
 
 
 # ── profile resolution ────────────────────────────────────────────────────────
@@ -118,7 +175,8 @@ def resolve_profile(exe: str, title: str, class_name: str,
                     data: dict) -> tuple[str, list]:
     for p in data.get("profiles", []):
         if _matches(p.get("match", []), exe, title, class_name):
-            return p["name"], p.get("shortcuts", [])
+            cmds = p.get("commands") or p.get("shortcuts") or []
+            return p.get("name", "Profile"), cmds
     default_raw = data.get("default", data.get("shortcuts", []))
     return "Default", default_raw
 
