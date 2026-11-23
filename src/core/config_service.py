@@ -44,13 +44,23 @@ DEFAULT_COMMANDS: list[dict[str, Any]] = [
     },
 ]
 
+GESTURE_DESCRIPTIONS: dict[str, str] = {
+    "D_R": "Đóng tab trình duyệt hiện tại (Close Tab)",
+    "U_R": "Mở tab trình duyệt mới (New Tab)",
+    "L": "Quay lại trang trước (Back)",
+    "R": "Đi tới trang kế tiếp (Forward)",
+    "COMMAND_PALETTE": "Mở Bảng lệnh phím tắt nhanh tại con trỏ chuột",
+    "ALT_TAB": "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)",
+    "TASK_VIEW_NAV": "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)",
+}
+
 DEFAULT_MOUSE_GESTURES: list[dict[str, Any]] = [
-    {"kind": "draw", "directions": ["D", "R"], "shape": "D_R", "keys": "ctrl+w", "type": "KEY_COMBO", "target": "ctrl+w", "enabled": True, "label": "Close Tab"},
-    {"kind": "draw", "directions": ["U", "R"], "shape": "U_R", "keys": "ctrl+t", "type": "KEY_COMBO", "target": "ctrl+t", "enabled": True, "label": "New Tab"},
-    {"kind": "draw", "directions": ["L"], "shape": "L", "keys": "alt+left", "type": "KEY_COMBO", "target": "alt+left", "enabled": True, "label": "Back"},
-    {"kind": "draw", "directions": ["R"], "shape": "R", "keys": "alt+right", "type": "KEY_COMBO", "target": "alt+right", "enabled": True, "label": "Forward"},
-    {"kind": "wheel", "direction": "UP", "type": "COMMAND_PALETTE", "target": "COMMAND_PALETTE", "enabled": True, "label": "Show Shortcut Panel"},
-    {"kind": "wheel", "direction": "DOWN", "type": "TASK_VIEW_NAV", "target": "ALT_TAB", "enabled": True, "label": "Alt+Tab Switcher"},
+    {"kind": "draw", "directions": ["D", "R"], "shape": "D_R", "keys": "ctrl+w", "type": "KEY_COMBO", "target": "ctrl+w", "enabled": True, "label": "Close Tab", "description": "Đóng tab trình duyệt hiện tại (Close Tab)"},
+    {"kind": "draw", "directions": ["U", "R"], "shape": "U_R", "keys": "ctrl+t", "type": "KEY_COMBO", "target": "ctrl+t", "enabled": True, "label": "New Tab", "description": "Mở tab trình duyệt mới (New Tab)"},
+    {"kind": "draw", "directions": ["L"], "shape": "L", "keys": "alt+left", "type": "KEY_COMBO", "target": "alt+left", "enabled": True, "label": "Back", "description": "Quay lại trang trước (Back)"},
+    {"kind": "draw", "directions": ["R"], "shape": "R", "keys": "alt+right", "type": "KEY_COMBO", "target": "alt+right", "enabled": True, "label": "Forward", "description": "Đi tới trang kế tiếp (Forward)"},
+    {"kind": "wheel", "direction": "UP", "type": "COMMAND_PALETTE", "target": "COMMAND_PALETTE", "enabled": True, "label": "Show Shortcut Panel", "description": "Mở Bảng lệnh phím tắt nhanh tại con trỏ chuột"},
+    {"kind": "wheel", "direction": "DOWN", "type": "TASK_VIEW_NAV", "target": "ALT_TAB", "enabled": True, "label": "Alt+Tab Switcher", "description": "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)"},
 ]
 
 DEFAULT_UNIFIED_CONFIG: dict[str, Any] = {
@@ -92,6 +102,7 @@ def migrate_to_v4(legacy_shortcuts: dict[str, Any]) -> dict[str, Any]:
         dirs = g.get("directions") or []
         shape = "_".join(dirs) if isinstance(dirs, list) else str(g.get("shape", ""))
         keys = g.get("keys") or g.get("target") or ""
+        desc = g.get("description") or GESTURE_DESCRIPTIONS.get(shape) or GESTURE_DESCRIPTIONS.get(g.get("target", "")) or ""
         migrated_gestures.append({
             "kind": g.get("kind", "draw"),
             "directions": dirs,
@@ -101,6 +112,7 @@ def migrate_to_v4(legacy_shortcuts: dict[str, Any]) -> dict[str, Any]:
             "target": keys,
             "enabled": bool(g.get("enabled", True)),
             "label": g.get("label", shape),
+            "description": desc,
         })
 
     profiles_list: list[dict[str, Any]] = [
@@ -142,6 +154,15 @@ def load_unified_profiles() -> dict[str, Any]:
             with open(profiles_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             if isinstance(data, dict) and data.get("version") == 4 and "profiles" in data:
+                # Ensure default gestures have action descriptions populated
+                for prof in data.get("profiles", []):
+                    for g in prof.get("gestures", []):
+                        if not g.get("description"):
+                            shape = str(g.get("shape") or "".join(g.get("directions", [])) or g.get("direction", "")).upper()
+                            target = str(g.get("target") or g.get("type", "")).upper()
+                            desc = GESTURE_DESCRIPTIONS.get(shape) or GESTURE_DESCRIPTIONS.get(target)
+                            if desc:
+                                g["description"] = desc
                 return data
         except Exception:
             pass

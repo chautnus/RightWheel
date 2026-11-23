@@ -212,6 +212,7 @@ class WebViewBridgeAPI:
             {
                 "key": binding_key_for(g),
                 "label": _gesture_label(g),
+                "description": g.get("description", ""),
                 "action_type": g.get("type", "KEY_COMBO"),
                 "target": g.get("target", ""),
                 "enabled": g.get("enabled", True),
@@ -243,7 +244,13 @@ class WebViewBridgeAPI:
         current.update(patch)
 
         if "language" in patch:
-            set_language(str(patch["language"]))
+            lang_code = str(patch["language"])
+            set_language(lang_code)
+            try:
+                from src.features import i18n as features_i18n
+                features_i18n.set_locale(lang_code)
+            except Exception:
+                pass
 
         self._save_app_settings(current)
         lang = str(current.get("language") or "vi")

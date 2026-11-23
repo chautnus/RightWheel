@@ -35,10 +35,10 @@ class TrayUI:
         self._title       = title
         self._icon: pystray.Icon | None = None
 
-    def run(self) -> None:
+    def _build_menu(self) -> pystray.Menu:
         items = [
             pystray.MenuItem(
-                t("tray.enable"),
+                lambda item: t("tray.enable"),
                 self._toggle,
                 checked=lambda item: self._logic.enabled,
                 default=True,
@@ -46,18 +46,24 @@ class TrayUI:
             pystray.Menu.SEPARATOR,
         ]
         if self._on_settings:
-            items.append(pystray.MenuItem(t("tray.settings"), self._settings))
+            items.append(pystray.MenuItem(lambda item: t("tray.settings"), self._settings))
             items.append(pystray.Menu.SEPARATOR)
-        items.append(pystray.MenuItem(t("tray.restart"), self._restart))
-        items.append(pystray.MenuItem(t("tray.exit"), self._exit))
+        items.append(pystray.MenuItem(lambda item: t("tray.restart"), self._restart))
+        items.append(pystray.MenuItem(lambda item: t("tray.exit"), self._exit))
+        return pystray.Menu(*items)
 
+    def run(self) -> None:
         self._icon = pystray.Icon(
             name="RightWheel",
             icon=_make_icon(self._logic.enabled),
             title=self._title,
-            menu=pystray.Menu(*items),
+            menu=self._build_menu(),
         )
         self._icon.run()
+
+    def refresh_menu(self) -> None:
+        if self._icon:
+            self._icon.menu = self._build_menu()
 
     def update_title(self, title: str) -> None:
         self._title = title

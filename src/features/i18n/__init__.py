@@ -64,6 +64,12 @@ def set_locale(code: str) -> None:
     strings = _load(_code)
     _current = strings
     _save_pref(_code)
+    try:
+        from src.core import i18n as core_i18n
+        if core_i18n.get_language() != _code:
+            core_i18n.set_language(_code)
+    except Exception:
+        pass
 
 
 def init() -> None:
@@ -93,10 +99,25 @@ def _detect() -> str:
 
 
 def _read_pref() -> str:
+    # 1. Primary source of truth: app_settings.json
     try:
-        return _LANG_FILE.read_text(encoding="utf-8").strip()
+        import json
+        settings_file = _LANG_FILE.parent / "app_settings.json"
+        if settings_file.exists():
+            data = json.loads(settings_file.read_text(encoding="utf-8"))
+            lang = str(data.get("language") or "").strip()
+            if lang in _SUPPORTED:
+                return lang
     except Exception:
-        return ""
+        pass
+    # 2. Secondary source: lang.txt
+    try:
+        val = _LANG_FILE.read_text(encoding="utf-8").strip()
+        if val in _SUPPORTED:
+            return val
+    except Exception:
+        pass
+    return ""
 
 
 def _save_pref(code: str) -> None:
