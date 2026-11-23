@@ -53,7 +53,7 @@ def main() -> None:
     # Shortcut panel & Tkinter fallback window
     panel = PanelLogic()
     panel_window = PanelWindow(panel)
-    trail = TrailOverlay(getattr(panel_window, "_root", None))
+    trail = TrailOverlay(lambda: getattr(panel_window, "_root", None))
 
     launcher = WebViewLauncher()
 
@@ -109,6 +109,7 @@ def main() -> None:
         mapper,
         on_settings=open_settings_adaptive,
         title=tray_title,
+        hook_service=hook,
     )
 
     # Monitor trial expiration in background

@@ -183,3 +183,47 @@ def test_gesture_recognizer_shape_and_sort():
     sorted_g = config_service.sort_gestures(raw_gestures)
     shapes = [g.get("shape") or g.get("direction") for g in sorted_g]
     assert shapes == ["UP", "DOWN", "U", "U_D", "D_R", "L", "R_D"]
+
+
+def test_mouse_hook_win64_signatures_and_stats():
+    from src.features.mouse_mapper.services.mouse_hook_service import MouseHookService, user32
+    import ctypes
+
+    # Verify 64-bit argtypes and restype
+    assert user32.CallNextHookEx.restype == ctypes.c_ssize_t
+    assert len(user32.CallNextHookEx.argtypes) == 4
+    assert user32.SetWindowsHookExW.restype == ctypes.c_void_p
+    assert len(user32.SetWindowsHookExW.argtypes) == 4
+
+    hook_svc = MouseHookService(on_event=lambda ev: False)
+    assert hook_svc.is_hook_alive is False
+    assert "rmb_down" in hook_svc.stats
+    assert "rmb_up" in hook_svc.stats
+    assert "moves" in hook_svc.stats
+
+
+def test_trail_overlay_root_getter():
+    from src.features.mouse_mapper.ui.trail_overlay import TrailOverlay
+
+    mock_holder = {"root": None}
+    trail = TrailOverlay(lambda: mock_holder["root"])
+
+    # Before root initializes
+    assert trail._get_root() is None
+
+    # After root initializes
+    fake_root = object()
+    mock_holder["root"] = fake_root
+    assert trail._get_root() is fake_root
+
+
+def test_move_threshold_default_and_config():
+    from src.features.mouse_mapper.types.mouse_mapper_types import HotkeyConfig
+    from src.features.mouse_mapper.logic.mouse_mapper_logic import MouseMapperLogic
+
+    # Default is now 16px (responsive on all screens and touchpads)
+    cfg = HotkeyConfig()
+    assert cfg.move_threshold == 16
+
+    mapper = MouseMapperLogic()
+    assert mapper._cfg.move_threshold == 16

@@ -23,7 +23,7 @@ _SetWindowLongPtr.restype = ctypes.c_ssize_t
 class TrailOverlay:
     """Fullscreen transparent overlay canvas displaying real-time mouse gesture trails."""
 
-    def __init__(self, root: tk.Tk | None = None) -> None:
+    def __init__(self, root: tk.Tk | Callable[[], tk.Tk | None] | None = None) -> None:
         self._root = root
         self._win: tk.Toplevel | None = None
         self._canvas: tk.Canvas | None = None
@@ -34,7 +34,14 @@ class TrailOverlay:
         self._vy: int = 0
 
     def _get_root(self) -> tk.Tk | None:
-        if self._root is not None:
+        if callable(self._root):
+            try:
+                r = self._root()
+                if r is not None:
+                    return r
+            except Exception:
+                pass
+        elif self._root is not None:
             return self._root
         return getattr(tk, "_default_root", None)
 

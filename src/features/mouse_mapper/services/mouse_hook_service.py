@@ -19,9 +19,19 @@ WM_APP_REHOOK  = 0x8001   # custom thread msg: re-register hook after sleep/wake
 
 user32   = ctypes.windll.user32
 kernel32 = ctypes.windll.kernel32
-user32.CallNextHookEx.restype    = ctypes.c_long
+
+# Win64 explicit argtypes & restype declarations
+user32.CallNextHookEx.argtypes = [ctypes.c_void_p, ctypes.c_int, wt.WPARAM, wt.LPARAM]
+user32.CallNextHookEx.restype = ctypes.c_ssize_t
+
+user32.SetWindowsHookExW.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, wt.DWORD]
 user32.SetWindowsHookExW.restype = ctypes.c_void_p
-user32.GetMessageW.restype       = ctypes.c_long
+
+user32.UnhookWindowsHookEx.argtypes = [ctypes.c_void_p]
+user32.UnhookWindowsHookEx.restype = wt.BOOL
+
+user32.GetMessageW.argtypes = [ctypes.POINTER(wt.MSG), wt.HWND, wt.UINT, wt.UINT]
+user32.GetMessageW.restype = wt.BOOL
 
 
 class MSLLHOOKSTRUCT(ctypes.Structure):
@@ -35,7 +45,7 @@ class MSLLHOOKSTRUCT(ctypes.Structure):
 
 
 _HookProc = ctypes.WINFUNCTYPE(
-    ctypes.c_long, ctypes.c_int, wt.WPARAM, ctypes.POINTER(MSLLHOOKSTRUCT),
+    ctypes.c_ssize_t, ctypes.c_int, wt.WPARAM, ctypes.POINTER(MSLLHOOKSTRUCT),
     use_last_error=True,
 )
 
@@ -57,12 +67,31 @@ class MouseHookService:
         self._on_event       = on_event
         self._wants_moves    = wants_move_events
         self._on_scroll_mod  = on_scroll_modifier
-        self._hook_id        = None
+        self._hook_id: int | None = None
         self._thread_id: int = 0
         self._alive          = True
         self._watchdog_started = False
         self._thread         = threading.Thread(target=self._run, daemon=True)
         self._proc           = _HookProc(self._hook_proc)
+
+        # Anti-timeout rate limiting variables for 500Hz/1000Hz gaming mice
+        self._last_move_x: int = 0
+        self._last_move_y: int = 0
+        self._last_move_time: float = 0.0
+
+        # Real-time event diagnostics
+        self.stats: dict[str, int] = {
+            "rmb_down": 0,
+            "rmb_up": 0,
+            "scroll": 0,
+            "moves": 0,
+            "rehook_count": 0,
+        }
+
+    @property
+    def is_hook_alive(self) -> bool:
+        """Check if hook handle exists and thread is running."""
+        return bool(self._hook_id and self._thread.is_alive())
 
     def start(self) -> None:
         self._thread.start()
@@ -76,8 +105,15 @@ class MouseHookService:
             user32.PostThreadMessageW(self._thread_id, 0x0012, 0, 0)
 
     def _run(self) -> None:
+        from src.core.app_paths import log_debug
         self._thread_id = kernel32.GetCurrentThreadId()
         self._hook_id   = user32.SetWindowsHookExW(WH_MOUSE_LL, self._proc, None, 0)
+        if self._hook_id:
+            log_debug(f"MouseHookService: hook installed successfully (hook_id=0x{self._hook_id:X}, thread={self._thread_id})")
+        else:
+            err = kernel32.GetLastError()
+            log_debug(f"MouseHookService: SetWindowsHookExW FAILED (err={err})")
+
         self._start_watchdog()
         msg = wt.MSG()
         while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
@@ -87,6 +123,12 @@ class MouseHookService:
                 if self._hook_id:
                     user32.UnhookWindowsHookEx(self._hook_id)
                 self._hook_id = user32.SetWindowsHookExW(WH_MOUSE_LL, self._proc, None, 0)
+                self.stats["rehook_count"] += 1
+                if self._hook_id:
+                    log_debug(f"MouseHookService: hook re-registered (hook_id=0x{self._hook_id:X})")
+                else:
+                    err = kernel32.GetLastError()
+                    log_debug(f"MouseHookService: re-register FAILED (err={err})")
             else:
                 user32.TranslateMessage(ctypes.byref(msg))
                 user32.DispatchMessageW(ctypes.byref(msg))
@@ -112,9 +154,8 @@ class MouseHookService:
                 if not self._alive:
                     break
                 if not self._thread.is_alive():
-                    logging.warning(
-                        "MouseHookService: hook thread is dead, restarting new hook thread..."
-                    )
+                    from src.core.app_paths import log_debug
+                    log_debug("MouseHookService: hook thread is dead, restarting new hook thread...")
                     if self._hook_id:
                         try:
                             user32.UnhookWindowsHookEx(self._hook_id)
@@ -137,22 +178,34 @@ class MouseHookService:
                     return user32.CallNextHookEx(self._hook_id, n_code, w_param, l_param)
 
                 # Fast-path: skip WM_MOUSEMOVE entirely when logic doesn't need it.
-                # Avoids Python overhead on every cursor movement (Edge can fire
-                # 200+ move events/sec which would risk the 300ms LL hook timeout).
+                # Avoids Python overhead on every cursor movement.
                 if w_param == WM_MOUSEMOVE:
                     if not self._wants_moves():
                         return user32.CallNextHookEx(self._hook_id, n_code, w_param, l_param)
-                    self._on_event(MouseEvent("move", x=data.pt.x, y=data.pt.y))
+
+                    # Anti-timeout rate limiter for 500Hz/1000Hz gaming mice:
+                    # Forward to Python logic only if cursor moved >= 2px or >= 8ms elapsed (~125Hz max)
+                    cur_x, cur_y = data.pt.x, data.pt.y
+                    now = time.perf_counter()
+                    if abs(cur_x - self._last_move_x) >= 2 or abs(cur_y - self._last_move_y) >= 2 or (now - self._last_move_time) >= 0.008:
+                        self._last_move_x = cur_x
+                        self._last_move_y = cur_y
+                        self._last_move_time = now
+                        self.stats["moves"] += 1
+                        self._on_event(MouseEvent("move", x=cur_x, y=cur_y))
                     return user32.CallNextHookEx(self._hook_id, n_code, w_param, l_param)
 
                 x, y     = data.pt.x, data.pt.y
                 suppress = False
 
                 if w_param == WM_RBUTTONDOWN:
+                    self.stats["rmb_down"] += 1
                     suppress = self._on_event(MouseEvent("right_down", x=x, y=y))
                 elif w_param == WM_RBUTTONUP:
+                    self.stats["rmb_up"] += 1
                     suppress = self._on_event(MouseEvent("right_up", x=x, y=y))
                 elif w_param == WM_MOUSEWHEEL:
+                    self.stats["scroll"] += 1
                     delta     = ctypes.c_short(data.mouseData >> 16).value
                     direction = ScrollDirection.UP if delta > 0 else ScrollDirection.DOWN
                     if self._on_scroll_mod is not None and self._on_scroll_mod(direction):
@@ -163,7 +216,11 @@ class MouseHookService:
                 if suppress:
                     return 1
 
-        except Exception:
-            pass  # never let Python exceptions corrupt the hook return value
+        except Exception as exc:
+            try:
+                from src.core.app_paths import log_debug
+                log_debug(f"MouseHookService._hook_proc exception: {exc}")
+            except Exception:
+                pass
 
         return user32.CallNextHookEx(self._hook_id, n_code, w_param, l_param)

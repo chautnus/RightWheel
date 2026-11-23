@@ -19,7 +19,20 @@ from .gesture_recognizer import GestureRecognizer
 
 class MouseMapperLogic:
     def __init__(self, config: HotkeyConfig | None = None) -> None:
-        self._cfg        = config or HotkeyConfig()
+        if config is None:
+            try:
+                from src.core.config_service import load_app_settings
+                st = load_app_settings()
+                val = st.get("swipe_threshold") or st.get("move_threshold")
+                if val and isinstance(val, (int, float)) and val > 0:
+                    self._cfg = HotkeyConfig(move_threshold=int(val))
+                else:
+                    self._cfg = HotkeyConfig()
+            except Exception:
+                self._cfg = HotkeyConfig()
+        else:
+            self._cfg = config
+
         self._state      = MapperState.IDLE
         self._lock       = threading.Lock()
         self._alt_held   = False
