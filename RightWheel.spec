@@ -2,7 +2,7 @@
 
 a = Analysis(
     ['src/main.py'],
-    pathex=['src'],
+    pathex=['.', 'src'],
     binaries=[],
     datas=[
         ('assets/icon.png', 'assets'),
@@ -18,7 +18,11 @@ a = Analysis(
         'tkinter.filedialog',
         '_tkinter',
         'webview',
+        'webview.platforms.edgechromium',
         'clr',
+        'win32timezone',
+        'win32com',
+        'win32com.client',
         # Core modules
         'src.core.app_paths',
         'src.core.single_instance',
@@ -27,6 +31,11 @@ a = Analysis(
         'src.core.memory_manager',
         'src.core.store_license_service',
         'src.core.i18n',
+        'src.core.locales.fr',
+        'src.core.locales.es',
+        'src.core.locales.it',
+        'src.core.locales.pt',
+        'src.core.locales.id',
         'src.core.config_service',
         'src.core.profile_service',
         'src.core.window_service',
@@ -37,6 +46,7 @@ a = Analysis(
         'src.features.action_dispatcher.sequence_executor',
         'src.features.action_dispatcher.clipboard_web_actions',
         'src.features.action_dispatcher.window_manager',
+        'src.features.action_dispatcher.task_view_navigator',
         # WebView2 UI
         'src.features.webview_ui.host',
         'src.features.webview_ui.bridge_api',
@@ -51,11 +61,16 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        'unittest', 'xml', 'xmlrpc', 'pydoc', 'doctest', 'difflib', 'pdb',
-        'test', 'tests', 'lib2to3', 'tkinter.test', 'distutils',
-        'multiprocessing', 'concurrent', 'asyncio',
-        'numpy', 'scipy', 'pandas', 'matplotlib', 'IPython', 'PIL.ImageMath',
-        'cryptography', 'OpenSSL', 'Crypto',
+        'unittest',
+        'pydoc',
+        'doctest',
+        'test',
+        'curses',
+        'numpy',
+        'scipy',
+        'matplotlib',
+        'pandas',
+        'IPython',
     ],
     noarchive=False,
 )
