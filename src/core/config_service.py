@@ -42,6 +42,16 @@ DEFAULT_COMMANDS: list[dict[str, Any]] = [
             {"type": "url_clipboard", "url_template": "https://www.google.com/search?q={text}", "delay_ms": 10},
         ],
     },
+    {
+        "type": "sequence",
+        "label": "ChatGPT: Paste Clipboard",
+        "steps": [
+            {"type": "shortcut", "keys": "ctrl+c", "delay_ms": 200},
+            {"type": "url", "url": "https://chatgpt.com", "delay_ms": 3000},
+            {"type": "shortcut", "keys": "ctrl+v", "delay_ms": 800},
+            {"type": "shortcut", "keys": "enter", "delay_ms": 10},
+        ],
+    },
 ]
 
 GESTURE_DESCRIPTIONS: dict[str, str] = {

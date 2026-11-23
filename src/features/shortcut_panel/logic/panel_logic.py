@@ -141,8 +141,8 @@ class PanelLogic:
             threading.Timer(0.1, shortcut_executor.execute_command,
                             args=[item.cmd, item.cwd]).start()
         elif isinstance(item, SequenceItem):
-            threading.Timer(0.25, shortcut_executor.execute_sequence,
-                            args=[item.steps]).start()
+            from src.features.action_dispatcher.sequence_executor import execute_steps_async
+            threading.Timer(0.2, execute_steps_async, args=[item.steps]).start()
 
     def _handle_action(self, action: str) -> None:
         self.hide()

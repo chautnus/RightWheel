@@ -68,6 +68,17 @@ BUILTIN_WEBCLIP_TEMPLATES: list[dict[str, Any]] = [
         "auto_submit": True,
     },
     {
+        "id": "chatgpt_paste",
+        "name": "ChatGPT (Paste Clipboard / Image)",
+        "keywords": "chatgpt openai gpt ai prompt anh image dan paste",
+        "url_template": "https://chatgpt.com",
+        "base_url": "https://chatgpt.com",
+        "mode": "paste_submit",
+        "supports_image_paste": True,
+        "default_prompt": "",
+        "auto_submit": True,
+    },
+    {
         "id": "claude",
         "name": "Claude (Anthropic)",
         "keywords": "claude anthropic ai prompt anh image",

@@ -7,7 +7,10 @@ import subprocess
 import time
 import webbrowser
 
-from . import clipboard_web_actions
+try:
+    from src.features.action_dispatcher import clipboard_web_actions
+except Exception:
+    from . import clipboard_web_actions
 
 _log = logging.getLogger("mousehotkey")
 
@@ -164,36 +167,25 @@ def execute_url(url: str) -> None:
 
 
 def execute_sequence(steps: list[dict]) -> None:
-    """Execute a list of steps sequentially. Errors in a step log a warning and continue."""
-    for i, step in enumerate(steps):
-        if not isinstance(step, dict):
-            continue
-        stype = step.get("type", "shortcut")
-        delay_raw = step.get("delay_ms", 100)
-        try:
-            delay_ms = int(delay_raw)
-            if delay_ms < 0:
-                delay_ms = 100
-        except (ValueError, TypeError):
-            delay_ms = 100
-
-        try:
-            if stype == "shortcut":
-                execute(step.get("keys", ""))
-            elif stype == "app":
-                execute_app(step.get("path", ""), step.get("args", ""))
-            elif stype == "url":
-                execute_url(step.get("url", ""))
-            elif stype == "url_clipboard":
-                clipboard_web_actions.execute_url_clipboard(step.get("url_template", ""))
-            elif stype == "gemini":
-                clipboard_web_actions.execute_gemini(step.get("prompt", ""))
-            elif stype == "command":
-                execute_command(step.get("cmd", ""), step.get("cwd", ""))
-            else:
-                _log.warning(f"execute_sequence() unknown step type at {i}: {stype!r}")
-        except Exception as exc:
-            _log.warning(f"execute_sequence() step {i} ({stype}) failed: {exc}")
-
-        if delay_ms > 0:
-            time.sleep(delay_ms / 1000.0)
+    """Execute a list of steps sequentially via action_dispatcher.sequence_executor.
+    
+    Errors in a step log a warning and continue without crashing.
+    """
+    try:
+        from src.features.action_dispatcher.sequence_executor import execute_steps
+        res = execute_steps(steps)
+        if res.get("ok"):
+            return
+        # If strict batch validation failed, filter out invalid steps and retry
+        valid_types = {
+            "SHORTCUT", "KEY_COMBO", "APP", "RUN_APP", "URL", "OPEN_URL",
+            "COMMAND", "RUN_SHELL", "URL_CLIPBOARD", "WEB_CLIPBOARD", "GEMINI",
+            "TEXT", "TYPE_TEXT", "DELAY",
+        }
+        filtered = [s for s in steps if isinstance(s, dict) and str(s.get("type", "")).upper() in valid_types]
+        if filtered:
+            execute_steps(filtered)
+        else:
+            _log.warning(f"execute_sequence() failed: {res.get('error')}")
+    except Exception as exc:
+        _log.warning(f"execute_sequence() failed: {exc}")

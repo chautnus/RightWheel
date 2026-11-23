@@ -27,6 +27,24 @@ _DEFAULT: dict = {
             {"type": "action", "label": "App Settings",       "action": "open_settings"},
             {"type": "action", "label": "Pause RightWheel",   "action": "toggle_pause"},
         ]},
+        {
+            "type": "sequence",
+            "label": "Search Copied Text",
+            "steps": [
+                {"type": "shortcut", "keys": "ctrl+c", "delay_ms": 150},
+                {"type": "url_clipboard", "url_template": "https://www.google.com/search?q={text}", "delay_ms": 10},
+            ],
+        },
+        {
+            "type": "sequence",
+            "label": "ChatGPT: Paste Clipboard",
+            "steps": [
+                {"type": "shortcut", "keys": "ctrl+c", "delay_ms": 200},
+                {"type": "url", "url": "https://chatgpt.com", "delay_ms": 3000},
+                {"type": "shortcut", "keys": "ctrl+v", "delay_ms": 800},
+                {"type": "shortcut", "keys": "enter", "delay_ms": 10},
+            ],
+        },
     ],
     "profiles": [],
     "gestures": [
