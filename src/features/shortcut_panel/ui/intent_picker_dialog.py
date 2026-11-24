@@ -28,6 +28,7 @@ class IntentPickerDialog(tk.Toplevel):
 
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent)
+        self.withdraw()
         self.title("Trợ lý Phím tắt theo Mục đích")
         self.resizable(False, False)
         self.configure(bg=_BG)
@@ -44,6 +45,7 @@ class IntentPickerDialog(tk.Toplevel):
         self._center(parent, width=540, height=480)
         self._search_var.set("")
         self._on_search()
+        self.deiconify()
         self._entry.focus_set()
 
     def _center(self, parent: tk.Widget, width: int, height: int) -> None:
