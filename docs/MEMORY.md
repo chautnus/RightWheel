@@ -1,9 +1,9 @@
 # RightWheel — Project Memory
 
-last_updated: 2026-11-12 (v2.21.0 — Sequence: Gemini step + Edit existing steps; split clipboard_web_actions.py/sequence_step_dialogs.py)
+last_updated: 2026-11-24 (F-024: Gesture Guide Overlay live HUD on RMB hold + V3 Welcome & Onboarding Wizard)
 
 ## Overview
-Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys and a shortcut panel. Python + ctypes WH_MOUSE_LL hook. Feature-Sliced Design.
+Windows tray app that maps mouse combos (RMB+scroll) to keyboard hotkeys, radial shortcut panel, and draw gestures. Modernized with V3 WebView2 interface (React 19 + Tailwind + shadcn/ui) and resilient Tkinter fallback. Python + ctypes WH_MOUSE_LL hook. Feature-Sliced Design.
 
 ## Domains
 
@@ -44,8 +44,9 @@ Xem `CLAUDE.md` ở project root để biết toàn bộ luật. Tóm tắt:
 - **Sequence editor (F-014/F-015):** `src/features/shortcut_panel/ui/sequence_editor_dialog.py` (211 lines) — builds `SequenceItem.steps` (Keys/App/Web/Script/Web+Clip/Gemini), standalone in-memory buffer; list/button/save orchestration only. Has an **Edit** button + double-click-to-edit (F-015) alongside Add/Delete/▲▼.
 - **Sequence step dialogs (F-015):** `src/features/shortcut_panel/ui/sequence_step_dialogs.py` (98 lines) — `ask_<type>(parent, init=None)` per step type (reuses `KeyRecorderDialog`/`_AskDialog`, both support `init` for pre-fill) + `STEP_KINDS` map; shared by Add and Edit so the two flows can't drift apart.
 - **Key recorder:** `src/features/shortcut_panel/ui/key_recorder_dialog.py` — click-buttons for Ctrl/Shift/Alt/⊞Win/arrows/Home/End/PgUp/PgDn (avoids Win key being intercepted by Windows when typed physically)
-- **Welcome screen:** `src/features/shortcut_panel/ui/welcome_window.py`
-- **Config:** `%APPDATA%\RightWheel\shortcuts.json` (schema v3)
+- **Gesture Guide Overlay (F-024):** `src/features/mouse_mapper/ui/gesture_guide_overlay.py` (480x480 bottom-right HUD showing 4-direction live action hints on RMB hold, click-through, non-activating, dynamically matches foreground profile)
+- **Welcome screen & Wizard (V3):** Modern WebView2 `WelcomeView.tsx` (3 Bento pillars) & `WizardView.tsx` (Step 1/2 Command Palette + Draw Gestures config) in `C:\dev\ui-studio\src\projects\rightwheel-v3\views\`; legacy Tkinter fallback `src/features/shortcut_panel/ui/welcome_window.py`
+- **Config:** `%APPDATA%\RightWheel\shortcuts.json` (schema v3 / profiles.json unified v4)
 - **i18n engine:** `src/features/i18n/__init__.py` — `t(key)`, `init()`, `set_locale()`, 9 locales
 - **License:** `src/features/licensing/` — LemonSqueezy API, trial 30d, 7d cache
 - **Spec:** `RightWheel.spec` (PyInstaller 6.22.3 — core/hooks-contrib version must stay matched, see antigravity-calibration.md). ⚠ Known leftover: `hiddenimports` still lists `features.shortcut_panel.services.volume_service`, deleted in F-013 — logs a harmless `ERROR: Hidden import ... not found` on every build, not yet cleaned up.

@@ -8,6 +8,7 @@ from typing import Any
 
 SECTORS = ["R", "DR", "D", "DL", "L", "UL", "U", "UR"]
 CARDINALS = {"R", "D", "L", "U"}
+CARDINAL_NAMES = {"R": "RIGHT", "L": "LEFT", "U": "UP", "D": "DOWN"}
 DIAGONALS = {"DR", "DL", "UL", "UR"}
 OPPOSITE_CARDINALS = {
     "R": "L",

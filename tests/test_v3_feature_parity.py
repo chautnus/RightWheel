@@ -440,5 +440,44 @@ def test_bridge_api_search_intents():
     assert len(res_empty["data"]) > 0
 
 
+def test_gesture_guide_overlay_and_mapper_hold_events():
+    """Verify MouseMapperLogic on_hold_start and on_sector_change callbacks for GestureGuideOverlay."""
+    from src.features.mouse_mapper.logic.mouse_mapper_logic import MouseMapperLogic
+    from src.features.mouse_mapper.types.mouse_mapper_types import MouseEvent
+    from src.features.mouse_mapper.logic.gesture_recognizer import CARDINAL_NAMES
+    from src.features.mouse_mapper.ui.gesture_guide_overlay import GestureGuideOverlay
+
+    assert CARDINAL_NAMES["R"] == "RIGHT"
+    assert CARDINAL_NAMES["L"] == "LEFT"
+    assert CARDINAL_NAMES["U"] == "UP"
+    assert CARDINAL_NAMES["D"] == "DOWN"
+
+    events = {"hold": False, "paths": [], "end": False}
+
+    mapper = MouseMapperLogic()
+    mapper.on_hold_start = lambda: events.update({"hold": True})
+    mapper.on_sector_change = lambda p: events["paths"].append(list(p))
+    mapper.on_gesture_end = lambda: events.update({"end": True})
+
+    # 1. RMB Down should trigger on_hold_start immediately
+    mapper.handle(MouseEvent(kind="right_down", x=100, y=100))
+    assert events["hold"] is True
+
+    # 2. Movement exceeding threshold (18px) to the right -> commits RIGHT
+    for x in range(110, 200, 10):
+        mapper.handle(MouseEvent(kind="move", x=x, y=100))
+    assert len(events["paths"]) > 0
+    assert events["paths"][-1] == ["RIGHT"]
+
+    # 3. RMB Up should call on_gesture_end to close overlay
+    mapper.handle(MouseEvent(kind="right_up", x=200, y=100))
+    assert events["end"] is True
+
+    # 4. GestureGuideOverlay instantiation check
+    overlay = GestureGuideOverlay()
+    assert overlay._active is False
+
+
+
 
 

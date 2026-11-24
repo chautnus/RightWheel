@@ -17,6 +17,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [2.22.0] — 2026-11-24
+
+### Added
+- **Gesture Guide Overlay HUD (F-024)**: Cửa sổ HUD hướng dẫn cử chỉ 4 hướng kích hoạt ngay khi giữ chuột phải (`RMB Hold`). Đặt tại góc dưới bên phải màn hình (`480x480px`), trong suốt, không cướp focus (`WS_EX_NOACTIVATE`) và click-through 100% (`WS_EX_TRANSPARENT`). Hiển thị biểu tượng chuột phải, 4 mũi tên hướng chính kèm tên chức năng, tự động cập nhật live theo từng nét vẽ (`on_sector_change`) để chỉ dẫn nhánh rẽ tiếp theo.
+- **Màn hình Chào mừng & Onboarding Wizard V3 (F-016 / F-017 / F-023)**: Tích hợp giao diện Fluent Precision hiện đại trên WebView2. Màn hình Welcome hiển thị 3 thẻ Bento nổi bật (Cử chỉ vẽ chuột, Bảng lệnh nhanh, Chuỗi tác vụ đa bước). Wizard 2 bước cho phép cấu hình song song cử chỉ chuột và Command Palette trực tiếp trước khi bắt đầu sử dụng.
+- **Bộ chọn ngôn ngữ cố định**: Thêm dropdown chuyển đổi 7 ngôn ngữ trực tiếp trên Sidebar cài đặt và Welcome screen, cập nhật tức thì toàn bộ UI không cần khởi động lại.
+
+### Fixed
+- **Triệt tiêu hiện tượng giật nảy giao diện khi tìm kiếm Intent**: Chuyển danh sách gợi ý phím tắt từ luồng tài liệu thông thường sang floating dropdown tuyệt đối (`absolute left-0 right-0 top-full z-50 shadow-2xl`), đồng thời bổ sung `self.withdraw()` và `self.deiconify()` cho `IntentPickerDialog` Tkinter để loại bỏ chớp giật kích cỡ cửa sổ.
+
+---
+
 ## [2.21.0] — 2026-11-12
 
 ### Added

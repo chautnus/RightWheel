@@ -38,6 +38,8 @@ import features.i18n as i18n
 from features.mouse_mapper import MouseHookService, MouseMapperLogic
 from features.mouse_mapper.ui.tray_ui import TrayUI
 from features.mouse_mapper.ui.trail_overlay import TrailOverlay
+from features.mouse_mapper.ui.gesture_guide_overlay import GestureGuideOverlay
+from features.mouse_mapper.logic.gesture_recognizer import normalize_directions
 from features.mouse_mapper.logic.tab_switch_logic import handle_scroll_for_tab_switch
 from features.shortcut_panel import PanelLogic, PanelWindow
 from src.features.webview_ui.launcher import WebViewLauncher
@@ -66,15 +68,104 @@ def main() -> None:
     mapper.panel = panel
     panel.on_open_settings = open_settings_adaptive
 
+    # Gesture Guide Overlay: live directional hints while RMB gesture is held,
+    # ported from Touchpad Gesture's F-032. Labels come from the flat "gestures"
+    # preset list (prefix-matched against each preset's normalized directions),
+    # not a binding_key lookup like the touchpad app, since RightWheel's gesture
+    # config has no per-finger-count grouping.
+    guide_overlay = GestureGuideOverlay()
+    _dir_to_letter = {"UP": "U", "DOWN": "D", "LEFT": "L", "RIGHT": "R"}
+    _ALL_GUIDE_DIRECTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
+    from features.shortcut_panel.services.intent_service import IntentService
+    _guide_intent_svc = IntentService()
+
+    def _guide_keys_to_text(keys: str) -> str:
+        for it in _guide_intent_svc.catalog:
+            if it.keys == keys:
+                return it.title_vi
+        return keys
+
+    def _guide_active_presets() -> list[dict]:
+        try:
+            import ctypes as _ctypes
+            from src.core.profile_service import resolve_active_profile_full
+            hwnd = _ctypes.windll.user32.GetForegroundWindow()
+            prof_res = resolve_active_profile_full(hwnd)
+            if prof_res.get("ok"):
+                presets = prof_res.get("data", {}).get("effective_gestures", [])
+                if presets:
+                    return presets
+        except Exception:
+            pass
+        try:
+            from features.shortcut_panel.services import config_service
+            return config_service.load().get("gestures", [])
+        except Exception:
+            return []
+
+    def _guide_preset_text(preset: dict) -> str:
+        if preset.get("description"):
+            return str(preset["description"])
+        if preset.get("label"):
+            return str(preset["label"])
+        keys = str(preset.get("keys") or preset.get("target") or "")
+        if keys:
+            return _guide_keys_to_text(keys)
+        return i18n.t("guide_unassigned", "Chưa gán")
+
+    def _guide_labels_for_path(path: list[str]) -> dict[str, str]:
+        presets = _guide_active_presets()
+        result: dict[str, str] = {}
+        for direction in _ALL_GUIDE_DIRECTIONS:
+            if path and direction == path[-1]:
+                continue
+            candidate_path = path + [_dir_to_letter[direction]]
+            best: dict | None = None
+            best_len = 0
+            for preset in presets:
+                if not isinstance(preset, dict) or not preset.get("enabled", True):
+                    continue
+                preset_dirs = preset.get("directions")
+                if not preset_dirs:
+                    shape = str(preset.get("shape") or preset.get("direction") or "").strip()
+                    preset_dirs = [d.strip().upper() for d in shape.split("_") if d.strip()] if shape else None
+                if not preset_dirs:
+                    continue
+                norm = normalize_directions([d.upper() for d in preset_dirs])
+                if norm[: len(candidate_path)] == candidate_path:
+                    if best is None or len(norm) < best_len:
+                        best = preset
+                        best_len = len(norm)
+            result[direction] = _guide_preset_text(best) if best else i18n.t("guide_unassigned", "Chưa gán")
+        return result
+
+    def on_hold_start_wrap() -> None:
+        # Fires on RMB-down, before any movement — show the guide overlay
+        # immediately (parity with the touchpad app's 3/4-finger-hold trigger).
+        try:
+            guide_overlay.start(_guide_labels_for_path([]))
+        except Exception:
+            pass
+
     def on_gesture_start_wrap(x: int, y: int) -> None:
         memory_manager.notify_activity()
         trail.start(x, y)
 
+    def on_sector_change_wrap(path: list[str]) -> None:
+        letters = [_dir_to_letter[d] for d in path]
+        try:
+            guide_overlay.update_sectors(path, _guide_labels_for_path(letters))
+        except Exception:
+            pass
+
     def on_gesture_end_wrap() -> None:
         memory_manager.notify_activity()
         trail.stop()
+        guide_overlay.stop()
 
+    mapper.on_hold_start = on_hold_start_wrap
     mapper.on_gesture_start = on_gesture_start_wrap
+    mapper.on_sector_change = on_sector_change_wrap
     mapper.on_gesture_end = on_gesture_end_wrap
 
     # Show modern Welcome onboarding on first launch if enabled

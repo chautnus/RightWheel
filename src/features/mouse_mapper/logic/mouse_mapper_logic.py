@@ -14,7 +14,7 @@ from ...shortcut_panel.services import (
     config_service,
     shortcut_executor,
 )
-from .gesture_recognizer import GestureRecognizer
+from .gesture_recognizer import CARDINAL_NAMES, GestureRecognizer
 
 
 class MouseMapperLogic:
@@ -42,6 +42,17 @@ class MouseMapperLogic:
         self.enabled     = True
         self.on_gesture_start: Callable[[int, int], None] | None = None
         self.on_gesture_end: Callable[[], None] | None = None
+        # Fires the moment RMB goes down (before any movement) — lets the Gesture
+        # Guide Overlay show immediately on hold, matching the touchpad app's
+        # 3/4-finger-hold trigger instead of waiting for move_threshold to be crossed.
+        self.on_hold_start: Callable[[], None] | None = None
+        # Fires with the cardinal-only (U/D/L/R) direction path so far, each time the
+        # recognizer commits a NEW sector while the gesture is still being held — used
+        # by the Gesture Guide Overlay to show "what happens next" live. Diagonal
+        # sectors (DR/DL/UL/UR) are not reported here (the overlay only shows 4
+        # cardinal arrows); the real 8-direction matching in finish() is unaffected.
+        self.on_sector_change: Callable[[list[str]], None] | None = None
+        self._cardinal_path: list[str] = []
         self._gesture_recognizer = GestureRecognizer(threshold=18)
 
     def handle(self, event: MouseEvent) -> bool:
@@ -64,11 +75,29 @@ class MouseMapperLogic:
         self._state  = MapperState.RIGHT_HELD
         self._down_x = x
         self._down_y = y
+        if self.on_hold_start:
+            try:
+                self.on_hold_start()
+            except Exception:
+                pass
         return True   # always suppress; re-inject on right_up or move
+
+    def _maybe_report_sector_change(self, res: dict) -> None:
+        if not (res.get("ok") and res.get("data", {}).get("stroke_added") and self.on_sector_change):
+            return
+        sector = self._gesture_recognizer._directions[-1] if self._gesture_recognizer._directions else None
+        cardinal = CARDINAL_NAMES.get(sector) if sector else None
+        if cardinal and (not self._cardinal_path or self._cardinal_path[-1] != cardinal):
+            self._cardinal_path.append(cardinal)
+            try:
+                self.on_sector_change(list(self._cardinal_path))
+            except Exception:
+                pass
 
     def _on_move(self, x: int, y: int) -> bool:
         if self._state == MapperState.GESTURE:
-            self._gesture_recognizer.feed_point(x, y)
+            res = self._gesture_recognizer.feed_point(x, y)
+            self._maybe_report_sector_change(res)
             return False
         if self._state != MapperState.RIGHT_HELD:
             return False
@@ -76,11 +105,13 @@ class MouseMapperLogic:
         dy = abs(y - self._down_y)
         if dx >= self._cfg.move_threshold or dy >= self._cfg.move_threshold:
             self._state = MapperState.GESTURE
+            self._cardinal_path = []
             self._gesture_recognizer.reset()
             self._gesture_recognizer.feed_point(self._down_x, self._down_y)
-            self._gesture_recognizer.feed_point(x, y)
+            res0 = self._gesture_recognizer.feed_point(x, y)
             if self.on_gesture_start:
                 self.on_gesture_start(self._down_x, self._down_y)
+            self._maybe_report_sector_change(res0)
         return False   # never suppress mouse moves
 
     def _on_scroll(self, direction: ScrollDirection | None) -> bool:
@@ -128,6 +159,13 @@ class MouseMapperLogic:
             self._alt_held = False
 
         if prev == MapperState.RIGHT_HELD:
+            # Short tap (no drag) — on_hold_start already showed the guide overlay;
+            # hide it since no gesture actually happened.
+            if self.on_gesture_end:
+                try:
+                    self.on_gesture_end()
+                except Exception:
+                    pass
             # Short tap — re-inject clean down+up so context menu appears
             hotkey_service.inject_right_click()
             return True
