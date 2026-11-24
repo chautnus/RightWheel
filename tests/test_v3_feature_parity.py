@@ -416,4 +416,29 @@ def test_shortcut_executor_scan_codes():
     assert _resolve_scan_code(0x0D) > 0  # Enter
 
 
+def test_bridge_api_search_intents():
+    """Verify WebViewBridgeAPI search_intents localized fuzzy search."""
+    from src.features.webview_ui.bridge_api import WebViewBridgeAPI
+
+    api = WebViewBridgeAPI()
+
+    # Vietnamese query
+    res_vi = api.search_intents("chụp màn hình", lang="vi")
+    assert res_vi["ok"] is True
+    assert len(res_vi["data"]) > 0
+    assert any("Chụp" in it["title"] or "win+shift+s" in it["keys"] for it in res_vi["data"])
+
+    # English query
+    res_en = api.search_intents("task manager", lang="en")
+    assert res_en["ok"] is True
+    assert len(res_en["data"]) > 0
+    assert any("Task Manager" in it["title"] for it in res_en["data"])
+
+    # Empty query should return default list
+    res_empty = api.search_intents("")
+    assert res_empty["ok"] is True
+    assert len(res_empty["data"]) > 0
+
+
+
 

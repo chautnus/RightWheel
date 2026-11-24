@@ -357,7 +357,7 @@ class WebViewBridgeAPI:
             return _ok([
                 {
                     "intent_id": item.intent_id,
-                    "title": item.get_title(resolved_lang),
+                    "title": item.get_title(resolved_lang) if hasattr(item, "get_title") else (getattr(item, "title_en", "") if resolved_lang == "en" else getattr(item, "title_vi", "")),
                     "keys": item.keys,
                     "category": item.category,
                     "description": item.description,

@@ -28,6 +28,12 @@ class IntentItem:
     keywords: list[str]
     description: str = ""
 
+    def get_title(self, lang: str = "vi") -> str:
+        """Return localized title based on language code (defaults to Vietnamese)."""
+        if lang == "en":
+            return self.title_en or self.title_vi
+        return self.title_vi or self.title_en
+
     def match_score(self, query: str) -> int:
         """Calculate match relevance score (higher is better). 0 means no match."""
         if not query:
