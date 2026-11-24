@@ -18,6 +18,10 @@ from .gesture_recognizer import CARDINAL_NAMES, GestureRecognizer
 
 
 class MouseMapperLogic:
+    # Press-and-hold delay before on_hold_start fires, so a plain quick right-click
+    # (context menu) never triggers the guide overlay.
+    _HOLD_DELAY_S = 0.18
+
     def __init__(self, config: HotkeyConfig | None = None) -> None:
         if config is None:
             try:
@@ -34,7 +38,7 @@ class MouseMapperLogic:
             self._cfg = config
 
         self._state      = MapperState.IDLE
-        self._lock       = threading.Lock()
+        self._lock       = threading.RLock()  # RLock: _fire_hold_start may re-enter from _on_move
         self._alt_held   = False
         self._panel_mode = False   # True = this scroll session opened the panel
         self._down_x     = 0
@@ -42,10 +46,13 @@ class MouseMapperLogic:
         self.enabled     = True
         self.on_gesture_start: Callable[[int, int], None] | None = None
         self.on_gesture_end: Callable[[], None] | None = None
-        # Fires the moment RMB goes down (before any movement) — lets the Gesture
-        # Guide Overlay show immediately on hold, matching the touchpad app's
-        # 3/4-finger-hold trigger instead of waiting for move_threshold to be crossed.
+        # Fires once RMB has been held for _HOLD_DELAY_S (or immediately once real
+        # drag movement starts, whichever comes first) — lets the Gesture Guide
+        # Overlay show on a genuine press-and-hold, matching the touchpad app's
+        # 3/4-finger-hold trigger, WITHOUT firing on an ordinary quick right-click.
         self.on_hold_start: Callable[[], None] | None = None
+        self._hold_timer: threading.Timer | None = None
+        self._hold_fired: bool = False
         # Fires with the cardinal-only (U/D/L/R) direction path so far, each time the
         # recognizer commits a NEW sector while the gesture is still being held — used
         # by the Gesture Guide Overlay to show "what happens next" live. Diagonal
@@ -75,12 +82,30 @@ class MouseMapperLogic:
         self._state  = MapperState.RIGHT_HELD
         self._down_x = x
         self._down_y = y
+        self._hold_fired = False
+        self._hold_timer = threading.Timer(self._HOLD_DELAY_S, self._fire_hold_start)
+        self._hold_timer.daemon = True
+        self._hold_timer.start()
+        return True   # always suppress; re-inject on right_up or move
+
+    def _cancel_hold_timer(self) -> None:
+        if self._hold_timer is not None:
+            try:
+                self._hold_timer.cancel()
+            except Exception:
+                pass
+            self._hold_timer = None
+
+    def _fire_hold_start(self) -> None:
+        with self._lock:
+            if self._hold_fired or self._state == MapperState.IDLE:
+                return
+            self._hold_fired = True
         if self.on_hold_start:
             try:
                 self.on_hold_start()
             except Exception:
                 pass
-        return True   # always suppress; re-inject on right_up or move
 
     def _maybe_report_sector_change(self, res: dict) -> None:
         if not (res.get("ok") and res.get("data", {}).get("stroke_added") and self.on_sector_change):
@@ -108,6 +133,11 @@ class MouseMapperLogic:
             self._cardinal_path = []
             self._gesture_recognizer.reset()
             self._gesture_recognizer.feed_point(self._down_x, self._down_y)
+            # Real drag movement is itself proof of intent — fire the (possibly still
+            # pending) hold-start right away instead of waiting out the rest of the
+            # delay, so update_sectors below is never clobbered by a late initial render.
+            self._cancel_hold_timer()
+            self._fire_hold_start()
             res0 = self._gesture_recognizer.feed_point(x, y)
             if self.on_gesture_start:
                 self.on_gesture_start(self._down_x, self._down_y)
@@ -145,6 +175,7 @@ class MouseMapperLogic:
     def _on_right_up(self) -> bool:
         prev        = self._state
         self._state = MapperState.IDLE
+        self._cancel_hold_timer()
 
         # Guard: spurious right_up received when already IDLE (e.g. app just
         # started while RMB was held, or state was reset externally).

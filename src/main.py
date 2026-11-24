@@ -82,7 +82,7 @@ def main() -> None:
     def _guide_keys_to_text(keys: str) -> str:
         for it in _guide_intent_svc.catalog:
             if it.keys == keys:
-                return it.title_vi
+                return it.title_en
         return keys
 
     def _guide_active_presets() -> list[dict]:
@@ -111,7 +111,7 @@ def main() -> None:
         keys = str(preset.get("keys") or preset.get("target") or "")
         if keys:
             return _guide_keys_to_text(keys)
-        return i18n.t("guide_unassigned", "Chưa gán")
+        return i18n.t("guide_unassigned", "Unassigned")
 
     def _guide_labels_for_path(path: list[str]) -> dict[str, str]:
         presets = _guide_active_presets()
@@ -136,7 +136,7 @@ def main() -> None:
                     if best is None or len(norm) < best_len:
                         best = preset
                         best_len = len(norm)
-            result[direction] = _guide_preset_text(best) if best else i18n.t("guide_unassigned", "Chưa gán")
+            result[direction] = _guide_preset_text(best) if best else i18n.t("guide_unassigned", "Unassigned")
         return result
 
     def on_hold_start_wrap() -> None:

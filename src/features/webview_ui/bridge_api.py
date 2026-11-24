@@ -132,7 +132,7 @@ class WebViewBridgeAPI:
 
     def _load_app_settings(self) -> dict[str, Any]:
         defaults: dict[str, Any] = {
-            "language": get_language(),
+            "language": "en",
             "autostart": True,
             "ui_engine": "webview",
             "show_welcome": True,
@@ -141,6 +141,7 @@ class WebViewBridgeAPI:
         }
         raw = self._load_raw_settings()
         defaults.update(raw)
+        defaults["language"] = "en"
         defaults["available_languages"] = [code for code, _ in SUPPORTED_LANGUAGES]
         defaults["language_options"] = [{"code": code, "name": name} for code, name in SUPPORTED_LANGUAGES]
         return defaults
@@ -191,17 +192,17 @@ class WebViewBridgeAPI:
         }
 
     def _build_i18n_payload(self, lang: str) -> tuple[dict[str, str], list[dict[str, str]]]:
-        translations = dict(_TRANSLATIONS.get(lang, _TRANSLATIONS.get("vi", {})))
+        translations = dict(_TRANSLATIONS.get("en", {}))
         shortcuts = [
             {"category": cat, "keys": keys, "description": desc}
-            for cat, keys, desc in get_localized_shortcuts(lang)
+            for cat, keys, desc in get_localized_shortcuts("en")
         ]
         return translations, shortcuts
 
     def get_initial_state(self, view: str = "") -> dict[str, Any]:
         resolved_view = view if view in ("settings", "welcome", "wizard") else self._default_view
         settings = self._load_app_settings()
-        lang = str(settings.get("language") or "vi")
+        lang = "en"
         set_language(lang)
         translations, ref_shortcuts = self._build_i18n_payload(lang)
 
@@ -244,16 +245,16 @@ class WebViewBridgeAPI:
         current.update(patch)
 
         if "language" in patch:
-            lang_code = str(patch["language"])
-            set_language(lang_code)
+            set_language("en")
             try:
                 from src.features import i18n as features_i18n
-                features_i18n.set_locale(lang_code)
+                features_i18n.set_locale("en")
             except Exception:
                 pass
 
+        current["language"] = "en"
         self._save_app_settings(current)
-        lang = str(current.get("language") or "vi")
+        lang = "en"
         translations, ref_shortcuts = self._build_i18n_payload(lang)
         return _ok({
             **current,

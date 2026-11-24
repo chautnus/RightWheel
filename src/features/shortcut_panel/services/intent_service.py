@@ -28,7 +28,7 @@ class IntentItem:
     keywords: list[str]
     description: str = ""
 
-    def get_title(self, lang: str = "vi") -> str:
+    def get_title(self, lang: str = "en") -> str:
         """Return localized title based on language code (defaults to Vietnamese)."""
         if lang == "en":
             return self.title_en or self.title_vi

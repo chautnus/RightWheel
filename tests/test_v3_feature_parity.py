@@ -77,10 +77,12 @@ def test_webview_bridge_api(tmp_path, monkeypatch):
     assert "profiles" in data
     assert "license" in data
 
-    # Test save settings
+    # Test save settings (temporarily locked to English-only)
     patch_res = api.save_general_settings({"ui_engine": "webview", "language": "vi"})
     assert patch_res["ok"] is True
     assert patch_res["data"]["ui_engine"] == "webview"
+    assert patch_res["data"]["language"] == "en"
+    assert patch_res["data"]["available_languages"] == ["en"]
 
     # Test UI dist index path
     idx = resolve_ui_index_path()
@@ -428,16 +430,43 @@ def test_bridge_api_search_intents():
     assert len(res_vi["data"]) > 0
     assert any("Chụp" in it["title"] or "win+shift+s" in it["keys"] for it in res_vi["data"])
 
-    # English query
+    # English query (default)
     res_en = api.search_intents("task manager", lang="en")
     assert res_en["ok"] is True
     assert len(res_en["data"]) > 0
     assert any("Task Manager" in it["title"] for it in res_en["data"])
 
-    # Empty query should return default list
+    # Empty query should return default list in English
     res_empty = api.search_intents("")
     assert res_empty["ok"] is True
     assert len(res_empty["data"]) > 0
+
+
+def test_legacy_vi_config_migrates_default_descriptions_to_en(tmp_path, monkeypatch):
+    """Verify legacy Vietnamese default descriptions normalize to English while preserving custom ones."""
+    import json
+    monkeypatch.setattr(config_service, "get_config_root", lambda: tmp_path)
+    legacy_doc = {
+        "version": 4,
+        "profiles": [
+            {
+                "id": "global",
+                "name": "Global",
+                "is_default": True,
+                "commands": [],
+                "gestures": [
+                    {"kind": "draw", "shape": "D_R", "keys": "ctrl+w", "description": "Đóng tab trình duyệt hiện tại (Close Tab)"},
+                    {"kind": "draw", "shape": "U", "keys": "ctrl+1", "description": "My Custom User Gesture"},
+                ],
+            }
+        ],
+    }
+    (tmp_path / "profiles.json").write_text(json.dumps(legacy_doc, ensure_ascii=False), encoding="utf-8")
+
+    loaded = config_service.load_unified_profiles()
+    gestures = loaded["profiles"][0]["gestures"]
+    assert gestures[0]["description"] == "Close the current browser tab (Close Tab)"
+    assert gestures[1]["description"] == "My Custom User Gesture"
 
 
 def test_gesture_guide_overlay_and_mapper_hold_events():
@@ -459,13 +488,18 @@ def test_gesture_guide_overlay_and_mapper_hold_events():
     mapper.on_sector_change = lambda p: events["paths"].append(list(p))
     mapper.on_gesture_end = lambda: events.update({"end": True})
 
-    # 1. RMB Down should trigger on_hold_start immediately
+    # 1. RMB Down should NOT fire on_hold_start immediately — it's a press-and-hold
+    # trigger (delayed), not a quick-tap one, so an ordinary right-click (context
+    # menu) never shows the guide overlay.
     mapper.handle(MouseEvent(kind="right_down", x=100, y=100))
-    assert events["hold"] is True
+    assert events["hold"] is False
 
-    # 2. Movement exceeding threshold (18px) to the right -> commits RIGHT
+    # 2. Movement exceeding threshold (18px) to the right is itself proof of real
+    # gesture intent, so it fires on_hold_start immediately (bypassing the rest of
+    # the delay) and commits RIGHT.
     for x in range(110, 200, 10):
         mapper.handle(MouseEvent(kind="move", x=x, y=100))
+    assert events["hold"] is True
     assert len(events["paths"]) > 0
     assert events["paths"][-1] == ["RIGHT"]
 

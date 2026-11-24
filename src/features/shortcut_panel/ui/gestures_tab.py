@@ -54,11 +54,11 @@ class GesturesTab(tk.Frame):
             bg=_BG, fg=theme.FG_PRIMARY, font=(font, 11, "bold")
         ).pack(side="left")
         tk.Label(
-            hdr, text="• Giữ chuột phải + Kéo theo hướng",
+            hdr, text="• Hold Right Mouse + Drag in direction",
             bg=_BG, fg=theme.FG_MUTED, font=(font, 9)
         ).pack(side="left", padx=(8, 0))
 
-        _btn(hdr, "+ Thêm Cử chỉ", self._add, bg=_ACC).pack(side="right", padx=2)
+        _btn(hdr, "+ Add Gesture", self._add, bg=_ACC).pack(side="right", padx=2)
 
         # ── 2. Gesture List Frame ────────────────────────────────────────────
         list_wrap = tk.Frame(self, bg=theme.BORDER_SUBTLE, padx=1, pady=1)
@@ -83,15 +83,15 @@ class GesturesTab(tk.Frame):
         act_box.pack(fill="x", padx=4, pady=(6, 8))
 
         tk.Label(
-            act_box, text="Nhấp đúp để đổi phím • Chọn để bật/tắt hoặc xóa",
+            act_box, text="Double-click to change shortcut • Select to toggle or delete",
             bg=_BG, fg=theme.FG_MUTED, font=(font, 9)
         ).pack(side="left")
 
         btn_row = tk.Frame(act_box, bg=_BG)
         btn_row.pack(side="right")
-        _btn(btn_row, "Sửa phím", self._edit, bg=_BTN_NEUTRAL).pack(side="left", padx=2)
-        _btn(btn_row, "Bật / Tắt", self._toggle, bg=_BTN_NEUTRAL).pack(side="left", padx=2)
-        _btn(btn_row, "Xoá", self._delete, bg=_RED).pack(side="left", padx=2)
+        _btn(btn_row, "Edit Key", self._edit, bg=_BTN_NEUTRAL).pack(side="left", padx=2)
+        _btn(btn_row, "Toggle", self._toggle, bg=_BTN_NEUTRAL).pack(side="left", padx=2)
+        _btn(btn_row, "Delete", self._delete, bg=_RED).pack(side="left", padx=2)
 
         # ── 4. Interactive Gesture Playground ────────────────────────────────
         pg_wrap = tk.Frame(self, bg=theme.BORDER_SUBTLE, padx=1, pady=1)
@@ -101,7 +101,7 @@ class GesturesTab(tk.Frame):
         pg.pack(fill="x")
 
         tk.Label(
-            pg, text="Bảng vẽ thử (Giữ chuột phải vẽ vào đây để kiểm tra nhận diện):",
+            pg, text="Gesture Playground (Hold Right-Click and draw here to test recognition):",
             bg=theme.BG_SIDEBAR, fg=theme.FG_MUTED, font=(font, 9)
         ).pack(anchor="w", padx=8, pady=(4, 2))
 
@@ -111,7 +111,7 @@ class GesturesTab(tk.Frame):
         self._canvas.pack(fill="x", padx=6, pady=(0, 4))
 
         self._cv_hint = self._canvas.create_text(
-            180, 32, text="Giữ chuột phải (RMB) và kéo rê...",
+            180, 32, text="Hold Right Mouse Button (RMB) and drag...",
             fill=theme.FG_MUTED, font=(font, 9, "italic")
         )
 
@@ -128,7 +128,7 @@ class GesturesTab(tk.Frame):
         self._test_pts = [(event.x, event.y)]
         self._test_recognizer.reset()
         self._test_recognizer.feed_point(event.x, event.y)
-        self._canvas.itemconfigure(self._cv_hint, text="Đang nhận diện...")
+        self._canvas.itemconfigure(self._cv_hint, text="Recognizing...")
 
     def _on_pg_move(self, event: tk.Event) -> None:
         if not self._test_pts:
@@ -147,8 +147,8 @@ class GesturesTab(tk.Frame):
         matched = self._test_recognizer.finish(presets)
 
         dirs = self._test_recognizer._directions
-        dir_str = " → ".join(_ARROWS.get(d, d) for d in dirs) if dirs else "Không có hướng"
-        txt, clr = (f"✓ Khớp: {dir_str} → [ {matched.get('keys','').upper()} ]", _GRN) if matched else (f"✗ Cử chỉ: {dir_str} (Chưa gán)", theme.FG_MUTED)
+        dir_str = " → ".join(_ARROWS.get(d, d) for d in dirs) if dirs else "No direction"
+        txt, clr = (f"✓ Matched: {dir_str} → [ {matched.get('keys','').upper()} ]", _GRN) if matched else (f"✗ Gesture: {dir_str} (Unassigned)", theme.FG_MUTED)
 
         self._canvas.itemconfigure(self._cv_hint, text=txt, fill=clr)
         self.after(3000, lambda: self._canvas.delete("trail"))
@@ -163,9 +163,9 @@ class GesturesTab(tk.Frame):
             arrow_badge = _format_directions(dirs)
             keys = g.get("keys", "").upper()
             enabled = g.get("enabled", True)
-            status = "● Bật" if enabled else "○ Tắt"
+            status = "● Enabled" if enabled else "○ Disabled"
 
-            line = f"  {arrow_badge:<12}  {','.join(dirs):<8}  →  Phím: {keys:<14}  {status}"
+            line = f"  {arrow_badge:<12}  {','.join(dirs):<8}  →  Key: {keys:<14}  {status}"
             self._lb.insert("end", line)
             self._lb.itemconfigure(i, foreground=theme.FG_PRIMARY if enabled else theme.FG_MUTED)
 
@@ -222,9 +222,9 @@ class GesturesTab(tk.Frame):
         try:
             parent_win = self.winfo_toplevel()
             dirs_str = _AskDialog.ask(
-                parent_win, "Thêm cử chỉ",
-                "Các hướng di chuyển (cách nhau bởi dấu phẩy):",
-                init="D,R", hint="Hướng: U (Lên), D (Xuống), L (Trái), R (Phải)",
+                parent_win, "Add Gesture",
+                "Stroke directions (comma-separated):",
+                init="D,R", hint="Directions: U (Up), D (Down), L (Left), R (Right)",
             )
             if not dirs_str: return
             directions = [d.strip().upper() for d in dirs_str.split(",") if d.strip()]

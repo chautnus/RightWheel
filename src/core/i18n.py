@@ -18,13 +18,7 @@ from typing import Any
 from src.core.app_paths import get_config_root
 
 SUPPORTED_LANGUAGES = [
-    ("vi", "Tiếng Việt"),
     ("en", "English"),
-    ("fr", "Français"),
-    ("es", "Español"),
-    ("it", "Italiano"),
-    ("pt", "Português"),
-    ("id", "Bahasa Indonesia"),
 ]
 
 # Translation dictionaries for 7 languages
@@ -2201,7 +2195,7 @@ def _merge_extra_locales() -> None:
 
 _merge_extra_locales()
 
-_CURRENT_LANG: str = "vi"
+_CURRENT_LANG: str = "en"
 
 
 def _get_settings_file() -> Path:
@@ -2209,39 +2203,28 @@ def _get_settings_file() -> Path:
 
 
 def load_language_preference() -> str:
-    """Load saved language from %APPDATA%\\RightWheel\\app_settings.json."""
+    """Temporarily enforce English-only runtime while preserving dictionaries."""
     global _CURRENT_LANG
-    try:
-        p = _get_settings_file()
-        if p.exists():
-            with open(p, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                lang = data.get("language")
-                if lang in _TRANSLATIONS:
-                    _CURRENT_LANG = lang
-                    return _CURRENT_LANG
-    except Exception:
-        pass
-    _CURRENT_LANG = "vi"
+    _CURRENT_LANG = "en"
     return _CURRENT_LANG
 
 
 def set_language(lang_code: str) -> None:
-    """Set and persist language preference."""
+    """Temporarily lock language preference to English."""
     global _CURRENT_LANG
-    if lang_code in _TRANSLATIONS:
-        _CURRENT_LANG = lang_code
-        try:
-            p = _get_settings_file()
-            data: dict[str, Any] = {}
-            if p.exists():
-                with open(p, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            data["language"] = lang_code
+    _CURRENT_LANG = "en"
+    try:
+        p = _get_settings_file()
+        data: dict[str, Any] = {}
+        if p.exists():
+            with open(p, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        if data.get("language") != "en":
+            data["language"] = "en"
             with open(p, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
-        except Exception:
-            pass
+    except Exception:
+        pass
 
 
 def get_language() -> str:

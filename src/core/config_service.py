@@ -55,51 +55,72 @@ DEFAULT_COMMANDS: list[dict[str, Any]] = [
 ]
 
 GESTURE_DESCRIPTIONS: dict[str, str] = {
-    # Nhóm U: Lên
-    "U": "Cuộn lên đầu trang / Mở tab mới",
-    "U_D": "Tải lại trang (Refresh / F5)",
-    "U_R": "Mở tab trình duyệt mới (New Tab)",
-    "U_L": "Khôi phục tab vừa đóng (Reopen Closed Tab)",
-    # Nhóm D: Xuống
-    "D": "Cuộn xuống cuối trang / Thu nhỏ cửa sổ",
-    "D_U": "Mở cửa sổ mới (New Window)",
-    "D_R": "Đóng tab trình duyệt hiện tại (Close Tab)",
-    "D_L": "Mở liên kết trong tab mới ngầm",
-    # Nhóm L: Trái
-    "L": "Quay lại trang trước (Back)",
-    "L_R": "Chuyển sang tab bên phải",
-    "L_U": "Chuyển sang tab bên trái",
-    "L_D": "Đóng cửa sổ hiện tại (Alt+F4)",
-    # Nhóm R: Phải
-    "R": "Đi tới trang kế tiếp (Forward)",
-    "R_L": "Chuyển sang tab trước đó",
-    "R_U": "Phóng to toàn màn hình (F11)",
-    "R_D": "Thu nhỏ cửa sổ xuống Taskbar",
+    # Group U: Up
+    "U": "Scroll to top / Open new tab",
+    "U_D": "Refresh page (F5)",
+    "U_R": "Open a new browser tab (New Tab)",
+    "U_L": "Reopen last closed tab (Reopen Closed Tab)",
+    # Group D: Down
+    "D": "Scroll to bottom / Minimize window",
+    "D_U": "Open a new window (New Window)",
+    "D_R": "Close the current browser tab (Close Tab)",
+    "D_L": "Open link in a new background tab",
+    # Group L: Left
+    "L": "Go back to previous page or folder (Back)",
+    "L_R": "Switch to next tab (Right)",
+    "L_U": "Switch to previous tab (Left)",
+    "L_D": "Close the current application window (Alt+F4)",
+    # Group R: Right
+    "R": "Go forward to next page (Forward)",
+    "R_L": "Switch to previous tab",
+    "R_U": "Toggle fullscreen mode (F11)",
+    "R_D": "Minimize window to Taskbar",
     # Wheel & Action targets
-    "COMMAND_PALETTE": "Mở Bảng lệnh phím tắt nhanh tại con trỏ chuột",
-    "ALT_TAB": "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)",
-    "TASK_VIEW_NAV": "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)",
+    "COMMAND_PALETTE": "Open the Quick Command Palette at cursor",
+    "ALT_TAB": "Switch between open applications (Alt+Tab)",
+    "TASK_VIEW_NAV": "Switch between open applications (Alt+Tab)",
+}
+
+_LEGACY_VI_DESCRIPTIONS: dict[str, str] = {
+    "Cuộn lên đầu trang / Mở tab mới": GESTURE_DESCRIPTIONS["U"],
+    "Tải lại trang (Refresh / F5)": GESTURE_DESCRIPTIONS["U_D"],
+    "Mở tab trình duyệt mới (New Tab)": GESTURE_DESCRIPTIONS["U_R"],
+    "Khôi phục tab vừa đóng (Reopen Closed Tab)": GESTURE_DESCRIPTIONS["U_L"],
+    "Cuộn xuống cuối trang / Thu nhỏ cửa sổ": GESTURE_DESCRIPTIONS["D"],
+    "Mở cửa sổ mới (New Window)": GESTURE_DESCRIPTIONS["D_U"],
+    "Đóng tab trình duyệt hiện tại (Close Tab)": GESTURE_DESCRIPTIONS["D_R"],
+    "Mở liên kết trong tab mới ngầm": GESTURE_DESCRIPTIONS["D_L"],
+    "Quay lại trang trước (Back)": GESTURE_DESCRIPTIONS["L"],
+    "Chuyển sang tab bên phải": GESTURE_DESCRIPTIONS["L_R"],
+    "Chuyển sang tab bên trái": GESTURE_DESCRIPTIONS["L_U"],
+    "Đóng cửa sổ hiện tại (Alt+F4)": GESTURE_DESCRIPTIONS["L_D"],
+    "Đi tới trang kế tiếp (Forward)": GESTURE_DESCRIPTIONS["R"],
+    "Chuyển sang tab trước đó": GESTURE_DESCRIPTIONS["R_L"],
+    "Phóng to toàn màn hình (F11)": GESTURE_DESCRIPTIONS["R_U"],
+    "Thu nhỏ cửa sổ xuống Taskbar": GESTURE_DESCRIPTIONS["R_D"],
+    "Mở Bảng lệnh phím tắt nhanh tại con trỏ chuột": GESTURE_DESCRIPTIONS["COMMAND_PALETTE"],
+    "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)": GESTURE_DESCRIPTIONS["ALT_TAB"],
 }
 
 _DRAW_GESTURE_ORDER = [
-    # Nhóm U: Lên, Lên Xuống, Lên Phải, Lên Trái
+    # Group U: Up, Up-Down, Up-Right, Up-Left
     "U", "U_D", "U_R", "U_L",
-    # Nhóm D: Xuống, Xuống Lên, Xuống Phải, Xuống Trái
+    # Group D: Down, Down-Up, Down-Right, Down-Left
     "D", "D_U", "D_R", "D_L",
-    # Nhóm L: Trái, Trái Phải, Trái Lên, Trái Xuống
+    # Group L: Left, Left-Right, Left-Up, Left-Down
     "L", "L_R", "L_U", "L_D",
-    # Nhóm R: Phải, Phải Trái, Phải Lên, Phải Xuống
+    # Group R: Right, Right-Left, Right-Up, Right-Down
     "R", "R_L", "R_U", "R_D",
 ]
 _DRAW_GESTURE_INDEX = {code: i for i, code in enumerate(_DRAW_GESTURE_ORDER)}
 
 DEFAULT_MOUSE_GESTURES: list[dict[str, Any]] = [
-    {"kind": "draw", "directions": ["D", "R"], "shape": "D_R", "keys": "ctrl+w", "type": "KEY_COMBO", "target": "ctrl+w", "enabled": True, "label": "Close Tab", "description": "Đóng tab trình duyệt hiện tại (Close Tab)"},
-    {"kind": "draw", "directions": ["U", "R"], "shape": "U_R", "keys": "ctrl+t", "type": "KEY_COMBO", "target": "ctrl+t", "enabled": True, "label": "New Tab", "description": "Mở tab trình duyệt mới (New Tab)"},
-    {"kind": "draw", "directions": ["L"], "shape": "L", "keys": "alt+left", "type": "KEY_COMBO", "target": "alt+left", "enabled": True, "label": "Back", "description": "Quay lại trang trước (Back)"},
-    {"kind": "draw", "directions": ["R"], "shape": "R", "keys": "alt+right", "type": "KEY_COMBO", "target": "alt+right", "enabled": True, "label": "Forward", "description": "Đi tới trang kế tiếp (Forward)"},
-    {"kind": "wheel", "direction": "UP", "type": "COMMAND_PALETTE", "target": "COMMAND_PALETTE", "enabled": True, "label": "Show Shortcut Panel", "description": "Mở Bảng lệnh phím tắt nhanh tại con trỏ chuột"},
-    {"kind": "wheel", "direction": "DOWN", "type": "TASK_VIEW_NAV", "target": "ALT_TAB", "enabled": True, "label": "Alt+Tab Switcher", "description": "Chuyển đổi qua lại giữa các ứng dụng đang mở (Alt+Tab)"},
+    {"kind": "draw", "directions": ["D", "R"], "shape": "D_R", "keys": "ctrl+w", "type": "KEY_COMBO", "target": "ctrl+w", "enabled": True, "label": "Close Tab", "description": "Close the current browser tab (Close Tab)"},
+    {"kind": "draw", "directions": ["U", "R"], "shape": "U_R", "keys": "ctrl+t", "type": "KEY_COMBO", "target": "ctrl+t", "enabled": True, "label": "New Tab", "description": "Open a new browser tab (New Tab)"},
+    {"kind": "draw", "directions": ["L"], "shape": "L", "keys": "alt+left", "type": "KEY_COMBO", "target": "alt+left", "enabled": True, "label": "Back", "description": "Go back to previous page or folder (Back)"},
+    {"kind": "draw", "directions": ["R"], "shape": "R", "keys": "alt+right", "type": "KEY_COMBO", "target": "alt+right", "enabled": True, "label": "Forward", "description": "Go forward to next page (Forward)"},
+    {"kind": "wheel", "direction": "UP", "type": "COMMAND_PALETTE", "target": "COMMAND_PALETTE", "enabled": True, "label": "Show Shortcut Panel", "description": "Open the Quick Command Palette at cursor"},
+    {"kind": "wheel", "direction": "DOWN", "type": "TASK_VIEW_NAV", "target": "ALT_TAB", "enabled": True, "label": "Alt+Tab Switcher", "description": "Switch between open applications (Alt+Tab)"},
 ]
 
 DEFAULT_UNIFIED_CONFIG: dict[str, Any] = {
@@ -202,10 +223,13 @@ def load_unified_profiles() -> dict[str, Any]:
             with open(profiles_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             if isinstance(data, dict) and data.get("version") == 4 and "profiles" in data:
-                # Ensure default gestures have action descriptions populated
+                # Ensure default gestures have English action descriptions populated
                 for prof in data.get("profiles", []):
                     for g in prof.get("gestures", []):
-                        if not g.get("description"):
+                        cur_desc = g.get("description")
+                        if cur_desc in _LEGACY_VI_DESCRIPTIONS:
+                            g["description"] = _LEGACY_VI_DESCRIPTIONS[cur_desc]
+                        elif not cur_desc:
                             shape = str(g.get("shape") or "".join(g.get("directions", [])) or g.get("direction", "")).upper()
                             target = str(g.get("target") or g.get("type", "")).upper()
                             desc = GESTURE_DESCRIPTIONS.get(shape) or GESTURE_DESCRIPTIONS.get(target)
@@ -288,7 +312,7 @@ def load_app_settings() -> dict[str, Any]:
     """Load app_settings.json from %APPDATA%\\RightWheel."""
     path = get_config_root() / "app_settings.json"
     defaults = {
-        "language": "vi",
+        "language": "en",
         "autostart": True,
         "ui_engine": "webview",
         "show_welcome": True,
@@ -302,6 +326,7 @@ def load_app_settings() -> dict[str, Any]:
                 defaults.update(data)
         except Exception:
             pass
+    defaults["language"] = "en"
     return defaults
 
 

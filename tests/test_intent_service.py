@@ -75,7 +75,7 @@ def test_reference_tab_add_selected_headless(monkeypatch, tmp_path):
         tab._add_selected()
         loaded = config_service.load().get("default", [])
         if "rmb" in vals[1].lower():
-            assert "cử chỉ chuột" in tab._feedback_lbl.cget("text").lower()
+            assert "mouse gesture" in tab._feedback_lbl.cget("text").lower()
         else:
             assert len(loaded) == 1
             assert loaded[0]["label"] == vals[2]

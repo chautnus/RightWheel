@@ -52,15 +52,13 @@ def ui_font(base: str = "Segoe UI") -> str:
 def available() -> list[tuple[str, str]]:
     """Return [(code, native_name), ...] for the language selector."""
     return [
-        ("en", "English"), ("fr", "Français"), ("pt", "Português"),
-        ("es", "Español"), ("it", "Italiano"), ("vi", "Tiếng Việt"),
-        ("id", "Indonesia"), ("th", "ภาษาไทย"), ("zh", "中文"),
+        ("en", "English"),
     ]
 
 
 def set_locale(code: str) -> None:
     global _current, _code
-    _code = code if code in _SUPPORTED else "en"
+    _code = "en"
     strings = _load(_code)
     _current = strings
     _save_pref(_code)
@@ -73,10 +71,8 @@ def set_locale(code: str) -> None:
 
 
 def init() -> None:
-    """Load saved preference, or auto-detect from system locale."""
-    saved = _read_pref()
-    code  = saved or _detect()
-    set_locale(code)
+    """Temporarily enforce English-only locale."""
+    set_locale("en")
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────

@@ -112,7 +112,7 @@ class ReferenceTab(tk.Frame):
 
         self._feedback_lbl = tk.Label(
             bot_bar,
-            text="Nhấp đúp chuột hoặc chọn mục rồi bấm nút để thêm vào phím tắt của bạn:",
+            text="Double-click or select an item and click the button to add to your shortcuts:",
             bg=_BG,
             fg=theme.FG_MUTED,
             font=(font_name, 9),
@@ -121,7 +121,7 @@ class ReferenceTab(tk.Frame):
 
         add_btn = tk.Button(
             bot_bar,
-            text="+ Thêm vào Phím tắt của tôi",
+            text="+ Add to My Shortcuts",
             command=self._add_selected,
             bg=_ACC,
             fg="white",
@@ -165,7 +165,7 @@ class ReferenceTab(tk.Frame):
         # Ignore mouse combos that aren't keyboard hotkeys
         if "rmb" in sc.lower():
             self._feedback_lbl.configure(
-                text=f"ℹ '{sc}' là cử chỉ chuột tích hợp, không phải phím tắt bàn phím.",
+                text=f"ℹ '{sc}' is a built-in mouse gesture, not a keyboard shortcut.",
                 fg=theme.COLOR_WARNING,
             )
             return
@@ -179,13 +179,13 @@ class ReferenceTab(tk.Frame):
             self._logic.reload()
 
         self._feedback_lbl.configure(
-            text=f"✓ Đã thêm '{desc}' ({sc}) vào danh sách phím tắt!",
+            text=f"✓ Added '{desc}' ({sc}) to your shortcuts list!",
             fg=_GRN,
         )
         self.after(3500, self._reset_feedback)
 
     def _reset_feedback(self) -> None:
         self._feedback_lbl.configure(
-            text="Nhấp đúp chuột hoặc chọn mục rồi bấm nút để thêm vào phím tắt của bạn:",
+            text="Double-click or select an item and click the button to add to your shortcuts:",
             fg=theme.FG_MUTED,
         )

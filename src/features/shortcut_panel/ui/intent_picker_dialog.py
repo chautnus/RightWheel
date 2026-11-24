@@ -29,7 +29,7 @@ class IntentPickerDialog(tk.Toplevel):
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent)
         self.withdraw()
-        self.title("Trợ lý Phím tắt theo Mục đích")
+        self.title("Shortcut Assistant by Purpose")
         self.resizable(False, False)
         self.configure(bg=_BG)
         top_parent = parent.winfo_toplevel() if hasattr(parent, "winfo_toplevel") else parent
@@ -73,11 +73,11 @@ class IntentPickerDialog(tk.Toplevel):
 
         # Header
         tk.Label(
-            p, text="Chọn phím tắt theo mục đích bạn muốn thực hiện",
+            p, text="Choose a shortcut by the action you want to perform",
             bg=_BG, fg=_FG, font=(font_name, 11, "bold"),
         ).pack(anchor="w")
         tk.Label(
-            p, text="Gõ mục đích (chụp màn hình, đổi tab, task manager...) hoặc chọn danh mục:",
+            p, text="Type a goal (screenshot, switch tab, task manager...) or pick a category:",
             bg=_BG, fg=_MUTED, font=(font_name, 9),
         ).pack(anchor="w", pady=(2, 8))
 
@@ -97,10 +97,10 @@ class IntentPickerDialog(tk.Toplevel):
         # Category Filter Pills
         cat_frame = tk.Frame(p, bg=_BG)
         cat_frame.pack(fill="x", pady=(0, 8))
-        tk.Label(cat_frame, text="Nhóm:", bg=_BG, fg=_MUTED, font=(font_name, 8)).pack(side="left", padx=(0, 6))
+        tk.Label(cat_frame, text="Group:", bg=_BG, fg=_MUTED, font=(font_name, 8)).pack(side="left", padx=(0, 6))
 
-        self._cat_var = tk.StringVar(value="Tất cả")
-        cats = ["Tất cả"] + self.service.get_all_categories()
+        self._cat_var = tk.StringVar(value="All")
+        cats = ["All"] + self.service.get_all_categories()
         for cat in cats:
             rb = tk.Radiobutton(
                 cat_frame, text=cat, variable=self._cat_var, value=cat,
@@ -141,13 +141,13 @@ class IntentPickerDialog(tk.Toplevel):
         btn_box.pack(fill="x")
 
         tk.Button(
-            btn_box, text="Chọn phím này", command=self._select_current,
+            btn_box, text="Use This Shortcut", command=self._select_current,
             bg=_ACC, fg="white", font=(font_name, 9, "bold"),
             relief="flat", cursor="hand2", padx=12, pady=4,
         ).pack(side="right", padx=(6, 0))
 
         tk.Button(
-            btn_box, text="Nhập thủ công...", command=self.destroy,
+            btn_box, text="Enter Manually...", command=self.destroy,
             bg=theme.BG_CARD_HOVER, fg=_FG, font=(font_name, 9),
             relief="flat", cursor="hand2", padx=10, pady=4,
         ).pack(side="right")
@@ -162,7 +162,7 @@ class IntentPickerDialog(tk.Toplevel):
     def _on_search(self) -> None:
         q = self._search_var.get().strip()
         cat = self._cat_var.get()
-        if cat == "Tất cả":
+        if cat == "All":
             items = self.service.search(q, limit=25)
         else:
             cat_items = self.service.get_by_category(cat)
@@ -175,19 +175,19 @@ class IntentPickerDialog(tk.Toplevel):
         self._items = items
         self._lb.delete(0, "end")
         for it in items:
-            self._lb.insert("end", f"[{it.category}]  {it.title_vi}  →  {it.keys.upper()}")
+            self._lb.insert("end", f"[{it.category}]  {it.title_en}  →  {it.keys.upper()}")
 
         if items:
             self._lb.selection_set(0)
             self._on_preview_select()
         else:
-            self._desc_label.configure(text="Không tìm thấy phím tắt phù hợp. Bạn có thể chọn 'Nhập thủ công'.")
+            self._desc_label.configure(text="No matching shortcuts found. You can choose 'Enter Manually'.")
 
     def _on_preview_select(self, event: tk.Event | None = None) -> None:
         sel = self._lb.curselection()
         if sel and sel[0] < len(self._items):
             it = self._items[sel[0]]
-            self._desc_label.configure(text=f"💡 {it.description} (Phím: {it.keys.upper()})")
+            self._desc_label.configure(text=f"💡 {it.title_en} (Key: {it.keys.upper()})")
 
     def _select_current(self) -> None:
         sel = self._lb.curselection()

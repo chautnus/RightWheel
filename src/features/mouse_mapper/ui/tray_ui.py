@@ -61,8 +61,8 @@ class TrayUI:
             items.append(pystray.Menu.SEPARATOR)
 
         if not is_admin():
-            items.append(pystray.MenuItem(lambda item: "🛡️ " + t("tray.run_as_admin", "Chạy với quyền Administrator"), self._run_as_admin))
-        items.append(pystray.MenuItem(lambda item: "📋 " + t("tray.copy_diagnostics", "Sao chép chẩn đoán chuột"), self._copy_diagnostics))
+            items.append(pystray.MenuItem(lambda item: "🛡️ " + t("tray.run_as_admin", "Run as Administrator"), self._run_as_admin))
+        items.append(pystray.MenuItem(lambda item: "📋 " + t("tray.copy_diagnostics", "Copy Mouse Diagnostics"), self._copy_diagnostics))
         items.append(pystray.Menu.SEPARATOR)
 
         items.append(pystray.MenuItem(lambda item: t("tray.restart"), self._restart))

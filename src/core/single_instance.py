@@ -36,8 +36,8 @@ class SingleInstanceGuard:
                     user32 = ctypes.windll.user32
                     user32.MessageBoxW(
                         0,
-                        _t("msg_already_running", "RightWheel đã đang chạy trên máy tính (kiểm tra khay hệ thống System Tray)."),
-                        _t("title_already_running", "RightWheel — Đang chạy"),
+                        _t("msg_already_running", "RightWheel is already running on this computer (check the System Tray)."),
+                        _t("title_already_running", "RightWheel — Running"),
                         0x40,  # MB_OK | MB_ICONINFORMATION
                     )
                 except Exception:
