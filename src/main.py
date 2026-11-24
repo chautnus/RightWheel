@@ -106,20 +106,28 @@ def main() -> None:
     def _guide_preset_text(preset: dict) -> str:
         if preset.get("description"):
             return str(preset["description"])
-        if preset.get("label"):
-            return str(preset["label"])
+        lbl = str(preset.get("label") or "").strip()
+        shape = str(preset.get("shape") or "").strip()
+        is_generic_shape_label = (
+            not lbl
+            or lbl == shape
+            or lbl[0] in ("▲", "▼", "◀", "▶", "↕", "↱", "↰", "↳", "↵", "↔", "⤴", "⤵")
+        )
         keys = str(preset.get("keys") or preset.get("target") or "")
+        if not is_generic_shape_label:
+            return lbl
         if keys:
             return _guide_keys_to_text(keys)
-        return i18n.t("guide_unassigned", "Unassigned")
+        return lbl or i18n.t("guide_unassigned", "Unassigned")
 
     def _guide_labels_for_path(path: list[str]) -> dict[str, str]:
         presets = _guide_active_presets()
         result: dict[str, str] = {}
         for direction in _ALL_GUIDE_DIRECTIONS:
-            if path and direction == path[-1]:
+            letter = _dir_to_letter[direction]
+            if path and letter == path[-1]:
                 continue
-            candidate_path = path + [_dir_to_letter[direction]]
+            candidate_path = path + [letter]
             best: dict | None = None
             best_len = 0
             for preset in presets:

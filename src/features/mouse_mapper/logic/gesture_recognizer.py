@@ -234,7 +234,13 @@ class GestureRecognizer:
         if len(dirs_to_norm) >= 2 and len(steps) >= 2 and steps[0] == 1 and steps[1] >= 2:
             dirs_to_norm.pop(0)
             steps.pop(0)
-        if len(dirs_to_norm) >= 2 and len(steps) >= 2 and steps[-1] == 1 and steps[-2] >= 2:
+        if (
+            len(dirs_to_norm) >= 2
+            and len(steps) >= 2
+            and steps[-1] == 1
+            and steps[-2] >= 2
+            and _are_adjacent_45(dirs_to_norm[-2], dirs_to_norm[-1])
+        ):
             dirs_to_norm.pop(-1)
             steps.pop(-1)
 
@@ -260,10 +266,11 @@ class GestureRecognizer:
         disp_ratio = (tot_dist / path_len) if path_len > 0 else 0.0
 
         single_stroke_dir: str | None = None
-        # Geometrically, in an orthogonal 90° corner (L-shape), the ratio of displacement
-        # to path length is at most sqrt(2)/2 ≈ 0.707. Therefore, any path with ratio >= 0.70
-        # is mathematically proven to be a single straight stroke with minor tremor.
-        if tot_dist >= self.threshold and (
+        # Only compute single-stroke fallback if the normalized path itself has no >=90° turn.
+        # Otherwise an asymmetric L-shape (e.g. Down 120px + Right 50px, disp_ratio=0.76) would
+        # falsely trigger a single-stroke preset like 'D' before 'D_R' is matched.
+        is_single = len(current_dirs) <= 1 or _is_effectively_single_stroke(current_dirs)
+        if tot_dist >= self.threshold and is_single and (
             len(current_dirs) <= 1
             or _is_effectively_single_stroke(current_dirs)
             or disp_ratio >= 0.70
@@ -273,7 +280,8 @@ class GestureRecognizer:
             else:
                 single_stroke_dir = "R" if tot_dx > 0 else "L"
 
-        # Match presets
+        # Normalize presets once for two-pass matching
+        parsed_presets: list[tuple[dict[str, Any], list[str]]] = []
         for preset in presets:
             if not isinstance(preset, dict) or not preset.get("enabled", True):
                 continue
@@ -292,16 +300,11 @@ class GestureRecognizer:
             if not preset_dirs:
                 continue
 
-            norm_preset = normalize_directions(preset_dirs)
+            parsed_presets.append((preset, normalize_directions(preset_dirs)))
 
-            # Check 1: exact normalized sector match
-            matched = (norm_preset == current_dirs)
-
-            # Check 2: single stroke dominant displacement fallback
-            if not matched and single_stroke_dir and norm_preset == [single_stroke_dir]:
-                matched = True
-
-            if matched:
+        # Pass 1: exact normalized sector match across ALL presets (prevents 'D' from stealing 'D_R')
+        for preset, norm_preset in parsed_presets:
+            if norm_preset == current_dirs:
                 keys = str(preset.get("keys") or preset.get("target") or "")
                 return {
                     "ok": True,
@@ -313,6 +316,22 @@ class GestureRecognizer:
                         "raw_directions": list(self._directions),
                     },
                 }
+
+        # Pass 2: single-stroke dominant displacement fallback (only when no exact match found)
+        if single_stroke_dir:
+            for preset, norm_preset in parsed_presets:
+                if norm_preset == [single_stroke_dir]:
+                    keys = str(preset.get("keys") or preset.get("target") or "")
+                    return {
+                        "ok": True,
+                        "data": {
+                            "matched": True,
+                            "keys": keys,
+                            "preset": preset,
+                            "directions": norm_preset,
+                            "raw_directions": list(self._directions),
+                        },
+                    }
 
         return {
             "ok": True,

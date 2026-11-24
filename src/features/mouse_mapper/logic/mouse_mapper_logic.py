@@ -98,7 +98,7 @@ class MouseMapperLogic:
 
     def _fire_hold_start(self) -> None:
         with self._lock:
-            if self._hold_fired or self._state == MapperState.IDLE:
+            if self._hold_fired or self._state not in (MapperState.RIGHT_HELD, MapperState.GESTURE):
                 return
             self._hold_fired = True
         if self.on_hold_start:
@@ -147,6 +147,14 @@ class MouseMapperLogic:
     def _on_scroll(self, direction: ScrollDirection | None) -> bool:
         if self._state not in (MapperState.RIGHT_HELD, MapperState.SCROLLING):
             return False
+        self._cancel_hold_timer()
+        if self._hold_fired:
+            self._hold_fired = False
+            if self.on_gesture_end:
+                try:
+                    self.on_gesture_end()
+                except Exception:
+                    pass
         self._state = MapperState.SCROLLING
         panel   = getattr(self, "panel", None)
         forward = (direction == ScrollDirection.DOWN)

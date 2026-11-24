@@ -512,6 +512,67 @@ def test_gesture_guide_overlay_and_mapper_hold_events():
     assert overlay._active is False
 
 
+def test_gesture_asymmetric_d_r_not_hijacked_by_d():
+    """Verify D (prtsc) listed before D_R (ctrl+w) never steals asymmetric or short-turn D_R."""
+    from src.features.mouse_mapper.logic.gesture_recognizer import GestureRecognizer
+
+    presets = [
+        {"shape": "D", "keys": "prtsc", "enabled": True},
+        {"shape": "D_R", "keys": "ctrl+w", "enabled": True},
+    ]
+
+    # Case A: Asymmetric L-shape (Down 120px, Right 50px -> disp_ratio ~0.76 >= 0.70)
+    gr = GestureRecognizer(threshold=18)
+    gr.reset()
+    gr.feed_point(100, 100)
+    for y in range(125, 225, 25):
+        gr.feed_point(100, y)
+    gr.feed_point(125, 220)
+    gr.feed_point(150, 220)
+    res_a = gr.finish(presets)
+    assert res_a["data"]["matched"] is True
+    assert res_a["data"]["keys"] == "ctrl+w"
+    assert res_a["data"]["directions"] == ["D", "R"]
+
+    # Case B: Short 1-step orthogonal Right leg (Down 100px, Right 25px)
+    gr2 = GestureRecognizer(threshold=18)
+    gr2.reset()
+    gr2.feed_point(100, 100)
+    for y in range(125, 225, 25):
+        gr2.feed_point(100, y)
+    gr2.feed_point(125, 200)
+    res_b = gr2.finish(presets)
+    assert res_b["data"]["matched"] is True
+    assert res_b["data"]["keys"] == "ctrl+w"
+    assert res_b["data"]["directions"] == ["D", "R"]
+
+
+def test_mapper_scroll_cancels_hold_timer_and_closes_guide():
+    """Verify scrolling cancels pending hold timer and closes guide overlay if already open."""
+    from src.features.mouse_mapper.logic.mouse_mapper_logic import MouseMapperLogic
+    from src.features.mouse_mapper.types.mouse_mapper_types import MouseEvent, ScrollDirection
+
+    ended = {"count": 0}
+    mapper = MouseMapperLogic()
+    mapper.on_hold_start = lambda: None
+    mapper.on_gesture_end = lambda: ended.__setitem__("count", ended["count"] + 1)
+
+    mapper.handle(MouseEvent(kind="right_down", x=100, y=100))
+    mapper._fire_hold_start()
+    assert mapper._hold_fired is True
+
+    # Scrolling must close the guide overlay immediately and clear _hold_fired
+    mapper.handle(MouseEvent(kind="scroll", scroll_dir=ScrollDirection.UP))
+    assert ended["count"] == 1
+    assert mapper._hold_fired is False
+
+    # Calling _fire_hold_start during SCROLLING must be ignored
+    mapper._fire_hold_start()
+    assert mapper._hold_fired is False
+
+    mapper.handle(MouseEvent(kind="right_up", x=100, y=100))
+
+
 
 
 
