@@ -33,11 +33,27 @@ def get_config_root() -> Path:
 MAX_LOG_BYTES = 2 * 1024 * 1024  # 2 MB per log file limit
 
 
+def _get_writable_log_dir() -> Path:
+    """Return a writable log directory, preferring %LOCALAPPDATA% when running from read-only WindowsApps."""
+    exe_str = str(getattr(sys, "executable", ""))
+    if getattr(sys, "frozen", False) and "WindowsApps" in exe_str:
+        local_appdata = os.environ.get("LOCALAPPDATA")
+        if local_appdata:
+            return Path(local_appdata) / "RightWheel" / "data"
+        return get_config_root() / "data"
+    return get_app_root() / "data"
+
+
 def log_debug(msg: str, filename: str = "app_debug.log") -> None:
-    """Append a timestamped line to data/<filename> next to the real app root with 2MB rotation. Never raises."""
+    """Append a timestamped line to data/<filename> with 2MB rotation and MSIX fallback. Never raises."""
     try:
-        log_dir = get_app_root() / "data"
-        log_dir.mkdir(parents=True, exist_ok=True)
+        log_dir = _get_writable_log_dir()
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            local_appdata = os.environ.get("LOCALAPPDATA")
+            log_dir = (Path(local_appdata) / "RightWheel" / "data") if local_appdata else (get_config_root() / "data")
+            log_dir.mkdir(parents=True, exist_ok=True)
         target_path = log_dir / filename
 
         # Rotate if file size exceeds MAX_LOG_BYTES to prevent memory/disk cache bloat

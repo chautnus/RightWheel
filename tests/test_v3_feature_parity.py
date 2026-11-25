@@ -573,6 +573,41 @@ def test_mapper_scroll_cancels_hold_timer_and_closes_guide():
     mapper.handle(MouseEvent(kind="right_up", x=100, y=100))
 
 
+def test_store_winrt_iap_and_msix_log_dir(tmp_path, monkeypatch):
+    """Verify WinRT StoreContext license/purchase mocks and MSIX-safe writable log path."""
+    import subprocess
+    import sys
+
+    # 1. MSIX WindowsApps read-only executable path must route logs to LOCALAPPDATA
+    fake_local = tmp_path / "LocalAppData"
+    monkeypatch.setenv("LOCALAPPDATA", str(fake_local))
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", r"C:\Program Files\WindowsApps\ChauTran.RightWheel_1.0.0.0_x64\RightWheel.exe")
+    log_dir = app_paths._get_writable_log_dir()
+    assert log_dir == fake_local / "RightWheel" / "data"
+
+    # 2. WinRT license verification mock
+    state_file = tmp_path / "store_license.json"
+    svc = store_license_service.StoreLicenseService(state_file_override=state_file)
+    monkeypatch.setattr(svc, "has_msix_package_identity", lambda: True)
+
+    class _FakeRes:
+        def __init__(self, stdout: str):
+            self.stdout = stdout
+
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: _FakeRes("PRO_ADDON_ACTIVE\n"))
+    st = svc.verify_store_license()
+    assert st["is_pro"] is True
+    assert st["status"] == "PRO_ACTIVATED"
+
+    # 3. WinRT purchase_pro mock
+    svc2 = store_license_service.StoreLicenseService(state_file_override=tmp_path / "store_license2.json")
+    monkeypatch.setattr(svc2, "has_msix_package_identity", lambda: True)
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: _FakeRes("Succeeded\n"))
+    assert svc2.purchase_pro(addon_id="9NQ_TEST_ADDON") is True
+    assert svc2.get_status()["is_pro"] is True
+
+
 
 
 

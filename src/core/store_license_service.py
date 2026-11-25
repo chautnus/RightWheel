@@ -270,6 +270,97 @@ class StoreLicenseService:
         t = threading.Thread(target=_monitor_loop, daemon=True, name="TrialExpiryMonitorDaemon")
         t.start()
 
+    def _query_winrt_addon_license(self) -> bool:
+        """Query Windows.Services.Store.StoreContext via WinRT PowerShell bridge when packaged as MSIX."""
+        if not self.has_msix_package_identity():
+            return False
+
+        addon_filter = STORE_ADDON_ID.strip()
+        ps_script = (
+            "[Windows.Services.Store.StoreContext, Windows.Services.Store, ContentType = WindowsRuntime] | Out-Null; "
+            "$ctx = [Windows.Services.Store.StoreContext]::GetDefault(); "
+            "$op = $ctx.GetAppLicenseAsync(); "
+            "while ($op.Status -eq 'Started') { Start-Sleep -Milliseconds 30 }; "
+            "$lic = $op.GetResults(); "
+            "if ($lic -eq $null) { Write-Output 'NONE'; exit 0 }; "
+            "$active = $false; "
+            "foreach ($v in $lic.AddOnLicenses.Values) { "
+            "  if ($v.IsActive) { "
+            f"    if ('{addon_filter}' -eq '' -or $v.SkuStoreId.StartsWith('{addon_filter}') -or $v.InAppOfferToken -eq '{addon_filter}') {{ $active = $true }} "
+            "  } "
+            "}; "
+            "if ($active) { Write-Output 'PRO_ADDON_ACTIVE' } else { Write-Output 'NOT_OWNED' }"
+        )
+        try:
+            creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+            res = subprocess.run(
+                ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
+                capture_output=True,
+                text=True,
+                timeout=8,
+                creationflags=creation_flags,
+            )
+            out = (res.stdout or "").strip()
+            log_debug(f"WinRT StoreContext license query output: {out!r}")
+            return "PRO_ADDON_ACTIVE" in out
+        except Exception as exc:
+            log_debug(f"WinRT StoreContext license query failed: {exc}")
+            return False
+
+    def verify_store_license(self) -> dict[str, Any]:
+        """Verify license against Microsoft Store WinRT StoreContext (if MSIX) and return updated status."""
+        if self._query_winrt_addon_license():
+            self.activate_pro("STORE_WINRT_VERIFIED")
+        return self.get_status()
+
+    def purchase_pro(self, addon_id: str | None = None) -> bool:
+        """Trigger in-app Store purchase via WinRT RequestPurchaseAsync if Add-on ID is configured, else open Store page."""
+        target_addon = (addon_id or STORE_ADDON_ID).strip()
+        if target_addon and self.has_msix_package_identity():
+            ps_script = (
+                "[Windows.Services.Store.StoreContext, Windows.Services.Store, ContentType = WindowsRuntime] | Out-Null; "
+                "$ctx = [Windows.Services.Store.StoreContext]::GetDefault(); "
+                f"$op = $ctx.RequestPurchaseAsync('{target_addon}'); "
+                "while ($op.Status -eq 'Started') { Start-Sleep -Milliseconds 50 }; "
+                "$res = $op.GetResults(); "
+                "Write-Output $res.Status.ToString()"
+            )
+            try:
+                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+                res = subprocess.run(
+                    ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                    creationflags=creation_flags,
+                )
+                status_str = (res.stdout or "").strip()
+                log_debug(f"WinRT RequestPurchaseAsync result: {status_str!r}")
+                if any(tok in status_str for tok in ("Succeeded", "AlreadyPurchased")):
+                    self.activate_pro(f"STORE_IAP_{target_addon}")
+                    return True
+                return False
+            except Exception as exc:
+                log_debug(f"WinRT RequestPurchaseAsync failed: {exc}")
+        return self.open_store_purchase_page()
+
+    def open_store_purchase_page(self, product_id: str | None = None) -> bool:
+        """Open Microsoft Store purchase page via protocol ms-windows-store."""
+        pid = product_id or STORE_PRODUCT_ID
+        try:
+            url = f"ms-windows-store://pdp/?productid={pid}"
+            os.startfile(url)
+            log_debug(f"Opened Store URL: {url}")
+            return True
+        except Exception as e:
+            log_debug(f"Failed to open Store protocol: {e}")
+            try:
+                import webbrowser
+                webbrowser.open(f"https://apps.microsoft.com/detail/{pid}")
+                return True
+            except Exception:
+                return False
+
 
 _global_license_service: StoreLicenseService | None = None
 
