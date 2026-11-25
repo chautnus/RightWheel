@@ -16,7 +16,7 @@ MANIFEST_SRC = ROOT_DIR / "packaging" / "msix" / "AppxManifest.xml"
 DEFAULT_PROTECTED_EXE = ROOT_DIR / "dist" / "RightWheel_Protected.exe"
 DEFAULT_DEV_EXE = ROOT_DIR / "dist" / "RightWheel.exe"
 STAGING_DIR = ROOT_DIR / "build_msix" / "msix_staging"
-OUTPUT_MSIX = ROOT_DIR / "dist" / "RightWheel_1.0.0.0_x64.msix"
+OUTPUT_MSIX = ROOT_DIR / "dist" / "RightWheel_1.0.1.0_x64.msix"
 ICON_SRC = ROOT_DIR / "assets" / "icon.png"
 
 
