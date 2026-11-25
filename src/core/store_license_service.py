@@ -22,8 +22,8 @@ import uuid
 from src.core.app_paths import get_config_root, log_debug
 
 TRIAL_DAYS = 30
-STORE_PRODUCT_ID = "RIGHTWHEEL_STORE_ID"
-STORE_ADDON_ID = ""
+STORE_PRODUCT_ID = "9MZGD08JT993"
+STORE_ADDON_ID = "9N29FLV8WSM4"
 
 
 class StoreLicenseStatus(str, Enum):

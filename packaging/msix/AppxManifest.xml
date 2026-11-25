@@ -6,7 +6,7 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="ChauTran.RightWheel"
+    Name="ChauTran.MouseGesture-RightWheel"
     Publisher="CN=9AAD203F-B008-4B7B-83DF-4D8364080D65"
     Version="1.0.0.0"
     ProcessorArchitecture="x64" />
